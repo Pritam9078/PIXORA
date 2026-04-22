@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface": "#051424",
+                      "on-primary-fixed": "#1a1b20",
+                      "tertiary-fixed-dim": "#b7c4ff",
+                      "on-error": "#690005",
+                      "inverse-on-surface": "#233143",
+                      "on-error-container": "#ffdad6",
+                      "on-primary-container": "#7b7b80",
+                      "surface-container": "#122131",
+                      "on-secondary-fixed": "#161e00",
+                      "on-background": "#d4e4fa",
+                      "tertiary-fixed": "#dde1ff",
+                      "outline": "#919095",
+                      "inverse-surface": "#d4e4fa",
+                      "tertiary-container": "#000933",
+                      "secondary-fixed-dim": "#abd600",
+                      "error": "#ffb4ab",
+                      "background": "#051424",
+                      "tertiary": "#b7c4ff",
+                      "primary-fixed-dim": "#c7c6cb",
+                      "error-container": "#93000a",
+                      "on-secondary": "#283500",
+                      "outline-variant": "#46464b",
+                      "on-tertiary-container": "#5774df",
+                      "surface-dim": "#051424",
+                      "secondary": "#ffffff",
+                      "on-tertiary-fixed": "#001452",
+                      "primary-fixed": "#e3e2e7",
+                      "on-secondary-container": "#556d00",
+                      "surface-container-low": "#0d1c2d",
+                      "on-surface-variant": "#c7c6cb",
+                      "surface-container-lowest": "#010f1f",
+                      "on-tertiary": "#002683",
+                      "on-secondary-fixed-variant": "#3c4d00",
+                      "surface-variant": "#273647",
+                      "surface-container-highest": "#273647",
+                      "surface-container-high": "#1c2b3c",
+                      "primary-container": "#0d0e12",
+                      "on-primary-fixed-variant": "#46464b",
+                      "secondary-container": "#c3f400",
+                      "primary": "#c7c6cb",
+                      "surface-tint": "#c7c6cb",
+                      "on-primary": "#2f3035",
+                      "on-surface": "#d4e4fa",
+                      "on-tertiary-fixed-variant": "#193ca7",
+                      "secondary-fixed": "#c3f400",
+                      "surface-bright": "#2c3a4c",
+                      "inverse-primary": "#5e5e63"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "margin-x": "40px",
+                      "gutter": "24px",
+                      "stack-sm": "8px",
+                      "stack-md": "24px",
+                      "unit": "4px",
+                      "container-max": "1440px",
+                      "stack-lg": "64px"
+              },
+              "fontFamily": {
+                      "headline-md": ["Space Grotesk"],
+                      "headline-xl": ["Space Grotesk"],
+                      "body-base": ["Inter"],
+                      "code-label": ["Space Grotesk"]
+              },
+              "fontSize": {
+                      "headline-md": ["24px", {"lineHeight": "1.2", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                      "headline-xl": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "body-base": ["16px", {"lineHeight": "1.6", "letterSpacing": "0", "fontWeight": "400"}],
+                      "code-label": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.1em", "fontWeight": "500"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(22, 24, 29, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .laser-border {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glow-lime {
+            box-shadow: 0px 0px 12px rgba(195, 244, 0, 0.15);
+        }
+        .glow-purple {
+            box-shadow: 0px 0px 12px rgba(168, 85, 247, 0.15);
+        }
+        .circuit-line {
+            background: linear-gradient(90deg, transparent, #c3f400, transparent);
+            height: 1px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="bg-[#0D0E12] text-on-surface font-body-base min-h-screen">
+<!-- TopAppBar Shell -->
+<header class="flex justify-between items-center px-6 h-16 w-full fixed top-0 z-50 bg-[#0D0E12]/80 backdrop-blur-xl border-b border-white/10">
+<div class="text-xl font-bold text-white tracking-tighter font-['Space_Grotesk'] uppercase">ZENITH ORBITAL</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="font-['Space_Grotesk'] uppercase tracking-widest text-xs text-[#D4FF00] font-bold hover:text-[#D4FF00] transition-all duration-300" href="partner-dashboard.html">Command Center</a>
+<a class="font-['Space_Grotesk'] uppercase tracking-widest text-xs text-slate-400 hover:text-[#D4FF00] transition-all duration-300" href="#">Network Nodes</a>
+<a class="font-['Space_Grotesk'] uppercase tracking-widest text-xs text-slate-400 hover:text-[#D4FF00] transition-all duration-300" href="#">Engine Analytics</a>
+</nav>
+<div class="flex items-center gap-4">
+<div class="relative group">
+<span class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-white transition-colors">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-[#D4FF00] rounded-full border border-[#0D0E12]"></span>
+</div>
+<span class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-white transition-colors">terminal</span>
+<span class="material-symbols-outlined text-white cursor-pointer hover:text-[#D4FF00] transition-colors">account_circle</span>
+</div>
+</header>
+<!-- SideNavBar Shell -->
+<aside class="hidden md:flex flex-col h-full w-64 fixed left-0 bg-[#16181D]/90 backdrop-blur-2xl border-r border-white/5 pt-20 z-40">
+<div class="px-6 mb-8">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full border border-[#A855F7]/30 p-0.5">
+<img class="w-full h-full rounded-full object-cover" data-alt="close-up of a professional male operator with a neutral expression against a dark tech background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGbPvrs-NmhMO4RBRXgU4B8k2Wsv2Z7dI5HIdc7nmQ7O3ukftnRmXjF3i4hvaEgKxGSCFXKbpj0hFS2tBu55xBoTJ5RU8-OFtXn_SLBnmdlwxFMKTiHT9wX34qUGyUfaE1cQonDgKm11rsjEYDYT55xseJAsXRcqkFxuYKLaUXXtQMGwJvhA8RQD6O_YFMh8H1TIMfjErIGNKJdnOJ7ULIAhcV7sC065oe3Dfbk0en4TBVK7RF3ajkPr1mLF_A9lGDEt2XyM_Uad8T"/>
+</div>
+<div>
+<p class="font-['Space_Grotesk'] font-bold text-sm text-white">OPERATOR</p>
+<p class="text-[10px] text-slate-500 uppercase tracking-widest">Level 4 Access</p>
+</div>
+</div>
+</div>
+<nav class="flex-grow font-['Space_Grotesk'] font-medium">
+<a class="flex items-center gap-3 px-6 py-3 bg-[#A855F7]/10 text-[#A855F7] border-r-2 border-[#A855F7] transition-all duration-200" href="partner-dashboard.html">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Command Center</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-slate-500 hover:bg-white/5 hover:text-slate-200 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">verified_user</span>
+<span>Onboarding Status</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-slate-500 hover:bg-white/5 hover:text-slate-200 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">account_tree</span>
+<span>Academic Tracks</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-slate-500 hover:bg-white/5 hover:text-slate-200 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">query_stats</span>
+<span>Engine Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-slate-500 hover:bg-white/5 hover:text-slate-200 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">hub</span>
+<span>Network Nodes</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-slate-500 hover:bg-white/5 hover:text-slate-200 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+<span>Documentation</span>
+</a>
+</nav>
+<div class="p-6 border-t border-white/5">
+<button class="w-full py-3 bg-[#A855F7] text-black font-['Space_Grotesk'] font-bold text-xs uppercase tracking-tighter hover:shadow-[0px_0px_12px_rgba(168,85,247,0.5)] transition-all">
+                DEPLOY PROJECT
+            </button>
+</div>
+<div class="px-6 py-4 space-y-2">
+<a class="flex items-center gap-3 text-slate-500 text-sm hover:text-slate-200" href="#">
+<span class="material-symbols-outlined text-sm">terminal</span>
+<span>System Logs</span>
+</a>
+<a class="flex items-center gap-3 text-slate-500 text-sm hover:text-slate-200" href="#">
+<span class="material-symbols-outlined text-sm">help_outline</span>
+<span>Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="md:ml-64 pt-24 px-6 pb-12 max-w-[1440px] mx-auto">
+<!-- Welcome & Partnership Status -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
+<div>
+<h1 class="font-headline-xl text-headline-xl text-white mb-2">Partner Portal</h1>
+<p class="text-on-primary-container font-body-base">Tracking network growth and referral performance across the orbital grid.</p>
+</div>
+<div class="glass-panel px-6 py-4 rounded-lg flex items-center gap-4 glow-lime border-[#c3f400]/20">
+<span class="material-symbols-outlined text-[#c3f400]" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+<div>
+<p class="font-code-label text-code-label text-[#c3f400]">PARTNERSHIP LEVEL</p>
+<p class="font-headline-md text-headline-md text-white">Gold Node</p>
+</div>
+</div>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<!-- Revenue Analytics -->
+<div class="md:col-span-8 glass-panel rounded-lg p-6 min-h-[400px] flex flex-col">
+<div class="flex justify-between items-center mb-8">
+<h3 class="font-headline-md text-headline-md text-white">Commission Revenue</h3>
+<div class="flex gap-2">
+<span class="px-3 py-1 rounded bg-[#c3f400]/10 text-[#c3f400] font-code-label">WEEKLY</span>
+<span class="px-3 py-1 rounded bg-white/5 text-slate-400 font-code-label hover:bg-white/10 cursor-pointer">MONTHLY</span>
+</div>
+</div>
+<!-- Mock Chart Visualization -->
+<div class="flex-grow flex items-end gap-2 px-2 relative">
+<div class="absolute inset-0 flex flex-col justify-between py-2 pointer-events-none">
+<div class="w-full border-t border-white/5"></div>
+<div class="w-full border-t border-white/5"></div>
+<div class="w-full border-t border-white/5"></div>
+<div class="w-full border-t border-white/5"></div>
+</div>
+<div class="flex-1 bg-[#c3f400]/20 rounded-t-sm h-[30%] hover:bg-[#c3f400]/40 transition-all cursor-pointer"></div>
+<div class="flex-1 bg-[#c3f400]/20 rounded-t-sm h-[45%] hover:bg-[#c3f400]/40 transition-all cursor-pointer"></div>
+<div class="flex-1 bg-[#c3f400]/30 rounded-t-sm h-[60%] hover:bg-[#c3f400]/40 transition-all cursor-pointer"></div>
+<div class="flex-1 bg-[#c3f400]/40 rounded-t-sm h-[85%] hover:bg-[#c3f400]/40 transition-all cursor-pointer"></div>
+<div class="flex-1 bg-[#c3f400] rounded-t-sm h-[70%] hover:brightness-110 transition-all cursor-pointer"></div>
+<div class="flex-1 bg-[#A855F7]/40 rounded-t-sm h-[50%] hover:bg-[#A855F7]/60 transition-all cursor-pointer"></div>
+<div class="flex-1 bg-[#A855F7]/60 rounded-t-sm h-[90%] hover:bg-[#A855F7]/80 transition-all cursor-pointer"></div>
+</div>
+<div class="flex justify-between pt-4 text-slate-500 font-code-label">
+<span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span><span>SUN</span>
+</div>
+</div>
+<!-- Conversion Stats -->
+<div class="md:col-span-4 space-y-6">
+<div class="glass-panel rounded-lg p-6">
+<h4 class="font-headline-md text-white mb-6">Lead Conversion</h4>
+<div class="space-y-4">
+<div>
+<div class="flex justify-between text-xs font-code-label mb-2">
+<span class="text-slate-400">QUALIFIED</span>
+<span class="text-white">82%</span>
+</div>
+<div class="h-1 bg-white/10 rounded-full overflow-hidden">
+<div class="h-full bg-[#c3f400] w-[82%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs font-code-label mb-2">
+<span class="text-slate-400">NEGOTIATION</span>
+<span class="text-white">45%</span>
+</div>
+<div class="h-1 bg-white/10 rounded-full overflow-hidden">
+<div class="h-full bg-[#A855F7] w-[45%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs font-code-label mb-2">
+<span class="text-slate-400">ONBOARDED</span>
+<span class="text-white">12%</span>
+</div>
+<div class="h-1 bg-white/10 rounded-full overflow-hidden">
+<div class="h-full bg-white w-[12%]"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="glass-panel rounded-lg p-6 relative overflow-hidden group">
+<div class="relative z-10">
+<p class="font-code-label text-[#A855F7] mb-2 uppercase">Network Reach</p>
+<h2 class="text-4xl font-headline-xl text-white">124</h2>
+<p class="text-slate-500 text-sm mt-1">Referred Institutions</p>
+</div>
+<div class="absolute -right-4 -bottom-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-[120px]">public</span>
+</div>
+</div>
+</div>
+<!-- Referred Colleges List (Custom Asymmetric Table) -->
+<div class="md:col-span-12 glass-panel rounded-lg overflow-hidden">
+<div class="px-6 py-5 border-b border-white/5 flex justify-between items-center">
+<h3 class="font-headline-md text-white">Referred Network</h3>
+<button class="text-xs font-code-label text-[#c3f400] flex items-center gap-2 hover:underline">
+                        EXPORT DATA <span class="material-symbols-outlined text-xs">download</span>
+</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="text-slate-500 font-code-label text-[10px] uppercase tracking-widest laser-border">
+<th class="px-6 py-4">Institution</th>
+<th class="px-6 py-4">Sector</th>
+<th class="px-6 py-4">Lead Status</th>
+<th class="px-6 py-4">Referral Yield</th>
+<th class="px-6 py-4 text-right">Action</th>
+</tr>
+</thead>
+<tbody class="text-sm font-body-base divide-y divide-white/5">
+<tr class="hover:bg-white/5 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-white/5 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-400">school</span>
+</div>
+<span class="text-white font-medium">Nebula Institute of Tech</span>
+</div>
+</td>
+<td class="px-6 py-4 text-slate-400">Blockchain Eng.</td>
+<td class="px-6 py-4">
+<span class="px-2 py-0.5 rounded-full bg-[#c3f400]/10 text-[#c3f400] text-[10px] border border-[#c3f400]/20 font-bold uppercase">Active</span>
+</td>
+<td class="px-6 py-4 font-code-label text-white">12,400 ZNT</td>
+<td class="px-6 py-4 text-right">
+<span class="material-symbols-outlined text-slate-500 hover:text-white cursor-pointer">more_vert</span>
+</td>
+</tr>
+<tr class="hover:bg-white/5 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-white/5 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-400">architecture</span>
+</div>
+<span class="text-white font-medium">Orbital Design Labs</span>
+</div>
+</td>
+<td class="px-6 py-4 text-slate-400">Game Development</td>
+<td class="px-6 py-4">
+<span class="px-2 py-0.5 rounded-full bg-[#A855F7]/10 text-[#A855F7] text-[10px] border border-[#A855F7]/20 font-bold uppercase">Pending</span>
+</td>
+<td class="px-6 py-4 font-code-label text-white">4,200 ZNT</td>
+<td class="px-6 py-4 text-right">
+<span class="material-symbols-outlined text-slate-500 hover:text-white cursor-pointer">more_vert</span>
+</td>
+</tr>
+<tr class="hover:bg-white/5 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-white/5 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-400">memory</span>
+</div>
+<span class="text-white font-medium">Titan Cyber Academy</span>
+</div>
+</td>
+<td class="px-6 py-4 text-slate-400">Security Audit</td>
+<td class="px-6 py-4">
+<span class="px-2 py-0.5 rounded-full bg-white/10 text-white text-[10px] border border-white/20 font-bold uppercase">Lead</span>
+</td>
+<td class="px-6 py-4 font-code-label text-white">0 ZNT</td>
+<td class="px-6 py-4 text-right">
+<span class="material-symbols-outlined text-slate-500 hover:text-white cursor-pointer">more_vert</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Expansion Vision Card -->
+<div class="md:col-span-12 glass-panel rounded-lg p-1 relative min-h-[300px] flex items-center overflow-hidden">
+<img class="absolute inset-0 w-full h-full object-cover opacity-40" data-alt="futuristic satellite view of earth at night with glowing data connection lines showing global network expansion" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgycz0bjfiVGuRrNHk0ebeRqC5t6MEZ_mcjAB3INGRY0_LEkcjLUHEebVt5khGIf9rdyrF-d0YEGvyaSLwB65Nj2XEuvWc8ruVFOux_QeoWBVTg1Rp9FClhC9VVp_WDkI_lkcR_-7KsEg83LfzfVPDZo_owKdAizcIE5v3xf_fbWgVv_XNE7xtV_Nfvujjo5B0ZNJBNsdRVcjIRrmUyNUzYyiLTzlycaJ8JGqA3zrNVMPr527mNZ9RaFuVdC1Ewa0QY_M98REoUKHI"/>
+<div class="absolute inset-0 bg-gradient-to-r from-[#0D0E12] via-[#0D0E12]/80 to-transparent"></div>
+<div class="relative z-10 p-10 max-w-2xl">
+<h2 class="font-headline-xl text-white mb-4">Scale Your Nodes</h2>
+<p class="text-on-primary-container font-body-base mb-8">Reach 'Platinum Node' status by referring 5 more accredited institutions. Unlock exclusive orbital governance rights and tier-2 commission multipliers.</p>
+<button class="bg-[#c3f400] text-black px-8 py-4 font-headline-md text-sm uppercase tracking-widest hover:shadow-[0px_0px_20px_rgba(195,244,0,0.4)] transition-all">
+                        EXPAND NETWORK
+                    </button>
+</div>
+</div>
+</div>
+<!-- System Logs Footer -->
+<div class="mt-12 flex flex-col md:flex-row justify-between items-center gap-6 py-6 border-t border-white/5 text-slate-600 font-code-label text-[10px]">
+<div class="flex gap-8">
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-[#c3f400]"></span>
+                    CORE ENGINE STATUS: STABLE
+                </div>
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-[#A855F7]"></span>
+                    NETWORK SYNC: 99.8%
+                </div>
+</div>
+<p>© 2024 ZENITH ORBITAL ACADEMY - PARTNER TERMINAL V2.4.0</p>
+</div>
+</main>
+<!-- FAB for Quick Actions -->
+<button class="fixed bottom-8 right-8 w-14 h-14 bg-[#c3f400] rounded-full flex items-center justify-center text-black shadow-[0px_0px_20px_rgba(195,244,0,0.3)] hover:scale-105 active:scale-95 transition-all z-50">
+<span class="material-symbols-outlined font-bold">add</span>
+</button>
+</body></html>

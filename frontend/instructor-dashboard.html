@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Instructor Dashboard | ZENITH ORBITAL</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#051424",
+                        "on-primary-fixed": "#1a1b20",
+                        "tertiary-fixed-dim": "#b7c4ff",
+                        "on-error": "#690005",
+                        "inverse-on-surface": "#233143",
+                        "on-error-container": "#ffdad6",
+                        "on-primary-container": "#7b7b80",
+                        "surface-container": "#122131",
+                        "on-secondary-fixed": "#161e00",
+                        "on-background": "#d4e4fa",
+                        "tertiary-fixed": "#dde1ff",
+                        "outline": "#919095",
+                        "inverse-surface": "#d4e4fa",
+                        "tertiary-container": "#000933",
+                        "secondary-fixed-dim": "#abd600",
+                        "error": "#ffb4ab",
+                        "background": "#051424",
+                        "tertiary": "#b7c4ff",
+                        "primary-fixed-dim": "#c7c6cb",
+                        "error-container": "#93000a",
+                        "on-secondary": "#283500",
+                        "outline-variant": "#46464b",
+                        "on-tertiary-container": "#5774df",
+                        "surface-dim": "#051424",
+                        "secondary": "#ffffff",
+                        "on-tertiary-fixed": "#001452",
+                        "primary-fixed": "#e3e2e7",
+                        "on-secondary-container": "#556d00",
+                        "surface-container-low": "#0d1c2d",
+                        "on-surface-variant": "#c7c6cb",
+                        "surface-container-lowest": "#010f1f",
+                        "on-tertiary": "#002683",
+                        "on-secondary-fixed-variant": "#3c4d00",
+                        "surface-variant": "#273647",
+                        "surface-container-highest": "#273647",
+                        "surface-container-high": "#1c2b3c",
+                        "primary-container": "#0d0e12",
+                        "on-primary-fixed-variant": "#46464b",
+                        "secondary-container": "#c3f400",
+                        "primary": "#c7c6cb",
+                        "surface-tint": "#c7c6cb",
+                        "on-primary": "#2f3035",
+                        "on-surface": "#d4e4fa",
+                        "on-tertiary-fixed-variant": "#193ca7",
+                        "secondary-fixed": "#c3f400",
+                        "surface-bright": "#2c3a4c",
+                        "inverse-primary": "#5e5e63"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin-x": "40px",
+                        "gutter": "24px",
+                        "stack-sm": "8px",
+                        "stack-md": "24px",
+                        "unit": "4px",
+                        "container-max": "1440px",
+                        "stack-lg": "64px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Space Grotesk"],
+                        "headline-xl": ["Space Grotesk"],
+                        "body-base": ["Inter"],
+                        "code-label": ["Space Grotesk"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", {"lineHeight": "1.2", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                        "headline-xl": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-base": ["16px", {"lineHeight": "1.6", "letterSpacing": "0", "fontWeight": "400"}],
+                        "code-label": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.1em", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(22, 24, 29, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .glass-panel:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+        .laser-border {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .circuit-line {
+            background: linear-gradient(90deg, transparent 0%, #D4FF00 50%, transparent 100%);
+            height: 1px;
+            width: 100%;
+        }
+        .glow-lime:hover {
+            box-shadow: 0px 0px 12px rgba(212, 255, 0, 0.3);
+        }
+        .glow-purple:hover {
+            box-shadow: 0px 0px 12px rgba(168, 85, 247, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-[#0D0E12] font-body-base text-on-surface selection:bg-secondary-fixed selection:text-on-secondary-fixed">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center px-6 h-16 w-full fixed top-0 z-50 bg-[#0D0E12]/80 backdrop-blur-xl border-b border-white/10">
+<div class="text-xl font-bold text-white tracking-tighter font-headline-md">ZENITH ORBITAL</div>
+<div class="hidden md:flex items-center gap-8">
+<nav class="flex items-center gap-6 font-['Space_Grotesk'] uppercase tracking-widest text-xs">
+<a class="text-[#D4FF00] font-bold" href="instructor-dashboard.html">DASHBOARD</a>
+<a class="text-slate-400 hover:text-[#D4FF00] transition-all duration-300" href="#">CURRICULUM</a>
+<a class="text-slate-400 hover:text-[#D4FF00] transition-all duration-300" href="#">STUDENTS</a>
+<a class="text-slate-400 hover:text-[#D4FF00] transition-all duration-300" href="#">REPORTS</a>
+</nav>
+<div class="h-6 w-[1px] bg-white/10 mx-2"></div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-[#D4FF00] transition-all">notifications</span>
+<span class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-[#D4FF00] transition-all">terminal</span>
+<div class="flex items-center gap-3 pl-4">
+<img alt="User Profile" class="w-8 h-8 rounded-full border border-[#D4FF00]/50 object-cover" data-alt="Professional headshot of a futuristic instructor with sharp lighting and clean tech background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAdZpjPAlEYAh098tw61yqW50duHMBsl140t3vBDxB04sdztserSmMMDtUb74XECm6qMRXPiQH_XedobbTZJQpDiQoLN1l59cnQL_c0Ku_-_WZ_Bt83QnuAbP84JfRnzL_4Svlml3z5NVkgdjx1RNzjtkjk8v7s3a8vsbXM-8R9YJyWPI6C3ySQsAYBFIYkFwyoNCMyJ4xhirTSBWDfIYNPmAbrhpDzfS8tlJZVMNzHZdr3v63x1DG_V6J8MP4AKCfxF3SvfAEMvx5g"/>
+<span class="material-symbols-outlined text-slate-400 cursor-pointer">account_circle</span>
+</div>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="hidden md:flex flex-col h-full w-64 fixed left-0 border-r border-white/5 bg-[#16181D]/90 backdrop-blur-2xl z-40 pt-20">
+<div class="px-6 mb-8">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-gradient-to-br from-tertiary to-on-tertiary-fixed-variant rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-white" data-weight="fill">verified_user</span>
+</div>
+<div>
+<p class="font-headline-md text-sm text-white uppercase tracking-wider">OPERATOR</p>
+<p class="text-[10px] text-slate-500 font-code-label">Level 4 Access</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 bg-[#A855F7]/10 text-[#A855F7] border-r-2 border-[#A855F7] transition-all translate-x-1" href="instructor-dashboard.html">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-['Space_Grotesk'] font-medium">Command Center</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-white/5 hover:text-slate-200 transition-colors" href="#">
+<span class="material-symbols-outlined">verified_user</span>
+<span class="font-['Space_Grotesk'] font-medium">Onboarding Status</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-white/5 hover:text-slate-200 transition-colors" href="#">
+<span class="material-symbols-outlined">account_tree</span>
+<span class="font-['Space_Grotesk'] font-medium">Academic Tracks</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-white/5 hover:text-slate-200 transition-colors" href="#">
+<span class="material-symbols-outlined">query_stats</span>
+<span class="font-['Space_Grotesk'] font-medium">Engine Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-white/5 hover:text-slate-200 transition-colors" href="#">
+<span class="material-symbols-outlined">hub</span>
+<span class="font-['Space_Grotesk'] font-medium">Network Nodes</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-white/5 hover:text-slate-200 transition-colors" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+<span class="font-['Space_Grotesk'] font-medium">Documentation</span>
+</a>
+</nav>
+<div class="p-6 space-y-4">
+<button class="w-full py-3 bg-[#A855F7] text-black font-bold font-code-label uppercase tracking-widest rounded-sm glow-purple transition-all scale-95 active:opacity-80">
+                DEPLOY PROJECT
+            </button>
+<div class="space-y-1">
+<a class="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-200 text-xs transition-colors" href="#">
+<span class="material-symbols-outlined text-sm">terminal</span>
+                    System Logs
+                </a>
+<a class="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-200 text-xs transition-colors" href="#">
+<span class="material-symbols-outlined text-sm">help_outline</span>
+                    Support
+                </a>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="md:ml-64 pt-24 px-8 pb-12 min-h-screen">
+<div class="max-w-[1440px] mx-auto">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
+<div>
+<h1 class="font-headline-xl text-headline-xl text-white">COMMAND CENTER</h1>
+<p class="text-on-primary-container font-body-base mt-2">Welcome back, Instructor. System integrity at 98.4%.</p>
+</div>
+<button class="px-8 py-4 bg-[#D4FF00] text-black font-bold font-code-label uppercase tracking-widest rounded-sm glow-lime transition-all flex items-center gap-3">
+<span class="material-symbols-outlined">add_box</span>
+                    Build New Module
+                </button>
+</div>
+<!-- Dashboard Grid -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Quick Metrics -->
+<div class="col-span-12 md:col-span-3 glass-panel p-6 rounded-lg">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-[#A855F7]">group</span>
+<span class="text-[10px] font-code-label text-[#A855F7] bg-[#A855F7]/10 px-2 py-1">+12%</span>
+</div>
+<p class="text-slate-500 text-xs font-code-label uppercase tracking-tighter">Active Students</p>
+<h2 class="font-headline-md text-headline-md text-white mt-1">1,248</h2>
+</div>
+<div class="col-span-12 md:col-span-3 glass-panel p-6 rounded-lg">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-[#D4FF00]">bolt</span>
+<span class="text-[10px] font-code-label text-[#D4FF00] bg-[#D4FF00]/10 px-2 py-1">STABLE</span>
+</div>
+<p class="text-slate-500 text-xs font-code-label uppercase tracking-tighter">Avg Progress</p>
+<h2 class="font-headline-md text-headline-md text-white mt-1">68.2%</h2>
+</div>
+<div class="col-span-12 md:col-span-3 glass-panel p-6 rounded-lg">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-tertiary">hourglass_empty</span>
+<span class="text-[10px] font-code-label text-tertiary bg-tertiary/10 px-2 py-1">3 PENDING</span>
+</div>
+<p class="text-slate-500 text-xs font-code-label uppercase tracking-tighter">Sessions Today</p>
+<h2 class="font-headline-md text-headline-md text-white mt-1">04</h2>
+</div>
+<div class="col-span-12 md:col-span-3 glass-panel p-6 rounded-lg">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-secondary-fixed">assignment_turned_in</span>
+<span class="text-[10px] font-code-label text-secondary-fixed bg-secondary-fixed/10 px-2 py-1">URGENT</span>
+</div>
+<p class="text-slate-500 text-xs font-code-label uppercase tracking-tighter">Submissions</p>
+<h2 class="font-headline-md text-headline-md text-white mt-1">142</h2>
+</div>
+<!-- Assigned Courses Bento Section -->
+<div class="col-span-12 lg:col-span-8 space-y-6">
+<div class="flex items-center justify-between">
+<h3 class="font-headline-md text-white flex items-center gap-3">
+<span class="w-1 h-6 bg-[#D4FF00]"></span>
+                            ASSIGNED COURSES
+                        </h3>
+<a class="text-[10px] font-code-label text-[#D4FF00] uppercase hover:underline" href="#">View All Trackers</a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Course Card 1 -->
+<div class="glass-panel rounded-lg overflow-hidden flex flex-col group">
+<div class="h-32 w-full relative overflow-hidden">
+<img alt="Course Image" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Abstract rendering of Mars surface with high-tech UI overlays and scanning lines" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBrfwGw1SZkfdmllebyZaYFvI_uAUXerywO8RIF4TjQOvdaYb9mLVIKcj_pVusTEllKyDOS4VGWBj3LtjlU2BZZAxnHEU0QmTT7fH96RI7yAvafEXBbrNqK5zSUYQnVmMNul_4bZBF9yvwZvh931VNLSipOe5_PbIGjXVbCHZGZp3DYngPE6mxih_8zLmTSzqCkXaUNp9i6oJ37ZXbRXdNsLCUVCESZKDyefXXOFe8_h_W9lJy5C55WLeFK5lSYlcegfWYU2k0Rn9fp"/>
+<div class="absolute inset-0 bg-gradient-to-t from-[#16181D] to-transparent"></div>
+<div class="absolute bottom-4 left-6">
+<span class="px-2 py-1 bg-[#D4FF00] text-black text-[10px] font-bold font-code-label">LEVEL 101</span>
+</div>
+</div>
+<div class="p-6 space-y-4">
+<h4 class="font-headline-md text-lg text-white">ORBITAL MECHANICS &amp; SIMULATION</h4>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-code-label">
+<span class="text-slate-500 uppercase">Batch Progress</span>
+<span class="text-[#D4FF00]">84%</span>
+</div>
+<div class="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-[#D4FF00]" style="width: 84%"></div>
+</div>
+</div>
+<div class="flex justify-between items-center pt-2">
+<div class="flex -space-x-2">
+<div class="w-6 h-6 rounded-full border border-surface bg-slate-800"></div>
+<div class="w-6 h-6 rounded-full border border-surface bg-slate-700"></div>
+<div class="w-6 h-6 rounded-full border border-surface bg-slate-600"></div>
+<div class="w-6 h-6 flex items-center justify-center rounded-full border border-surface bg-surface-container text-[8px]">+42</div>
+</div>
+<button class="text-[10px] font-code-label text-[#D4FF00] hover:text-white transition-colors uppercase">Enter Lab</button>
+</div>
+</div>
+</div>
+<!-- Course Card 2 -->
+<div class="glass-panel rounded-lg overflow-hidden flex flex-col group">
+<div class="h-32 w-full relative overflow-hidden">
+<img alt="Course Image" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Futuristic engine components with glowing purple energy pipes and digital schematic overlays" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5byfVuBVzaOFH1DXlzIYPopuT9nztwsxF0F3ZO_FcYkdAIHqp2JZlAFcbzz7iL-UMbmdMAmozDpzRO8XlWs8vyzUBtOGjfOK_VnsDlU1BIuY9SctEEGLQlaWsHUOPrBVu4vwDtxcGx7E_JNymzhRPrV5kzc5dnRY-KuqEyjWfFlXl8laU_e8owRpWhl4w58DxLLx37GZqooEFP211ENiMxAh1PQBEyr504Ja1ZJSN0kXkRNVomRmSgv4OeF7czhV7lQVHcZbKuEyr"/>
+<div class="absolute inset-0 bg-gradient-to-t from-[#16181D] to-transparent"></div>
+<div class="absolute bottom-4 left-6">
+<span class="px-2 py-1 bg-[#A855F7] text-white text-[10px] font-bold font-code-label">ADVANCED</span>
+</div>
+</div>
+<div class="p-6 space-y-4">
+<h4 class="font-headline-md text-lg text-white">PROPULSION SYSTEMS: ION DRIVE</h4>
+<div class="space-y-2">
+<div class="flex justify-between text-xs font-code-label">
+<span class="text-slate-500 uppercase">Batch Progress</span>
+<span class="text-[#A855F7]">42%</span>
+</div>
+<div class="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-[#A855F7]" style="width: 42%"></div>
+</div>
+</div>
+<div class="flex justify-between items-center pt-2">
+<div class="flex -space-x-2">
+<div class="w-6 h-6 rounded-full border border-surface bg-slate-800"></div>
+<div class="w-6 h-6 rounded-full border border-surface bg-slate-700"></div>
+<div class="w-6 h-6 flex items-center justify-center rounded-full border border-surface bg-surface-container text-[8px]">+18</div>
+</div>
+<button class="text-[10px] font-code-label text-[#A855F7] hover:text-white transition-colors uppercase">Enter Lab</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Batch Progress Chart Area -->
+<div class="glass-panel p-8 rounded-lg">
+<div class="flex justify-between items-center mb-8">
+<div>
+<h4 class="font-headline-md text-white uppercase tracking-wider">Performance Analytics</h4>
+<p class="text-xs text-slate-500 font-body-base">Aggregate student output across all active batches</p>
+</div>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-white/5 text-[10px] font-code-label text-slate-400 rounded-sm cursor-pointer hover:bg-white/10">7D</span>
+<span class="px-3 py-1 bg-[#D4FF00]/10 text-[10px] font-code-label text-[#D4FF00] rounded-sm cursor-pointer">30D</span>
+<span class="px-3 py-1 bg-white/5 text-[10px] font-code-label text-slate-400 rounded-sm cursor-pointer hover:bg-white/10">ALL</span>
+</div>
+</div>
+<div class="h-48 flex items-end justify-between gap-2">
+<!-- Simulated Graph Bars -->
+<div class="flex-1 bg-slate-800/50 rounded-t-sm h-[40%] hover:bg-[#D4FF00]/40 transition-all cursor-help relative group">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#0D0E12] border border-white/10 px-2 py-1 text-[8px] rounded opacity-0 group-hover:opacity-100 whitespace-nowrap">Week 1: 40%</div>
+</div>
+<div class="flex-1 bg-slate-800/50 rounded-t-sm h-[55%] hover:bg-[#D4FF00]/40 transition-all cursor-help relative group"></div>
+<div class="flex-1 bg-slate-800/50 rounded-t-sm h-[48%] hover:bg-[#D4FF00]/40 transition-all cursor-help relative group"></div>
+<div class="flex-1 bg-slate-800/50 rounded-t-sm h-[62%] hover:bg-[#D4FF00]/40 transition-all cursor-help relative group"></div>
+<div class="flex-1 bg-slate-800/50 rounded-t-sm h-[80%] hover:bg-[#D4FF00]/40 transition-all cursor-help relative group"></div>
+<div class="flex-1 bg-[#D4FF00] rounded-t-sm h-[92%] relative group">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#0D0E12] border border-[#D4FF00] px-2 py-1 text-[8px] rounded whitespace-nowrap text-[#D4FF00]">CURRENT: 92%</div>
+</div>
+<div class="flex-1 bg-slate-800/50 rounded-t-sm h-[65%] hover:bg-[#D4FF00]/40 transition-all cursor-help relative group"></div>
+<div class="flex-1 bg-slate-800/50 rounded-t-sm h-[70%] hover:bg-[#D4FF00]/40 transition-all cursor-help relative group"></div>
+</div>
+</div>
+</div>
+<!-- Sidebar Content -->
+<div class="col-span-12 lg:col-span-4 space-y-6">
+<!-- Live Sessions -->
+<div class="glass-panel p-6 rounded-lg">
+<h3 class="font-headline-md text-white flex items-center gap-3 mb-6">
+<span class="w-1 h-6 bg-[#A855F7]"></span>
+                            LIVE SESSIONS
+                        </h3>
+<div class="space-y-4">
+<!-- Session Item -->
+<div class="p-4 bg-white/5 border-l-2 border-[#A855F7] flex flex-col gap-2 group cursor-pointer hover:bg-white/10 transition-all">
+<div class="flex justify-between items-center">
+<span class="text-[10px] font-code-label text-[#A855F7] uppercase">Starting in 42m</span>
+<span class="material-symbols-outlined text-sm text-slate-500 group-hover:text-white">open_in_new</span>
+</div>
+<h5 class="font-headline-md text-sm text-white">Quantum Encryption Debugging</h5>
+<div class="flex items-center gap-4 text-[10px] text-slate-500 font-code-label">
+<div class="flex items-center gap-1"><span class="material-symbols-outlined text-xs">schedule</span> 14:00 UTC</div>
+<div class="flex items-center gap-1"><span class="material-symbols-outlined text-xs">group</span> 128 Expected</div>
+</div>
+</div>
+<!-- Session Item -->
+<div class="p-4 bg-transparent border-l-2 border-white/10 flex flex-col gap-2 group cursor-pointer hover:bg-white/5 transition-all">
+<div class="flex justify-between items-center">
+<span class="text-[10px] font-code-label text-slate-500 uppercase">Tomorrow</span>
+<span class="material-symbols-outlined text-sm text-slate-600 group-hover:text-white">open_in_new</span>
+</div>
+<h5 class="font-headline-md text-sm text-white">Mars Habitat Life Support UI</h5>
+<div class="flex items-center gap-4 text-[10px] text-slate-500 font-code-label">
+<div class="flex items-center gap-1"><span class="material-symbols-outlined text-xs">schedule</span> 09:30 UTC</div>
+<div class="flex items-center gap-1"><span class="material-symbols-outlined text-xs">group</span> 45 Expected</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Grading Tasks -->
+<div class="glass-panel p-6 rounded-lg">
+<h3 class="font-headline-md text-white mb-6 uppercase tracking-wider">ACTION REQUIRED</h3>
+<div class="space-y-4">
+<div class="flex items-center justify-between p-3 border-b border-white/5">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-error text-sm">priority_high</span>
+<div class="text-xs">
+<p class="text-white font-medium">Orbital Sim Lab-04</p>
+<p class="text-slate-500 font-code-label">24 Ungraded submissions</p>
+</div>
+</div>
+<button class="text-[#D4FF00] hover:bg-[#D4FF00]/10 px-2 py-1 rounded transition-all"><span class="material-symbols-outlined text-sm">edit</span></button>
+</div>
+<div class="flex items-center justify-between p-3 border-b border-white/5">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-500 text-sm">chat_bubble_outline</span>
+<div class="text-xs">
+<p class="text-white font-medium">Student Q&amp;A Forum</p>
+<p class="text-slate-500 font-code-label">12 New threads in 'Ion Drive'</p>
+</div>
+</div>
+<button class="text-slate-400 hover:bg-white/10 px-2 py-1 rounded transition-all"><span class="material-symbols-outlined text-sm">forum</span></button>
+</div>
+</div>
+<div class="mt-6 pt-4 border-t border-white/10 text-center">
+<p class="text-[10px] text-slate-600 font-code-label uppercase">Total pending actions: 36</p>
+</div>
+</div>
+<!-- System Status -->
+<div class="p-6 bg-[#A855F7]/5 border border-[#A855F7]/20 rounded-lg">
+<div class="flex items-center gap-3 mb-2">
+<div class="w-2 h-2 bg-[#D4FF00] rounded-full animate-pulse"></div>
+<span class="text-[10px] font-code-label text-white uppercase tracking-widest">Server Status: Nominal</span>
+</div>
+<p class="text-[10px] text-[#A855F7] font-code-label">ZENITH-ORBITAL-CORE-01 // ASIA-PACIFIC-NODE</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#0D0E12]/90 backdrop-blur-xl border-t border-white/10 flex items-center justify-around z-50">
+<a class="flex flex-col items-center gap-1 text-[#D4FF00]" href="instructor-dashboard.html">
+<span class="material-symbols-outlined" data-weight="fill">dashboard</span>
+<span class="text-[8px] font-code-label uppercase">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+<span class="text-[8px] font-code-label uppercase">Tracks</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="text-[8px] font-code-label uppercase">Students</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[8px] font-code-label uppercase">Admin</span>
+</a>
+</nav>
+<!-- Floating Action Button Contextual -->
+<button class="fixed bottom-24 right-8 w-14 h-14 bg-[#D4FF00] text-black rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-all z-40 md:bottom-8">
+<span class="material-symbols-outlined text-2xl font-bold">add</span>
+</button>
+</body></html>

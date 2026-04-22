@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AETHER_ACADEMY | Student Portal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .inner-glow {
+            box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+        }
+        .glass-panel {
+            background: rgba(22, 24, 29, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .glass-panel:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0D0E12;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1C2B3C;
+            border-radius: 10px;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#c7c6cb",
+                        "on-secondary-fixed": "#161e00",
+                        "primary-container": "#0d0e12",
+                        "on-tertiary-fixed": "#001452",
+                        "secondary-fixed-dim": "#abd600",
+                        "background": "#051424",
+                        "surface-container-highest": "#273647",
+                        "on-surface-variant": "#c7c6cb",
+                        "inverse-surface": "#d4e4fa",
+                        "on-tertiary-container": "#5774df",
+                        "surface-tint": "#c7c6cb",
+                        "on-primary-container": "#7b7b80",
+                        "surface": "#051424",
+                        "on-error": "#690005",
+                        "inverse-primary": "#5e5e63",
+                        "secondary": "#ffffff",
+                        "on-primary-fixed": "#1a1b20",
+                        "surface-container-lowest": "#010f1f",
+                        "on-primary": "#2f3035",
+                        "surface-container-low": "#0d1c2d",
+                        "on-tertiary-fixed-variant": "#193ca7",
+                        "on-background": "#d4e4fa",
+                        "inverse-on-surface": "#233143",
+                        "primary-fixed-dim": "#c7c6cb",
+                        "on-tertiary": "#002683",
+                        "outline": "#919095",
+                        "surface-dim": "#051424",
+                        "on-primary-fixed-variant": "#46464b",
+                        "surface-bright": "#2c3a4c",
+                        "on-secondary-fixed-variant": "#3c4d00",
+                        "on-secondary-container": "#556d00",
+                        "surface-container-high": "#1c2b3c",
+                        "tertiary-fixed": "#dde1ff",
+                        "tertiary-fixed-dim": "#b7c4ff",
+                        "secondary-fixed": "#c3f400",
+                        "primary-fixed": "#e3e2e7",
+                        "on-secondary": "#283500",
+                        "outline-variant": "#46464b",
+                        "on-surface": "#d4e4fa",
+                        "on-error-container": "#ffdad6",
+                        "surface-container": "#122131",
+                        "surface-variant": "#273647",
+                        "tertiary": "#b7c4ff",
+                        "error-container": "#93000a",
+                        "tertiary-container": "#000933",
+                        "secondary-container": "#c3f400",
+                        "error": "#ffb4ab"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "container-max": "1440px",
+                        "margin-x": "40px",
+                        "stack-sm": "8px",
+                        "stack-md": "24px",
+                        "gutter": "24px",
+                        "stack-lg": "64px"
+                    },
+                    "fontFamily": {
+                        "body-base": ["Inter"],
+                        "headline-md": ["Space Grotesk"],
+                        "headline-xl": ["Space Grotesk"],
+                        "code-label": ["Space Grotesk"]
+                    },
+                    "fontSize": {
+                        "body-base": ["16px", {"lineHeight": "1.6", "letterSpacing": "0", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "1.2", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                        "headline-xl": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "code-label": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.1em", "fontWeight": "500"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-primary-container text-on-surface font-body-base antialiased min-h-screen selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- Top Navigation -->
+<header class="fixed top-0 left-0 right-0 z-50 bg-[#0D0E12]/80 backdrop-blur-xl border-b border-white/10 shadow-[0_0_15px_rgba(163,230,53,0.05)]">
+<div class="flex justify-between items-center w-full px-6 py-3 max-w-[1440px] mx-auto">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold tracking-[0.2em] text-white font-headline-md uppercase">AETHER_ACADEMY</span>
+<nav class="hidden md:flex items-center gap-6">
+<a class="font-code-label tracking-tighter uppercase text-lime-400 border-b-2 border-lime-400 pb-1" href="#">Curriculum</a>
+<a class="font-code-label tracking-tighter uppercase text-slate-400 hover:text-white transition-colors" href="#">Laboratory</a>
+<a class="font-code-label tracking-tighter uppercase text-slate-400 hover:text-white transition-colors" href="#">Archives</a>
+<a class="font-code-label tracking-tighter uppercase text-slate-400 hover:text-white transition-colors" href="#">Terminal</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden lg:flex items-center bg-white/5 border border-white/10 px-3 py-1 rounded">
+<span class="material-symbols-outlined text-lime-400 text-sm mr-2">monetization_on</span>
+<span class="font-code-label text-white">1250 SC</span>
+</div>
+<div class="flex items-center gap-3 ml-4">
+<div class="text-right">
+<p class="text-xs font-bold text-white uppercase tracking-wider">Cadet Name</p>
+<p class="text-[10px] text-lime-400 uppercase tracking-widest font-medium">Senior Cadet</p>
+</div>
+<img alt="Student Rank and Profile" class="w-10 h-10 rounded-full border border-lime-400/30 p-0.5 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbJUrM9Sh0yaQbcFD8iKBewo-f1XEtEWqJToPohGs0dc9yOEQxWHBW14ucLDlPHoHkIjfwKKKk_dgWwJmyiUfeqgIOKaMtN1ySwe62SO-WaNhNVoSzGWyFhxhN73SJ2IXpsvedytkbeHcdGFY-wr7V4OsWqWOg-2SPbzPOP5Z2y4hfQepM5ljvJoqZfNC8_2-5XWpcYDLdxATy352iISUFUQZGvYL4KIcwiNtlK753eDRepaW1QqiBs5_BKNwRlxmzOBKopWLJpkEI"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Side Navigation (Mobile Hidden) -->
+<aside class="fixed left-0 top-0 h-full z-40 hidden lg:flex flex-col w-64 bg-[#16181D] border-r border-white/5 pt-20">
+<div class="p-6">
+<p class="text-purple-400 font-black tracking-widest font-code-label mb-1 uppercase">INSTITUTION_OS</p>
+<p class="text-slate-500 text-[10px] tracking-[0.2em] uppercase">Level 4 Clearance</p>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-4 px-4 py-3 bg-purple-500/10 text-purple-400 border-r-2 border-purple-400 transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-lg">dashboard</span>
+<span class="font-code-label text-xs tracking-widest uppercase">Command</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 text-slate-500 hover:bg-white/5 hover:text-white transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-lg">insights</span>
+<span class="font-code-label text-xs tracking-widest uppercase">Analytics</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 text-slate-500 hover:bg-white/5 hover:text-white transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-lg">school</span>
+<span class="font-code-label text-xs tracking-widest uppercase">Students</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 text-slate-500 hover:bg-white/5 hover:text-white transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-lg">account_balance</span>
+<span class="font-code-label text-xs tracking-widest uppercase">Infrastructure</span>
+</a>
+</nav>
+<div class="p-6 border-t border-white/5">
+<button class="w-full py-3 bg-purple-500 text-black font-bold text-[10px] tracking-widest uppercase hover:shadow-[0_0_15px_rgba(168,85,247,0.4)] transition-all">
+                GENERATE_REPORT
+            </button>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="lg:pl-64 pt-20 pb-24 lg:pb-8">
+<div class="max-w-[1440px] mx-auto px-6 py-8">
+<!-- Learning Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+<div class="glass-panel p-6 rounded relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-24 h-24 bg-lime-400/5 -mr-8 -mt-8 rounded-full blur-2xl group-hover:bg-lime-400/10 transition-colors"></div>
+<p class="font-code-label text-slate-500 uppercase tracking-widest mb-1">Combat Hours</p>
+<h3 class="font-headline-xl text-white">120</h3>
+<div class="mt-4 flex items-center text-lime-400 gap-1">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+<span class="text-[10px] font-bold">+12% vs last cycle</span>
+</div>
+</div>
+<div class="glass-panel p-6 rounded relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-24 h-24 bg-purple-400/5 -mr-8 -mt-8 rounded-full blur-2xl group-hover:bg-purple-400/10 transition-colors"></div>
+<p class="font-code-label text-slate-500 uppercase tracking-widest mb-1">Assignments</p>
+<h3 class="font-headline-xl text-white">15</h3>
+<p class="text-[10px] font-bold text-slate-400 mt-4 uppercase">2 pending submission</p>
+</div>
+<div class="glass-panel p-6 rounded relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-24 h-24 bg-cyan-400/5 -mr-8 -mt-8 rounded-full blur-2xl group-hover:bg-cyan-400/10 transition-colors"></div>
+<p class="font-code-label text-slate-500 uppercase tracking-widest mb-1">Avg Score</p>
+<h3 class="font-headline-xl text-white">92%</h3>
+<div class="mt-4 w-full bg-white/10 h-1 rounded-full overflow-hidden">
+<div class="bg-cyan-400 h-full w-[92%]"></div>
+</div>
+</div>
+</div>
+<!-- Bento Dashboard Layout -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Active Courses (Col 1-8) -->
+<section class="col-span-12 lg:col-span-8 space-y-6">
+<div class="flex items-center justify-between">
+<h2 class="font-headline-md text-white uppercase tracking-tighter flex items-center gap-2">
+<span class="w-2 h-6 bg-lime-400"></span>
+                            Active Tracks
+                        </h2>
+<a class="font-code-label text-slate-500 hover:text-white uppercase" href="#">View all tracks</a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="glass-panel p-5 rounded group hover:translate-y-[-2px] transition-all">
+<div class="flex justify-between items-start mb-4">
+<span class="p-2 bg-lime-400/10 rounded">
+<span class="material-symbols-outlined text-lime-400" data-weight="fill">shield</span>
+</span>
+<span class="text-[10px] text-lime-400 font-bold uppercase tracking-widest bg-lime-400/5 px-2 py-0.5 border border-lime-400/20">In Progress</span>
+</div>
+<h4 class="font-headline-md text-white text-lg mb-2">Blockchain Engineering</h4>
+<p class="text-slate-400 text-xs mb-6 leading-relaxed">Advanced consensus algorithms and smart contract security in hostile environments.</p>
+<div class="space-y-2">
+<div class="flex justify-between text-[10px] uppercase font-bold tracking-widest">
+<span class="text-slate-500">Mastery Level</span>
+<span class="text-lime-400">85%</span>
+</div>
+<div class="h-1 bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-lime-400 w-[85%] shadow-[0_0_10px_rgba(163,230,53,0.5)]"></div>
+</div>
+</div>
+</div>
+<div class="glass-panel p-5 rounded group hover:translate-y-[-2px] transition-all">
+<div class="flex justify-between items-start mb-4">
+<span class="p-2 bg-purple-400/10 rounded">
+<span class="material-symbols-outlined text-purple-400" data-weight="fill">layers</span>
+</span>
+<span class="text-[10px] text-purple-400 font-bold uppercase tracking-widest bg-purple-400/5 px-2 py-0.5 border border-purple-400/20">In Progress</span>
+</div>
+<h4 class="font-headline-md text-white text-lg mb-2">Unreal Engine 5 Deep Systems</h4>
+<p class="text-slate-400 text-xs mb-6 leading-relaxed">Spatial computing and physics-based rendering for tactical simulation environments.</p>
+<div class="space-y-2">
+<div class="flex justify-between text-[10px] uppercase font-bold tracking-widest">
+<span class="text-slate-500">Mastery Level</span>
+<span class="text-purple-400">42%</span>
+</div>
+<div class="h-1 bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-purple-400 w-[42%] shadow-[0_0_10px_rgba(168,85,247,0.5)]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Available Courses -->
+<div class="mt-12 space-y-6">
+<div class="flex items-center justify-between">
+<h2 class="font-headline-md text-white uppercase tracking-tighter">New Directives</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div class="bg-[#16181D] border border-white/5 rounded p-4 group hover:border-lime-400/30 transition-colors">
+<img alt="Cryptography Course" class="w-full h-32 object-cover rounded mb-4 filter grayscale group-hover:grayscale-0 transition-all" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD7rwsXNEsEsoXdX0M1a5SzDhpw7rOy3lOqA_mcXl3WKRCObT5hrc2l6BP_39pNKr_dUtaEOk_cja6An1ivvsFxhw0b9286sc5dmgexhqnwNu5TGbn-tCZqe45Tlp4l5NkgYig_YmYm-D42EfNib-nhK94uTp1jVhwr9Nf1fyA16lSX_GdZvrveASdvR2akaqb7nL-78sOGoXAqGbvnI3RQUpotnjo3wtaD9p1TRUKjnYfAi_w0C2zlbi3AEa4I1yRI3WyAGtOmdwjI"/>
+<h5 class="text-white font-bold text-sm uppercase tracking-wider mb-2">Neural Link Interface</h5>
+<button class="w-full py-2 border border-white/10 text-[10px] font-bold uppercase tracking-widest hover:bg-white/5">Enroll</button>
+</div>
+<div class="bg-[#16181D] border border-white/5 rounded p-4 group hover:border-purple-400/30 transition-colors">
+<img alt="Planetary Dynamics" class="w-full h-32 object-cover rounded mb-4 filter grayscale group-hover:grayscale-0 transition-all" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBmEBNmcySwYVMHLP6xcwGSrAh-5CBkBjOohXI-h99ue1xyYp7bIxy67xfuqjaJVLZJgnd0SCl9PHAARe57iBba5QG-C45vdgHGD_79kS_4KBoIpRSzVeMFLBeB8tmBmEix_DJhXXOooqKayrIBtfaSQA6oOX1Cs5gEhI5-ozXz6bIhiMu-cldtGdfQhodYzzbvRFj2GXILqpwAbyT3-ZIXaT5NSwnU6uaxJ41yLsoRqxzPGoEV70pFjR8SrX5N2kNDjR5YpIDk_JnH"/>
+<h5 class="text-white font-bold text-sm uppercase tracking-wider mb-2">Planetary Defense</h5>
+<button class="w-full py-2 border border-white/10 text-[10px] font-bold uppercase tracking-widest hover:bg-white/5">Enroll</button>
+</div>
+<div class="bg-[#16181D] border border-white/5 rounded p-4 group hover:border-cyan-400/30 transition-colors">
+<img alt="Cybersecurity" class="w-full h-32 object-cover rounded mb-4 filter grayscale group-hover:grayscale-0 transition-all" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxjIuaL4Hlo8coOus3l2jE80TVkgwI7xsYF_jWVgDuqGch7IAxFNP36GSNaLNPydEBK8prRDQVNe2HE7zcTm8baI-KzJOICdzkKwc0IMQpbIir1lp7uP391mXlneoTu5EC_nKYGzWuY-lrHVEdsu1cUEVkhgGFh8ktpr1YJnJG9S8zYKa1Cvgf0ri--bfX1pJKvTYSOmOkNlvfSmCDsJmCJQ80B6AfwkzkJTVSImgEMIvdjyBaqGKIwqEdSoG_PF5gZbk8t3Hi78D_"/>
+<h5 class="text-white font-bold text-sm uppercase tracking-wider mb-2">Cyber Warfare 101</h5>
+<button class="w-full py-2 border border-white/10 text-[10px] font-bold uppercase tracking-widest hover:bg-white/5">Enroll</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Sidebar Content (Col 9-12) -->
+<aside class="col-span-12 lg:col-span-4 space-y-6">
+<!-- Pending Assignments -->
+<div class="glass-panel rounded p-6">
+<h3 class="font-headline-md text-white text-base uppercase tracking-wider mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-purple-400 text-lg">event_note</span>
+                            Pending Directives
+                        </h3>
+<div class="space-y-4">
+<div class="bg-white/5 p-4 rounded border-l-2 border-lime-400">
+<p class="text-[10px] font-bold text-lime-400 uppercase mb-1">Due in 4h</p>
+<h4 class="text-sm font-bold text-white mb-1">Smart Contract Audit</h4>
+<p class="text-xs text-slate-500">Secure the vault prototype against reentrancy.</p>
+</div>
+<div class="bg-white/5 p-4 rounded border-l-2 border-slate-700">
+<p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Due in 2 days</p>
+<h4 class="text-sm font-bold text-white mb-1">Physics Engine Stress Test</h4>
+<p class="text-xs text-slate-500">Calculate projectile trajectories in high gravity.</p>
+</div>
+</div>
+</div>
+<!-- Leaderboard -->
+<div class="glass-panel rounded p-6">
+<h3 class="font-headline-md text-white text-base uppercase tracking-wider mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-lime-400 text-lg">military_tech</span>
+                            Rankings
+                        </h3>
+<div class="space-y-4">
+<div class="flex items-center justify-between text-xs p-2 bg-lime-400/5 rounded">
+<div class="flex items-center gap-3">
+<span class="font-black text-lime-400">01</span>
+<span class="text-white font-medium uppercase">Cadet_Xenon</span>
+</div>
+<span class="text-slate-400 font-code-label">4500 XP</span>
+</div>
+<div class="flex items-center justify-between text-xs p-2">
+<div class="flex items-center gap-3">
+<span class="font-black text-slate-500">02</span>
+<span class="text-slate-300 font-medium uppercase">Alpha_Protocol</span>
+</div>
+<span class="text-slate-500 font-code-label">4250 XP</span>
+</div>
+<div class="flex items-center justify-between text-xs p-2 bg-white/5 rounded border border-white/10">
+<div class="flex items-center gap-3">
+<span class="font-black text-white">08</span>
+<span class="text-white font-bold uppercase">Cadet_Name (You)</span>
+</div>
+<span class="text-lime-400 font-code-label">1250 XP</span>
+</div>
+</div>
+</div>
+<!-- Study Resources -->
+<div class="glass-panel rounded p-6">
+<h3 class="font-headline-md text-white text-base uppercase tracking-wider mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-400 text-lg">folder_open</span>
+                            Data Library
+                        </h3>
+<div class="space-y-2">
+<button class="w-full flex items-center justify-between p-3 bg-white/5 rounded hover:bg-white/10 transition-colors text-left group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-xs text-slate-400">description</span>
+<span class="text-xs font-medium text-slate-300 group-hover:text-white uppercase tracking-wider">Protocol_Alpha.pdf</span>
+</div>
+<span class="material-symbols-outlined text-xs text-slate-600">download</span>
+</button>
+<button class="w-full flex items-center justify-between p-3 bg-white/5 rounded hover:bg-white/10 transition-colors text-left group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-xs text-slate-400">terminal</span>
+<span class="text-xs font-medium text-slate-300 group-hover:text-white uppercase tracking-wider">UE5_CheatSheet.txt</span>
+</div>
+<span class="material-symbols-outlined text-xs text-slate-600">download</span>
+</button>
+<button class="w-full flex items-center justify-between p-3 bg-white/5 rounded hover:bg-white/10 transition-colors text-left group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-xs text-slate-400">api</span>
+<span class="text-xs font-medium text-slate-300 group-hover:text-white uppercase tracking-wider">Blockchain_API.docs</span>
+</div>
+<span class="material-symbols-outlined text-xs text-slate-600">open_in_new</span>
+</button>
+</div>
+</div>
+</aside>
+</div>
+<!-- Performance Analytics Section (Full Width) -->
+<section class="mt-12">
+<div class="glass-panel p-8 rounded-lg overflow-hidden relative">
+<div class="flex items-center justify-between mb-8">
+<div>
+<h2 class="font-headline-md text-white uppercase tracking-tighter">Performance Spectrum</h2>
+<p class="text-slate-500 text-xs uppercase tracking-widest">Real-time engagement telemetry</p>
+</div>
+<div class="flex gap-4">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 bg-lime-400 rounded-full"></span>
+<span class="text-[10px] text-slate-400 uppercase font-bold">Focus</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 bg-purple-400 rounded-full"></span>
+<span class="text-[10px] text-slate-400 uppercase font-bold">Aptitude</span>
+</div>
+</div>
+</div>
+<!-- Synthetic Chart Placeholder -->
+<div class="h-64 w-full flex items-end gap-1 px-2">
+<div class="flex-1 bg-white/5 h-[40%] rounded-t-sm group relative">
+<div class="absolute bottom-0 w-full bg-lime-400/20 h-[60%] group-hover:bg-lime-400/40 transition-all"></div>
+</div>
+<div class="flex-1 bg-white/5 h-[60%] rounded-t-sm group relative">
+<div class="absolute bottom-0 w-full bg-lime-400/20 h-[80%] group-hover:bg-lime-400/40 transition-all"></div>
+</div>
+<div class="flex-1 bg-white/5 h-[50%] rounded-t-sm group relative">
+<div class="absolute bottom-0 w-full bg-lime-400/20 h-[45%] group-hover:bg-lime-400/40 transition-all"></div>
+</div>
+<div class="flex-1 bg-white/5 h-[80%] rounded-t-sm group relative">
+<div class="absolute bottom-0 w-full bg-lime-400/20 h-[90%] group-hover:bg-lime-400/40 transition-all"></div>
+</div>
+<div class="flex-1 bg-white/5 h-[70%] rounded-t-sm group relative">
+<div class="absolute bottom-0 w-full bg-lime-400/20 h-[60%] group-hover:bg-lime-400/40 transition-all"></div>
+</div>
+<div class="flex-1 bg-white/5 h-[90%] rounded-t-sm group relative border-x border-lime-400/20">
+<div class="absolute bottom-0 w-full bg-lime-400/30 h-[95%] group-hover:bg-lime-400/50 transition-all"></div>
+</div>
+<div class="flex-1 bg-white/5 h-[65%] rounded-t-sm group relative">
+<div class="absolute bottom-0 w-full bg-lime-400/20 h-[70%] group-hover:bg-lime-400/40 transition-all"></div>
+</div>
+</div>
+<div class="flex justify-between mt-4 text-[10px] text-slate-600 font-bold uppercase tracking-[0.2em]">
+<span>Cycle 01</span>
+<span>Cycle 02</span>
+<span>Cycle 03</span>
+<span>Cycle 04</span>
+<span>Cycle 05</span>
+<span>Cycle 06 (Live)</span>
+<span>Cycle 07</span>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Bottom Mobile Nav -->
+<nav class="lg:hidden fixed bottom-0 left-0 w-full flex justify-around items-center px-2 pb-safe bg-[#0D0E12]/95 backdrop-blur-2xl border-t border-white/10 z-50">
+<a class="flex flex-col items-center justify-center text-slate-500 py-2 active:bg-white/10 transition-all duration-100 scale-95" href="#">
+<span class="material-symbols-outlined">grid_view</span>
+<span class="font-code-label text-[10px] uppercase tracking-widest mt-1">Feed</span>
+</a>
+<a class="flex flex-col items-center justify-center text-lime-400 py-2 bg-lime-400/5 transition-all duration-100 scale-95" href="#">
+<span class="material-symbols-outlined">auto_stories</span>
+<span class="font-code-label text-[10px] uppercase tracking-widest mt-1">Courses</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 py-2 active:bg-white/10 transition-all duration-100 scale-95" href="#">
+<span class="material-symbols-outlined">monitoring</span>
+<span class="font-code-label text-[10px] uppercase tracking-widest mt-1">Intel</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 py-2 active:bg-white/10 transition-all duration-100 scale-95" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-code-label text-[10px] uppercase tracking-widest mt-1">Vault</span>
+</a>
+</nav>
+<!-- Contextual FAB (Only on Dashboard) -->
+<button class="fixed bottom-24 right-6 lg:bottom-8 lg:right-8 w-14 h-14 bg-lime-400 rounded-full flex items-center justify-center text-black shadow-[0_0_20px_rgba(163,230,53,0.4)] hover:scale-105 active:scale-95 transition-all z-40">
+<span class="material-symbols-outlined font-bold">add</span>
+</button>
+</body></html>

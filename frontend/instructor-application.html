@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MARTIANS ACADEMY | Faculty Application</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-dim": "#051424",
+            "on-secondary-container": "#556d00",
+            "surface-variant": "#273647",
+            "inverse-primary": "#5e5e63",
+            "error": "#ffb4ab",
+            "on-tertiary-fixed-variant": "#193ca7",
+            "tertiary-fixed": "#dde1ff",
+            "on-surface-variant": "#c7c6cb",
+            "on-primary-fixed": "#1a1b20",
+            "background": "#051424",
+            "primary-fixed-dim": "#c7c6cb",
+            "primary-fixed": "#e3e2e7",
+            "tertiary-fixed-dim": "#b7c4ff",
+            "on-tertiary-container": "#5774df",
+            "on-secondary-fixed-variant": "#3c4d00",
+            "surface-container-highest": "#273647",
+            "secondary-container": "#c3f400",
+            "primary-container": "#0d0e12",
+            "on-error": "#690005",
+            "outline-variant": "#46464b",
+            "on-tertiary": "#002683",
+            "surface-container-lowest": "#010f1f",
+            "primary": "#c7c6cb",
+            "on-primary": "#2f3035",
+            "inverse-on-surface": "#233143",
+            "surface-container-low": "#0d1c2d",
+            "on-tertiary-fixed": "#001452",
+            "on-primary-container": "#7b7b80",
+            "on-error-container": "#ffdad6",
+            "surface-tint": "#c7c6cb",
+            "secondary-fixed-dim": "#abd600",
+            "secondary-fixed": "#c3f400",
+            "on-primary-fixed-variant": "#46464b",
+            "tertiary": "#b7c4ff",
+            "on-surface": "#d4e4fa",
+            "error-container": "#93000a",
+            "on-secondary": "#283500",
+            "on-background": "#d4e4fa",
+            "tertiary-container": "#000933",
+            "secondary": "#ffffff",
+            "on-secondary-fixed": "#161e00",
+            "surface-container-high": "#1c2b3c",
+            "outline": "#919095",
+            "inverse-surface": "#d4e4fa",
+            "surface": "#051424",
+            "surface-bright": "#2c3a4c",
+            "surface-container": "#122131"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "margin-x": "40px",
+            "stack-md": "24px",
+            "unit": "4px",
+            "stack-sm": "8px",
+            "gutter": "24px",
+            "stack-lg": "64px",
+            "container-max": "1440px"
+          },
+          "fontFamily": {
+            "headline-md": ["Space Grotesk"],
+            "headline-xl": ["Space Grotesk"],
+            "code-label": ["Space Grotesk"],
+            "body-base": ["Inter"]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .glass-card {
+      background: rgba(22, 24, 29, 0.7);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .scanline {
+      width: 100%;
+      height: 2px;
+      background: rgba(195, 244, 0, 0.1);
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .circuit-bg {
+      background-image: radial-gradient(circle at 2px 2px, rgba(195, 244, 0, 0.05) 1px, transparent 0);
+      background-size: 32px 32px;
+    }
+  </style>
+</head>
+<body class="bg-surface-dim text-on-surface font-body-base min-h-screen selection:bg-secondary-container selection:text-on-secondary-container circuit-bg overflow-x-hidden">
+<!-- TOP APP BAR -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 py-4 bg-[#0D0E12]/80 backdrop-blur-xl border-b border-white/5">
+<div class="text-xl font-bold tracking-tighter text-lime-400 font-headline-md uppercase">MARTIANS ACADEMY</div>
+<nav class="hidden md:flex items-center gap-gutter">
+<a class="font-space-grotesk tracking-widest uppercase text-sm text-slate-400 hover:text-white transition-colors" href="#">Curriculum</a>
+<a class="font-space-grotesk tracking-widest uppercase text-sm text-lime-400 border-b-2 border-lime-400 pb-1" href="#">Admissions</a>
+<a class="font-space-grotesk tracking-widest uppercase text-sm text-slate-400 hover:text-white transition-colors" href="#">Research</a>
+</nav>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-slate-400 hover:bg-white/5 p-2 rounded cursor-pointer transition-all" data-icon="help">help</span>
+<span class="material-symbols-outlined text-slate-400 hover:bg-white/5 p-2 rounded cursor-pointer transition-all" data-icon="language">language</span>
+<a href="login.html" class="font-space-grotesk tracking-widest uppercase text-sm px-4 py-2 border border-lime-400 text-lime-400 hover:bg-lime-400 hover:text-black transition-all">LOGIN</a>
+</div>
+</header>
+<main class="pt-32 pb-24 px-6 max-w-container-max mx-auto relative">
+<!-- BACKGROUND DECORATION -->
+<div class="absolute top-0 right-0 w-1/2 h-full opacity-10 pointer-events-none">
+<img alt="Cyberpunk blueprints and neural networks" class="w-full h-full object-cover" data-alt="Abstract futuristic technical blueprints of neural networks and space satellites on a dark obsidian background with glowing lime laser lines" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDi5-o_DtItgGyxD_6DecxvsifI4xwCj7g-WFfNCufumLGCtPTev10fSX8juGNTkbUELz7Q89_BYEgVLIyLYKQn8aNfsXGXQBxLNshtQJYi4mJbElRVaJ8q4cCt-6hLLJIITeYv8n5hpZxgk6IrciNfNzyX-kJlq6I8i99ZVQhL0SpJM9FDkqMxj0jrWVQw7K92gTBHrDbzoC_8DWGK-H4YG80TlLaksTXRM7dtuDLTnlDKGK2Y0dJAxxk5SlpUf_JJFFG533qw6FCR"/>
+</div>
+<!-- PAGE HEADER -->
+<div class="relative z-10 mb-stack-lg border-l-4 border-secondary-fixed pl-gutter">
+<span class="font-code-label text-code-label text-secondary-fixed mb-2 block">SECURE PROTOCOL // FACULTY_RECRUITMENT_v4.2</span>
+<h1 class="font-headline-xl text-headline-xl text-white uppercase mb-4">Instructor Vetting</h1>
+<p class="max-w-2xl text-on-surface-variant text-body-base">The Academy seeks pioneers in Game Development, Blockchain Engineering, and Neural Interfaces. Submit your credentials for clearance and eventual terminal access.</p>
+</div>
+<!-- APPLICATION FORM -->
+<form class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- LEFT COLUMN: PERSONAL & PROFESSIONAL DATA -->
+<div class="lg:col-span-7 space-y-gutter">
+<!-- SECTION 1: IDENTITY -->
+<div class="glass-card p-gutter relative overflow-hidden">
+<div class="scanline"></div>
+<div class="flex items-center gap-2 mb-stack-md">
+<span class="material-symbols-outlined text-secondary-fixed" data-icon="fingerprint">fingerprint</span>
+<h2 class="font-headline-md text-headline-md uppercase text-white">Personnel Data</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-stack-md">
+<div class="flex flex-col gap-2">
+<label class="font-code-label text-code-label uppercase text-on-surface-variant">Full Name / Alias</label>
+<input class="bg-surface-container-low border-b border-outline-variant focus:border-secondary-fixed focus:ring-0 text-white placeholder:text-slate-600 transition-all px-4 py-3 font-mono text-sm" placeholder="ENTER IDENTITY" type="text"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="font-code-label text-code-label uppercase text-on-surface-variant">Secure Communication Link</label>
+<input class="bg-surface-container-low border-b border-outline-variant focus:border-secondary-fixed focus:ring-0 text-white placeholder:text-slate-600 transition-all px-4 py-3 font-mono text-sm" placeholder="EMAIL_ENCRYPTED@DOMAIN.COM" type="email"/>
+</div>
+</div>
+</div>
+<!-- SECTION 2: SPECIALIZATION -->
+<div class="glass-card p-gutter">
+<div class="flex items-center gap-2 mb-stack-md">
+<span class="material-symbols-outlined text-secondary-fixed" data-icon="terminal">terminal</span>
+<h2 class="font-headline-md text-headline-md uppercase text-white">Professional Expertise</h2>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-3 gap-unit">
+<label class="flex items-center gap-3 p-3 bg-white/5 border border-white/10 hover:border-secondary-fixed/50 transition-all cursor-pointer group">
+<input class="rounded-none border-secondary-fixed text-secondary-fixed focus:ring-0 bg-transparent" type="checkbox"/>
+<span class="font-code-label text-xs uppercase group-hover:text-secondary-fixed">Game Engine Dev</span>
+</label>
+<label class="flex items-center gap-3 p-3 bg-white/5 border border-white/10 hover:border-secondary-fixed/50 transition-all cursor-pointer group">
+<input class="rounded-none border-secondary-fixed text-secondary-fixed focus:ring-0 bg-transparent" type="checkbox"/>
+<span class="font-code-label text-xs uppercase group-hover:text-secondary-fixed">Smart Contracts</span>
+</label>
+<label class="flex items-center gap-3 p-3 bg-white/5 border border-white/10 hover:border-secondary-fixed/50 transition-all cursor-pointer group">
+<input class="rounded-none border-secondary-fixed text-secondary-fixed focus:ring-0 bg-transparent" type="checkbox"/>
+<span class="font-code-label text-xs uppercase group-hover:text-secondary-fixed">AI Training</span>
+</label>
+<label class="flex items-center gap-3 p-3 bg-white/5 border border-white/10 hover:border-secondary-fixed/50 transition-all cursor-pointer group">
+<input class="rounded-none border-secondary-fixed text-secondary-fixed focus:ring-0 bg-transparent" type="checkbox"/>
+<span class="font-code-label text-xs uppercase group-hover:text-secondary-fixed">Cyber Sec</span>
+</label>
+<label class="flex items-center gap-3 p-3 bg-white/5 border border-white/10 hover:border-secondary-fixed/50 transition-all cursor-pointer group">
+<input class="rounded-none border-secondary-fixed text-secondary-fixed focus:ring-0 bg-transparent" type="checkbox"/>
+<span class="font-code-label text-xs uppercase group-hover:text-secondary-fixed">DeFi Arch</span>
+</label>
+<label class="flex items-center gap-3 p-3 bg-white/5 border border-white/10 hover:border-secondary-fixed/50 transition-all cursor-pointer group">
+<input class="rounded-none border-secondary-fixed text-secondary-fixed focus:ring-0 bg-transparent" type="checkbox"/>
+<span class="font-code-label text-xs uppercase group-hover:text-secondary-fixed">UI/UX XR</span>
+</label>
+</div>
+</div>
+<!-- SECTION 3: REASONS -->
+<div class="glass-card p-gutter">
+<div class="flex items-center gap-2 mb-stack-md">
+<span class="material-symbols-outlined text-secondary-fixed" data-icon="psychology">psychology</span>
+<h2 class="font-headline-md text-headline-md uppercase text-white">Motivation for Joining</h2>
+</div>
+<textarea class="w-full bg-surface-container-low border border-outline-variant focus:border-secondary-fixed focus:ring-0 text-white placeholder:text-slate-600 transition-all px-4 py-3 font-mono text-sm resize-none" placeholder="DESCRIBE YOUR VISION FOR THE FUTURE OF TECH EDUCATION..." rows="4"></textarea>
+</div>
+</div>
+<!-- RIGHT COLUMN: VERIFICATION & CTAs -->
+<div class="lg:col-span-5 space-y-gutter">
+<!-- EXPERIENCE LEVEL -->
+<div class="glass-card p-gutter border-l-secondary-fixed">
+<div class="flex items-center justify-between mb-stack-md">
+<h3 class="font-code-label text-code-label uppercase text-white">Experience Level</h3>
+<span class="text-secondary-fixed font-mono text-xs">SENIOR_TIER</span>
+</div>
+<input class="w-full h-1 bg-surface-container-highest appearance-none cursor-pointer accent-secondary-fixed" type="range"/>
+<div class="flex justify-between mt-2 font-mono text-[10px] text-slate-500 uppercase">
+<span>Entry</span>
+<span>Mid</span>
+<span>Master</span>
+<span>Oracle</span>
+</div>
+</div>
+<!-- PORTFOLIO -->
+<div class="glass-card p-gutter">
+<label class="font-code-label text-code-label uppercase text-on-surface-variant mb-stack-sm block">Portfolio Terminal Link</label>
+<div class="flex gap-2">
+<div class="flex-1 bg-surface-container-low border border-outline-variant px-4 py-2 flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-500 text-sm" data-icon="link">link</span>
+<input class="bg-transparent border-none focus:ring-0 text-white placeholder:text-slate-600 font-mono text-sm w-full" placeholder="https://terminal.io/alias" type="text"/>
+</div>
+<button class="bg-white/5 border border-white/10 p-2 hover:bg-secondary-fixed hover:text-black transition-colors" type="button">
+<span class="material-symbols-outlined" data-icon="upload_file">upload_file</span>
+</button>
+</div>
+</div>
+<!-- SECURITY CLEARANCE CARD -->
+<div class="bg-secondary-fixed text-black p-gutter flex flex-col gap-stack-md">
+<div>
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-black" data-icon="verified_user" data-weight="fill" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+<h3 class="font-headline-md text-lg font-bold uppercase tracking-tight">Final Authorization</h3>
+</div>
+<p class="text-xs font-medium uppercase leading-tight opacity-80">By initializing vetting, you consent to neural-background verification and academic integrity protocols.</p>
+</div>
+<a href="institutional-request-logged.html" class="w-full py-4 bg-black text-secondary-fixed font-headline-md uppercase tracking-widest text-sm hover:bg-slate-900 transition-all flex items-center justify-center gap-3 group">
+            Initialize Instructor Vetting
+            <span class="material-symbols-outlined transition-transform group-hover:translate-x-1" data-icon="arrow_forward">arrow_forward</span>
+</a>
+</div>
+<!-- STATUS INDICATORS -->
+<div class="grid grid-cols-2 gap-4">
+<div class="glass-card p-4 flex flex-col items-center justify-center text-center">
+<div class="w-2 h-2 rounded-full bg-secondary-fixed mb-2 animate-pulse"></div>
+<span class="font-code-label text-[10px] text-on-surface-variant uppercase">Uplink Active</span>
+</div>
+<div class="glass-card p-4 flex flex-col items-center justify-center text-center">
+<span class="font-mono text-xs text-white mb-1">08:44:21</span>
+<span class="font-code-label text-[10px] text-on-surface-variant uppercase">Session Time</span>
+</div>
+</div>
+</div>
+</form>
+</main>
+<!-- FOOTER -->
+<footer class="w-full py-8 border-t border-white/5">
+<div class="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+<div class="font-mono text-[10px] uppercase tracking-[0.2em] text-lime-400">
+        © 2024 MARTIANS ACADEMY | NEURAL TERMINAL ALPHA-01
+      </div>
+<div class="flex gap-gutter">
+<a class="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-600 hover:text-lime-400 transition-opacity opacity-80 hover:opacity-100" href="#">Privacy Protocol</a>
+<a class="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-600 hover:text-lime-400 transition-opacity opacity-80 hover:opacity-100" href="#">Terms of Service</a>
+<a class="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-600 hover:text-lime-400 transition-opacity opacity-80 hover:opacity-100" href="#">Academy Support</a>
+</div>
+</div>
+</footer>
+</body></html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Martians Academy | Role Selection</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+                  "surface-dim": "#051424",
+                  "on-secondary-container": "#556d00",
+                  "surface-variant": "#273647",
+                  "inverse-primary": "#5e5e63",
+                  "error": "#ffb4ab",
+                  "on-tertiary-fixed-variant": "#193ca7",
+                  "tertiary-fixed": "#dde1ff",
+                  "on-surface-variant": "#c7c6cb",
+                  "on-primary-fixed": "#1a1b20",
+                  "background": "#051424",
+                  "primary-fixed-dim": "#c7c6cb",
+                  "primary-fixed": "#e3e2e7",
+                  "tertiary-fixed-dim": "#b7c4ff",
+                  "on-tertiary-container": "#5774df",
+                  "on-secondary-fixed-variant": "#3c4d00",
+                  "surface-container-highest": "#273647",
+                  "secondary-container": "#c3f400",
+                  "primary-container": "#0d0e12",
+                  "on-error": "#690005",
+                  "outline-variant": "#46464b",
+                  "on-tertiary": "#002683",
+                  "surface-container-lowest": "#010f1f",
+                  "primary": "#c7c6cb",
+                  "on-primary": "#2f3035",
+                  "inverse-on-surface": "#233143",
+                  "surface-container-low": "#0d1c2d",
+                  "on-tertiary-fixed": "#001452",
+                  "on-primary-container": "#7b7b80",
+                  "on-error-container": "#ffdad6",
+                  "surface-tint": "#c7c6cb",
+                  "secondary-fixed-dim": "#abd600",
+                  "secondary-fixed": "#c3f400",
+                  "on-primary-fixed-variant": "#46464b",
+                  "tertiary": "#b7c4ff",
+                  "on-surface": "#d4e4fa",
+                  "error-container": "#93000a",
+                  "on-secondary": "#283500",
+                  "on-background": "#d4e4fa",
+                  "tertiary-container": "#000933",
+                  "secondary": "#ffffff",
+                  "on-secondary-fixed": "#161e00",
+                  "surface-container-high": "#1c2b3c",
+                  "outline": "#919095",
+                  "inverse-surface": "#d4e4fa",
+                  "surface": "#051424",
+                  "surface-bright": "#2c3a4c",
+                  "surface-container": "#122131"
+          },
+          "borderRadius": {
+                  "DEFAULT": "0.125rem",
+                  "lg": "0.25rem",
+                  "xl": "0.5rem",
+                  "full": "0.75rem"
+          },
+          "spacing": {
+                  "margin-x": "40px",
+                  "stack-md": "24px",
+                  "unit": "4px",
+                  "stack-sm": "8px",
+                  "gutter": "24px",
+                  "stack-lg": "64px",
+                  "container-max": "1440px"
+          },
+          "fontFamily": {
+                  "headline-md": ["Space Grotesk"],
+                  "headline-xl": ["Space Grotesk"],
+                  "code-label": ["Space Grotesk"],
+                  "body-base": ["Inter"]
+          },
+          "fontSize": {
+                  "headline-md": ["24px", {"lineHeight": "1.2", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                  "headline-xl": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                  "code-label": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.1em", "fontWeight": "500"}],
+                  "body-base": ["16px", {"lineHeight": "1.6", "letterSpacing": "0", "fontWeight": "400"}]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .glass-card {
+      background: rgba(22, 24, 29, 0.6);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .glass-card:hover {
+      border-color: rgba(195, 244, 0, 0.3);
+      background: rgba(22, 24, 29, 0.8);
+    }
+    .circuit-bg {
+      background-image: radial-gradient(circle at 2px 2px, rgba(195, 244, 0, 0.05) 1px, transparent 0);
+      background-size: 32px 32px;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
+</head>
+<body class="bg-surface-dim text-on-background font-body-base selection:bg-secondary-container selection:text-on-secondary-container overflow-x-hidden min-h-screen flex flex-col">
+<!-- Shared Component: TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 py-4 bg-[#0D0E12]/80 backdrop-blur-xl border-b border-white/10 transition-all duration-300 ease-in-out">
+<div class="flex items-center gap-8">
+<h1 class="text-xl font-bold tracking-tighter text-lime-400 font-headline-md">MARTIANS ACADEMY</h1>
+<nav class="hidden md:flex gap-6">
+<a class="font-space-grotesk tracking-widest uppercase text-sm text-slate-400 hover:text-white transition-colors" href="#">Curriculum</a>
+<a class="font-space-grotesk tracking-widest uppercase text-sm text-slate-400 hover:text-white transition-colors" href="#">Admissions</a>
+<a class="font-space-grotesk tracking-widest uppercase text-sm text-slate-400 hover:text-white transition-colors" href="#">Research</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:bg-white/5 p-2 rounded-full transition-all" data-icon="help">help</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:bg-white/5 p-2 rounded-full transition-all" data-icon="language">language</span>
+<a href="login.html" class="bg-secondary-container text-on-secondary font-space-grotesk tracking-widest uppercase text-xs px-6 py-2 font-bold hover:shadow-[0_0_12px_rgba(195,244,0,0.5)] transition-all">
+        LOGIN
+      </a>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="flex-grow pt-32 pb-20 px-6 relative circuit-bg">
+<!-- Ambient Glow Backgrounds -->
+<div class="absolute top-1/4 -left-20 w-96 h-96 bg-secondary-container/10 rounded-full blur-[120px] pointer-events-none"></div>
+<div class="absolute bottom-1/4 -right-20 w-96 h-96 bg-tertiary/10 rounded-full blur-[120px] pointer-events-none"></div>
+<div class="max-w-7xl mx-auto flex flex-col items-center text-center">
+<div class="mb-16">
+<span class="text-secondary-container font-code-label tracking-[0.3em] uppercase mb-4 block">Initialization Phase // Terminal Alpha-01</span>
+<h2 class="font-headline-xl text-headline-xl text-white mb-6">DEFINE YOUR TRAJECTORY</h2>
+<p class="text-on-surface-variant max-w-2xl text-body-base">Choose your identity within the Martian ecosystem. Each path offers specialized neural protocols and direct access to the interplanetary engineering grid.</p>
+</div>
+<!-- Role Selection Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
+<!-- Student Role -->
+<a href="student-signup.html" class="glass-card p-8 flex flex-col items-start text-left group">
+<div class="w-14 h-14 rounded-lg bg-secondary-container/10 flex items-center justify-center mb-8 border border-secondary-container/20 group-hover:border-secondary-container/50 transition-colors">
+<span class="material-symbols-outlined text-secondary-container text-3xl" data-icon="school" style="font-variation-settings: 'FILL' 1;">school</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-white mb-4">Student</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-8 flex-grow">Access advanced blockchain engineering courses, participate in orbital hackathons, and earn neural credentials recognized across the Mars colony.</p>
+<div class="w-full mt-auto py-4 px-6 border border-secondary-container/40 text-secondary-container font-code-label uppercase tracking-widest group-hover:bg-secondary-container group-hover:text-on-secondary transition-all duration-300 text-center">
+            Select Path
+          </div>
+</a>
+<!-- College Admin Role -->
+<a href="college-admin.html" class="glass-card p-8 flex flex-col items-start text-left group">
+<div class="w-14 h-14 rounded-lg bg-tertiary/10 flex items-center justify-center mb-8 border border-tertiary/20 group-hover:border-tertiary/50 transition-colors">
+<span class="material-symbols-outlined text-tertiary text-3xl" data-icon="account_balance" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-white mb-4">College Admin</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-8 flex-grow">Manage institutional curriculum, oversee student neural telemetry, and integrate your campus with the Martians Academy global node network.</p>
+<div class="w-full mt-auto py-4 px-6 border border-tertiary/40 text-tertiary font-code-label uppercase tracking-widest group-hover:bg-tertiary group-hover:text-on-tertiary transition-all duration-300 text-center">
+            Select Path
+          </div>
+</a>
+<!-- Instructor Role -->
+<a href="instructor-application.html" class="glass-card p-8 flex flex-col items-start text-left group">
+<div class="w-14 h-14 rounded-lg bg-white/5 flex items-center justify-center mb-8 border border-white/10 group-hover:border-secondary-container/50 transition-colors">
+<span class="material-symbols-outlined text-white text-3xl" data-icon="terminal" style="font-variation-settings: 'FILL' 1;">terminal</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-white mb-4">Instructor</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-8 flex-grow">Architect high-fidelity learning modules, mentor the next generation of Martian pioneers, and earn tokens based on student mastery levels.</p>
+<div class="w-full mt-auto py-4 px-6 border border-white/20 text-white font-code-label uppercase tracking-widest group-hover:bg-white group-hover:text-black transition-all duration-300 text-center">
+            Select Path
+          </div>
+</a>
+<!-- Partner Role -->
+<a href="partner-application.html" class="glass-card p-8 flex flex-col items-start text-left group">
+<div class="w-14 h-14 rounded-lg bg-secondary-container/10 flex items-center justify-center mb-8 border border-secondary-container/20 group-hover:border-secondary-container/50 transition-colors">
+<span class="material-symbols-outlined text-secondary-container text-3xl" data-icon="hub" style="font-variation-settings: 'FILL' 1;">hub</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-white mb-4">Partner</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-8 flex-grow">Recruit elite talent directly from the academy, sponsor research expeditions, and integrate your tech stack with our developer ecosystem.</p>
+<div class="w-full mt-auto py-4 px-6 border border-secondary-container/40 text-secondary-container font-code-label uppercase tracking-widest group-hover:bg-secondary-container group-hover:text-on-secondary transition-all duration-300 text-center">
+            Select Path
+          </div>
+</a>
+</div>
+<!-- Feature Visual Support Section -->
+<section class="mt-32 w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+<div class="text-left">
+<h4 class="font-headline-md text-headline-md text-white mb-6">The Frontier of Education</h4>
+<p class="text-on-surface-variant mb-8 text-body-base leading-relaxed">Martians Academy utilizes a zero-knowledge proof system for all academic credentials, ensuring your progress is immutable and globally verifiable on the Zenith-V chain.</p>
+<ul class="space-y-4">
+<li class="flex items-center gap-3 text-sm text-secondary-container">
+<span class="material-symbols-outlined text-sm" data-icon="check_circle">check_circle</span>
+<span class="font-code-label">DECENTRALIZED GRADEBOOK ARCHITECTURE</span>
+</li>
+<li class="flex items-center gap-3 text-sm text-secondary-container">
+<span class="material-symbols-outlined text-sm" data-icon="check_circle">check_circle</span>
+<span class="font-code-label">NEURAL INTERFACE OPTIMIZED CONTENT</span>
+</li>
+<li class="flex items-center gap-3 text-sm text-secondary-container">
+<span class="material-symbols-outlined text-sm" data-icon="check_circle">check_circle</span>
+<span class="font-code-label">CROSS-COLONY JOB PLACEMENT SYSTEM</span>
+</li>
+</ul>
+</div>
+<div class="relative h-[400px] rounded-xl overflow-hidden border border-white/10 group">
+<img alt="Digital data hub" class="w-full h-full object-cover grayscale opacity-40 group-hover:grayscale-0 group-hover:opacity-60 transition-all duration-700" data-alt="Abstract futuristic visualization of a digital data hub in space with glowing circuit lines and purple energy pulses" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJeuFNpJFAB8ISNfQ454XBgGBnSlILNi5EsRDkgYE5Dg0WwuStsqdfsdeFmEF6Y6A7oIXWi1i8qOzPZiLGmS3tBefNJYmchNz_wqkePY-czhJg2lLXtM3biDyBVHINaTaVMBQ5BcCnzNMIpmbsdpI_ftMpCncetUya4s41zhE0GfuML4Y3bpnWJuGm5apsQ9xPzxQZf5OS74I5fTN80YTnLXZCmva1weh7EVLnHp-_gMU7pNJnQA5ZFEE-FGk0g6gtGm0PG19INQWd"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dim via-transparent to-transparent"></div>
+<div class="absolute bottom-6 left-6 flex items-center gap-3">
+<div class="w-3 h-3 bg-secondary-container rounded-full animate-pulse"></div>
+<span class="font-code-label text-[10px] text-white">SYSTEM STATUS: OPTIMAL // NODE-42 ACTIVE</span>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Shared Component: Footer -->
+<footer class="mt-auto border-t border-white/5 py-8">
+<div class="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+<div class="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-600">
+        © 2024 MARTIANS ACADEMY | NEURAL TERMINAL ALPHA-01
+      </div>
+<div class="flex gap-8">
+<a class="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-600 hover:text-lime-400 transition-opacity opacity-80 hover:opacity-100" href="#">Privacy Protocol</a>
+<a class="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-600 hover:text-lime-400 transition-opacity opacity-80 hover:opacity-100" href="#">Terms of Service</a>
+<a class="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-600 hover:text-lime-400 transition-opacity opacity-80 hover:opacity-100" href="#">Academy Support</a>
+</div>
+</div>
+</footer>
+</body></html>

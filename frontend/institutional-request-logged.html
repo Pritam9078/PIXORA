@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Institutional Request Logged | ZENITH ORBITAL</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#051424",
+                        "on-primary-fixed": "#1a1b20",
+                        "tertiary-fixed-dim": "#b7c4ff",
+                        "on-error": "#690005",
+                        "inverse-on-surface": "#233143",
+                        "on-error-container": "#ffdad6",
+                        "on-primary-container": "#7b7b80",
+                        "surface-container": "#122131",
+                        "on-secondary-fixed": "#161e00",
+                        "on-background": "#d4e4fa",
+                        "tertiary-fixed": "#dde1ff",
+                        "outline": "#919095",
+                        "inverse-surface": "#d4e4fa",
+                        "tertiary-container": "#000933",
+                        "secondary-fixed-dim": "#abd600",
+                        "error": "#ffb4ab",
+                        "background": "#051424",
+                        "tertiary": "#b7c4ff",
+                        "primary-fixed-dim": "#c7c6cb",
+                        "error-container": "#93000a",
+                        "on-secondary": "#283500",
+                        "outline-variant": "#46464b",
+                        "on-tertiary-container": "#5774df",
+                        "surface-dim": "#051424",
+                        "secondary": "#ffffff",
+                        "on-tertiary-fixed": "#001452",
+                        "primary-fixed": "#e3e2e7",
+                        "on-secondary-container": "#556d00",
+                        "surface-container-low": "#0d1c2d",
+                        "on-surface-variant": "#c7c6cb",
+                        "surface-container-lowest": "#010f1f",
+                        "on-tertiary": "#002683",
+                        "on-secondary-fixed-variant": "#3c4d00",
+                        "surface-variant": "#273647",
+                        "surface-container-highest": "#273647",
+                        "surface-container-high": "#1c2b3c",
+                        "primary-container": "#0d0e12",
+                        "on-primary-fixed-variant": "#46464b",
+                        "secondary-container": "#c3f400",
+                        "primary": "#c7c6cb",
+                        "surface-tint": "#c7c6cb",
+                        "on-primary": "#2f3035",
+                        "on-surface": "#d4e4fa",
+                        "on-tertiary-fixed-variant": "#193ca7",
+                        "secondary-fixed": "#c3f400",
+                        "surface-bright": "#2c3a4c",
+                        "inverse-primary": "#5e5e63"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin-x": "40px",
+                        "gutter": "24px",
+                        "stack-sm": "8px",
+                        "stack-md": "24px",
+                        "unit": "4px",
+                        "container-max": "1440px",
+                        "stack-lg": "64px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Space Grotesk"],
+                        "headline-xl": ["Space Grotesk"],
+                        "body-base": ["Inter"],
+                        "code-label": ["Space Grotesk"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", {"lineHeight": "1.2", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                        "headline-xl": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-base": ["16px", {"lineHeight": "1.6", "letterSpacing": "0", "fontWeight": "400"}],
+                        "code-label": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.1em", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(22, 24, 29, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .laser-border-lime {
+            border: 1px solid rgba(195, 244, 0, 0.2);
+        }
+        .laser-border-purple {
+            border: 1px solid rgba(168, 85, 247, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-base min-h-screen selection:bg-secondary-fixed selection:text-on-secondary-fixed overflow-x-hidden">
+<!-- Top Navigation Bar -->
+<header class="flex justify-between items-center px-6 h-16 w-full fixed top-0 z-50 bg-[#0D0E12]/80 backdrop-blur-xl border-b border-white/10">
+<div class="text-xl font-bold text-white tracking-tighter">ZENITH ORBITAL</div>
+<div class="hidden md:flex items-center gap-8">
+<span class="font-['Space_Grotesk'] uppercase tracking-widest text-xs text-slate-400 hover:text-[#D4FF00] transition-all duration-300 cursor-pointer">ACADEMY</span>
+<span class="font-['Space_Grotesk'] uppercase tracking-widest text-xs text-slate-400 hover:text-[#D4FF00] transition-all duration-300 cursor-pointer">PROTOCOL</span>
+<span class="font-['Space_Grotesk'] uppercase tracking-widest text-xs text-slate-400 hover:text-[#D4FF00] transition-all duration-300 cursor-pointer">INFRASTRUCTURE</span>
+</div>
+<div class="flex items-center gap-4 text-[#D4FF00]">
+<span class="material-symbols-outlined cursor-pointer hover:opacity-70 transition-opacity" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined cursor-pointer hover:opacity-70 transition-opacity" data-icon="terminal">terminal</span>
+<span class="material-symbols-outlined cursor-pointer hover:opacity-70 transition-opacity" data-icon="account_circle">account_circle</span>
+</div>
+</header>
+<main class="relative pt-16 flex flex-col items-center justify-center min-h-screen px-margin-x">
+<!-- Abstract Background Element -->
+<div class="absolute inset-0 pointer-events-none overflow-hidden">
+<div class="absolute top-1/4 -left-20 w-96 h-96 bg-secondary-fixed/5 blur-[120px] rounded-full"></div>
+<div class="absolute bottom-1/4 -right-20 w-[500px] h-[500px] bg-tertiary/5 blur-[150px] rounded-full"></div>
+</div>
+<!-- Success Content Container -->
+<div class="relative z-10 w-full max-w-3xl flex flex-col items-center text-center">
+<!-- Icon Hero -->
+<div class="mb-stack-lg relative group">
+<div class="absolute -inset-4 bg-secondary-fixed/20 blur-2xl rounded-full opacity-50 group-hover:opacity-100 transition-opacity duration-700"></div>
+<div class="relative w-24 h-24 glass-panel border border-secondary-fixed/30 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(195,244,0,0.15)]">
+<span class="material-symbols-outlined text-5xl text-secondary-fixed" data-icon="verified_user" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+</div>
+<!-- Circuit Detail -->
+<div class="absolute top-1/2 left-full w-32 h-px bg-gradient-to-r from-secondary-fixed/50 to-transparent -translate-y-1/2 ml-4 hidden lg:block"></div>
+<div class="absolute top-1/2 right-full w-32 h-px bg-gradient-to-l from-secondary-fixed/50 to-transparent -translate-y-1/2 mr-4 hidden lg:block"></div>
+</div>
+<!-- Title -->
+<h1 class="font-headline-xl text-headline-xl text-white mb-stack-sm">Institutional Request Logged</h1>
+<p class="text-on-surface-variant text-body-base max-w-xl mb-stack-lg">
+                Your application to join the high-performance tier of Zenith Orbital is now entering phase two of security verification.
+            </p>
+<!-- Status Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter w-full text-left">
+<!-- Info Card 1 -->
+<div class="glass-panel p-stack-md rounded-lg laser-border-purple relative group hover:border-purple-400/40 transition-all duration-300">
+<div class="flex items-center gap-3 mb-stack-sm">
+<span class="material-symbols-outlined text-tertiary" data-icon="psychology">psychology</span>
+<span class="font-code-label text-code-label text-tertiary uppercase tracking-widest">Neural Council Review</span>
+</div>
+<p class="text-sm text-slate-400">
+                        Credentials are being vetted by the Neural Council (Super Admins) for authorization clearance.
+                    </p>
+</div>
+<!-- Info Card 2 -->
+<div class="glass-panel p-stack-md rounded-lg laser-border-lime relative group hover:border-secondary-fixed/40 transition-all duration-300">
+<div class="flex items-center gap-3 mb-stack-sm">
+<span class="material-symbols-outlined text-secondary-fixed" data-icon="schedule">schedule</span>
+<span class="font-code-label text-code-label text-secondary-fixed uppercase tracking-widest">Transmission Window</span>
+</div>
+<p class="text-sm text-slate-400">
+                        Expect a secure transmission within <span class="text-secondary-fixed font-bold">72 hours</span> to your registered terminal.
+                    </p>
+</div>
+</div>
+<!-- Transaction Detail Strip -->
+<div class="w-full mt-stack-md glass-panel px-6 py-4 rounded-lg flex flex-wrap items-center justify-between gap-4 border-white/5">
+<div class="flex flex-col">
+<span class="text-[10px] uppercase text-slate-500 font-bold tracking-widest">Request Hash</span>
+<span class="font-mono text-xs text-slate-300">ZO-ADM-99x-11-DELTA-V</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-1 bg-secondary-fixed/10 border border-secondary-fixed/20 rounded-full">
+<div class="w-1.5 h-1.5 bg-secondary-fixed rounded-full animate-pulse"></div>
+<span class="text-[10px] font-bold text-secondary-fixed uppercase">Encryption Active</span>
+</div>
+</div>
+<!-- Action Cluster -->
+<div class="mt-stack-lg flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+<a href="college-admin-dashboard.html" class="bg-purple-500 text-white px-8 py-3 rounded-none font-code-label uppercase tracking-widest font-bold hover:shadow-[0_0_15px_rgba(168,85,247,0.4)] transition-all duration-300 active:scale-95 text-center">
+                    Admin Portal
+                </a>
+<a href="instructor-dashboard.html" class="bg-secondary-fixed text-on-secondary-fixed px-8 py-3 rounded-none font-code-label uppercase tracking-widest font-bold hover:shadow-[0_0_15px_rgba(195,244,0,0.4)] transition-all duration-300 active:scale-95 text-center">
+                    Instructor Hub
+                </a>
+<a href="partner-dashboard.html" class="bg-blue-500 text-white px-8 py-3 rounded-none font-code-label uppercase tracking-widest font-bold hover:shadow-[0_0_15px_rgba(59,130,246,0.4)] transition-all duration-300 active:scale-95 text-center">
+                    Partner Portal
+                </a>
+</div>
+</div>
+<!-- Decorative Footer Element -->
+<div class="mt-stack-lg w-full max-w-container-max px-margin-x flex justify-center opacity-30">
+<img alt="" class="h-6 w-6 grayscale" data-alt="a minimalist circuit board icon with geometric lines and nodes in a futuristic neon tech style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBwtSSWJus5QxonPXpz2tgl3P5QFjmtcJel81vDK8ghGBLnSpEOfgjU3eV1kxv9y-XjgVuPNEMN7HtaLaGgEjHZoy6zdyUhJ-do5DIY6yHtCy7sR1pBhpV3MlR7mH2G7fAYJg92am6Z24d1Hx6ee_lFi6E3aYmDG4DuLac5Jkq3OX0dE2djufa9KPokVA2u6Zlem3ixWy205xft0LSLtcQUeHuUXpTgTwqeV8T3yAAss2kXHEl8Xe8GMn2PppO00PbV9LtMzhZ2Xlm8"/>
+</div>
+</main>
+<!-- Side Navigation (Suppressed but layout-aware for spacing) -->
+<nav class="hidden lg:flex flex-col h-full pt-20 w-16 fixed left-0 top-0 border-r border-white/5 bg-[#16181D]/90 items-center gap-8 z-40">
+<span class="material-symbols-outlined text-slate-600 hover:text-secondary-fixed transition-colors cursor-pointer" data-icon="dashboard">dashboard</span>
+<span class="material-symbols-outlined text-slate-600 hover:text-secondary-fixed transition-colors cursor-pointer" data-icon="account_tree">account_tree</span>
+<span class="material-symbols-outlined text-slate-600 hover:text-secondary-fixed transition-colors cursor-pointer" data-icon="hub">hub</span>
+<div class="mt-auto mb-8 flex flex-col gap-8 items-center">
+<span class="material-symbols-outlined text-slate-600 hover:text-secondary-fixed transition-colors cursor-pointer" data-icon="help_outline">help_outline</span>
+<span class="material-symbols-outlined text-slate-600 hover:text-secondary-fixed transition-colors cursor-pointer" data-icon="terminal">terminal</span>
+</div>
+</nav>
+<!-- Bottom Detail Bar -->
+<footer class="fixed bottom-0 left-0 w-full px-6 py-3 border-t border-white/5 flex justify-between items-center bg-surface/80 backdrop-blur-md z-50">
+<div class="flex gap-6">
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+<span class="font-code-label text-[10px] text-slate-500 uppercase">System Nominal</span>
+</div>
+<div class="hidden sm:flex items-center gap-2">
+<span class="font-code-label text-[10px] text-slate-500 uppercase tracking-tighter">Latency: 14ms</span>
+</div>
+</div>
+<div class="text-[10px] text-slate-600 font-code-label uppercase">
+            © 2024 ZENITH ORBITAL ACADEMY // DEEP-SPACE INFRASTRUCTURE
+        </div>
+</footer>
+</body></html>

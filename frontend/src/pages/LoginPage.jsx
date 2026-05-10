@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
@@ -165,13 +165,24 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
-  // Redirect if already logged in
-  if (user) {
-    const role = user.user_metadata?.role || 'student';
-    setTimeout(() => navigate(`/dashboard/${role}`), 0);
-  }
+  // Redirect if already logged in and profile is loaded
+  useEffect(() => {
+    if (user && profile) {
+      const role = profile.role || 'student';
+      // Map specific roles to their respective dashboard routes
+      const dashboardRoutes = {
+        student: '/dashboard/student',
+        instructor: '/dashboard/instructor',
+        college_admin: '/dashboard/college',
+        partner: '/dashboard/partner',
+        super_admin: '/dashboard/admin'
+      };
+      
+      navigate(dashboardRoutes[role] || `/dashboard/student`);
+    }
+  }, [user, profile, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -186,8 +197,18 @@ export default function LoginPage() {
 
       if (authError) throw authError;
 
+      // We rely on the useEffect above to handle the routing once AuthContext provides the profile.
+      // But if we want an immediate fallback:
       const role = data.user.user_metadata?.role || 'student';
-      navigate(`/dashboard/${role}`);
+      const dashboardRoutes = {
+        student: '/dashboard/student',
+        instructor: '/dashboard/instructor',
+        college_admin: '/dashboard/college',
+        partner: '/dashboard/partner',
+        super_admin: '/dashboard/admin'
+      };
+      // For email auth, if they don't have a profile yet (unlikely with triggers, but possible):
+      // We will let useEffect take over because fetchProfile will happen soon.
     } catch (err) {
       setError(err.message);
     } finally {
@@ -200,7 +221,7 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: window.location.origin
+          redirectTo: `${window.location.origin}/login`
         }
       });
       if (error) throw error;
@@ -454,7 +475,7 @@ export default function LoginPage() {
                   <p className="code-label" style={{ color: "#64748b", fontSize: "11px" }}>
                     New to the Platform?
                   </p>
-                  <Link to="/role-selection" className="register-btn">
+                  <Link to="/signup/student" className="register-btn">
                     New Learner? Begin Onboarding
                   </Link>
                 </div>

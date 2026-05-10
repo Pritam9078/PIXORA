@@ -237,7 +237,7 @@ const LandingPage = () => {
                   <div className="pt-8">
                     <h2 className="text-headline text-white mb-6">Ready to initiate your sequence?</h2>
                     <div className="flex flex-wrap gap-4">
-                      <a href="/role-selection" className="bg-secondary-container text-on-secondary px-6 py-3 rounded font-bold text-xs uppercase tracking-widest hover:scale-105 transition-transform inline-block">Begin Application</a>
+                      <a href="/login" className="bg-secondary-container text-on-secondary px-6 py-3 rounded font-bold text-xs uppercase tracking-widest hover:scale-105 transition-transform inline-block">Begin Application</a>
                       <button className="text-white border border-white/20 px-6 py-3 rounded font-bold text-xs uppercase tracking-widest hover:bg-white/5 transition-colors">Join Discord</button>
                     </div>
                   </div>

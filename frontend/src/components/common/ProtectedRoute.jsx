@@ -2,13 +2,13 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-secondary-container border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-[#0D0E12] flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-[#c3f400] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -17,12 +17,29 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // If role-based check is needed
-  // This assumes metadata or a separate profile table has the role
-  const userRole = user.user_metadata?.role;
-
-  if (allowedRoles && !allowedRoles.includes(userRole)) {
+  // Check if role initialization is needed
+  if (!profile || !profile.role) {
+    // Prevent infinite loop if already on role-selection
+    if (location.pathname === '/role-selection') return children;
     return <Navigate to="/role-selection" replace />;
+  }
+
+  // Exact Match Authorization
+  if (allowedRoles && allowedRoles.length > 0) {
+    if (!allowedRoles.includes(profile.role)) {
+      console.warn(`Unauthorized access attempt. User role '${profile.role}' is not in allowed roles: [${allowedRoles.join(', ')}]`);
+      
+      // Fallback redirection based on their actual role
+      const dashboardRoutes = {
+        student: '/dashboard/student',
+        instructor: '/dashboard/instructor',
+        college_admin: '/dashboard/college',
+        partner: '/dashboard/partner',
+        super_admin: '/dashboard/admin'
+      };
+      
+      return <Navigate to={dashboardRoutes[profile.role] || '/login'} replace />;
+    }
   }
 
   return children;

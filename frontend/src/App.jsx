@@ -2,9 +2,23 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import StudentSignupPage from './pages/StudentSignupPage';
-import StudentDashboard from './pages/StudentDashboard';
+import StudentLayout from './layouts/StudentLayout';
+import StudentDashboard from './pages/student/Dashboard';
+import MyCourses from './pages/student/MyCourses';
+import CoursePlayer from './pages/student/CoursePlayer';
+import Leaderboard from './pages/student/Leaderboard';
+import BlockchainHub from './pages/student/BlockchainHub';
+import GameDevHub from './pages/student/GameDevHub';
+import CareerHub from './pages/student/CareerHub';
+import StudentAssignments from './pages/student/Assignments';
+import StudentQuizzes from './pages/student/Quizzes';
+import Community from './pages/student/Community';
+import LiveClasses from './pages/student/LiveClasses';
+import Settings from './pages/student/Settings';
+import CourseDiscovery from './pages/student/CourseDiscovery';
+import { StudentThemeProvider } from './context/StudentThemeContext';
 import CollegeAdminDashboard from './pages/CollegeAdminDashboard';
-import InstructorDashboard from './pages/InstructorDashboard';
+
 import PartnerDashboard from './pages/PartnerDashboard';
 import InstructorApplicationPage from './pages/InstructorApplicationPage';
 import PartnerApplicationPage from './pages/PartnerApplicationPage';
@@ -21,19 +35,49 @@ import Analytics from './pages/admin/Analytics';
 import Students from './pages/admin/Students';
 import Instructors from './pages/admin/Instructors';
 import Partners from './pages/admin/Partners';
-import Assignments from './pages/admin/Assignments';
-import Quizzes from './pages/admin/Quizzes';
+import AdminAssignments from './pages/admin/Assignments';
+import AdminQuizzes from './pages/admin/Quizzes';
 import Certificates from './pages/admin/Certificates';
 import Payments from './pages/admin/Payments';
 import AuditLogs from './pages/admin/AuditLogs';
 import Notifications from './pages/admin/Notifications';
 import Support from './pages/admin/Support';
+import InstructorLayout from './layouts/InstructorLayout';
+import InstructorDashboardPage from './pages/instructor/Dashboard';
+import InstructorMyCourses from './pages/instructor/MyCourses';
+import InstructorCourseBuilder from './pages/instructor/CourseBuilder';
+import InstructorContentLibrary from './pages/instructor/ContentLibrary';
+import InstructorAssignments from './pages/instructor/Assignments';
+import InstructorQuizzes from './pages/instructor/Quizzes';
+import InstructorStudents from './pages/instructor/Students';
+import InstructorAnalytics from './pages/instructor/Analytics';
+import InstructorLiveClasses from './pages/instructor/LiveClasses';
+import InstructorCommunity from './pages/instructor/Community';
+import InstructorNotifications from './pages/instructor/Notifications';
+import InstructorEarnings from './pages/instructor/Earnings';
+import InstructorSettings from './pages/instructor/Settings';
+
 import ProtectedRoute from './components/common/ProtectedRoute';
+import { Toaster } from 'react-hot-toast';
 import './App.css';
 
 function App() {
   return (
     <Router>
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          style: {
+            background: '#1A1B23',
+            color: '#fff',
+            border: '1px solid rgba(255,255,255,0.05)',
+            fontSize: '12px',
+            fontFamily: 'Outfit, sans-serif',
+            borderRadius: '16px',
+            padding: '12px 24px',
+          },
+        }}
+      />
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
@@ -45,14 +89,38 @@ function App() {
         <Route path="/application/success" element={<ApplicationSuccessPage />} />
         
         {/* Protected Routes */}
+        {/* Student Ecosystem Routes */}
         <Route 
-          path="/dashboard/student" 
+          path="/student/*" 
           element={
             <ProtectedRoute allowedRoles={['student']}>
-              <StudentDashboard />
+              <StudentThemeProvider>
+                <Routes>
+                  <Route element={<StudentLayout />}>
+                    <Route path="dashboard" element={<StudentDashboard />} />
+                    <Route path="courses" element={<CourseDiscovery />} />
+                    <Route path="my-courses" element={<MyCourses />} />
+                    <Route path="course/:courseId" element={<CoursePlayer />} />
+                    <Route path="assignments" element={<StudentAssignments />} />
+                    <Route path="quizzes" element={<StudentQuizzes />} />
+                    <Route path="leaderboard" element={<Leaderboard />} />
+                    <Route path="web3-hub" element={<BlockchainHub />} />
+                    <Route path="game-hub" element={<GameDevHub />} />
+                    <Route path="career" element={<CareerHub />} />
+                    <Route path="community" element={<Community />} />
+                    <Route path="live" element={<LiveClasses />} />
+                    <Route path="settings" element={<Settings />} />
+                    {/* Redirect from base student path to dashboard */}
+                    <Route index element={<Navigate to="dashboard" replace />} />
+                  </Route>
+                </Routes>
+              </StudentThemeProvider>
             </ProtectedRoute>
           } 
         />
+
+        {/* Legacy student redirect */}
+        <Route path="/dashboard/student" element={<Navigate to="/student/dashboard" replace />} />
 
         <Route 
           path="/dashboard/college" 
@@ -63,14 +131,35 @@ function App() {
           } 
         />
 
+        {/* Instructor Ecosystem Routes */}
         <Route 
-          path="/dashboard/instructor" 
+          path="/instructor/*" 
           element={
             <ProtectedRoute allowedRoles={['instructor']}>
-              <InstructorDashboard />
+              <Routes>
+                <Route element={<InstructorLayout />}>
+                  <Route path="dashboard" element={<InstructorDashboardPage />} />
+                  <Route path="courses" element={<InstructorMyCourses />} />
+                  <Route path="builder" element={<InstructorCourseBuilder />} />
+                  <Route path="library" element={<InstructorContentLibrary />} />
+                  <Route path="assignments" element={<InstructorAssignments />} />
+                  <Route path="quizzes" element={<InstructorQuizzes />} />
+                  <Route path="students" element={<InstructorStudents />} />
+                  <Route path="analytics" element={<InstructorAnalytics />} />
+                  <Route path="live" element={<InstructorLiveClasses />} />
+                  <Route path="community" element={<InstructorCommunity />} />
+                  <Route path="notifications" element={<InstructorNotifications />} />
+                  <Route path="earnings" element={<InstructorEarnings />} />
+                  <Route path="settings" element={<InstructorSettings />} />
+                  <Route index element={<Navigate to="dashboard" replace />} />
+                </Route>
+              </Routes>
             </ProtectedRoute>
           } 
         />
+
+        {/* Legacy instructor redirect */}
+        <Route path="/dashboard/instructor" element={<Navigate to="/instructor/dashboard" replace />} />
 
         <Route 
           path="/dashboard/partner" 
@@ -184,7 +273,7 @@ function App() {
           path="/admin/assignments" 
           element={
             <ProtectedRoute allowedRoles={['super_admin']}>
-              <Assignments />
+              <AdminAssignments />
             </ProtectedRoute>
           } 
         />
@@ -193,7 +282,7 @@ function App() {
           path="/admin/quizzes" 
           element={
             <ProtectedRoute allowedRoles={['super_admin']}>
-              <Quizzes />
+              <AdminQuizzes />
             </ProtectedRoute>
           } 
         />

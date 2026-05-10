@@ -17,11 +17,12 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Check if role initialization is needed
+  // Check if profile exists
   if (!profile || !profile.role) {
-    // Prevent infinite loop if already on role-selection
-    if (location.pathname === '/role-selection') return children;
-    return <Navigate to="/role-selection" replace />;
+    // If we have a user but no profile, they might be new. 
+    // Redirect to home where they can see their status or sign up.
+    if (location.pathname === '/') return children;
+    return <Navigate to="/" replace />;
   }
 
   // Exact Match Authorization

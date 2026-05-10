@@ -7,17 +7,27 @@ export const useSupabaseData = (table, query = '*') => {
   const [error, setError] = useState(null);
 
   const fetchData = async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
     try {
       setLoading(true);
+      setError(null);
+      
       const { data: result, error: fetchError } = await supabase
         .from(table)
-        .select(query);
+        .select(query)
+        .abortSignal(controller.signal);
 
       if (fetchError) throw fetchError;
-      setData(result);
+      setData(result || []);
     } catch (err) {
-      setError(err.message);
+      console.error(`Error fetching ${table}:`, err);
+      setError(err.name === 'AbortError' ? 'Request timed out' : err.message);
+      // Keep previous data or set to empty array
+      if (!data.length) setData([]);
     } finally {
+      clearTimeout(timeoutId);
       setLoading(false);
     }
   };

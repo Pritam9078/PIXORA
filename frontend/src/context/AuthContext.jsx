@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 
 const AuthContext = createContext({});
@@ -8,92 +8,182 @@ export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const fetchingRef = useRef(null);
 
-  const fetchProfile = async (userId) => {
+  const fetchProfile = async (userId, attempt = 1) => {
+    if (!userId) return null;
+    
+    // Prevent multiple simultaneous fetches for the same user
+    if (fetchingRef.current === userId && attempt === 1) {
+      console.log('fetchProfile: Already fetching for this user, skipping.');
+      return null;
+    }
+    fetchingRef.current = userId;
+
+    console.log(`fetchProfile: Starting fetch (attempt ${attempt}) for: ${userId}`);
+    
+    // Faster safety timeout promise (3s for first attempt, 5s for second)
+    const timeoutMs = attempt === 1 ? 3000 : 5000;
+    const timeout = (ms) => new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Profile fetch timeout')), ms)
+    );
+
     try {
-      console.log('fetchProfile: Starting fetch for:', userId);
-      
-      // Safety timeout: Don't wait more than 5 seconds for the profile
-      const fetchPromise = supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-        
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
-      );
+      // Race the supabase query
+      const { data, error } = await Promise.race([
+        supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId),
+        timeout(timeoutMs)
+      ]);
 
-      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
+      if (error) throw error;
       
-      console.log('fetchProfile: Result received:', { hasData: !!data, error: error?.message, code: error?.code });
-      
-      if (error) {
-        if (error.code === 'PGRST116') {
-          console.error("Profile not found. User might be new.");
-        } else if (error.code === '42P01') {
-          console.error("CRITICAL: 'profiles' table missing!");
-        } else {
-          console.error("Error fetching profile:", error.message);
-        }
-        setProfile(null);
-        return;
+      const profileData = data?.[0];
+      if (profileData) {
+        console.log('fetchProfile: Successfully fetched profile:', profileData.role);
+        setProfile(profileData);
+        fetchingRef.current = null;
+        return profileData;
+      } else {
+        throw new Error('Profile not found');
       }
-      
-      setProfile(data);
     } catch (err) {
-      console.error("Unexpected error or timeout fetching profile:", err.message);
-      setProfile(null);
-    } finally {
-      console.log('fetchProfile: Finished');
+      console.warn(`fetchProfile: Attempt ${attempt} failed:`, err.message);
+      
+      // If first attempt failed, try to use metadata IMMEDIATELY as a temporary state
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (currentUser && !profile) {
+        const tempProfile = {
+          id: currentUser.id,
+          email: currentUser.email,
+          role: currentUser.user_metadata?.role || 'student',
+          full_name: currentUser.user_metadata?.full_name || 'User',
+          is_temp: true
+        };
+        console.log('fetchProfile: Setting temporary profile from metadata');
+        setProfile(tempProfile);
+      }
+
+      if (attempt < 2) {
+        console.log('fetchProfile: Retrying for final attempt...');
+        return fetchProfile(userId, attempt + 1);
+      }
+
+      // Final Fallback
+      if (currentUser) {
+        const finalFallback = {
+          id: currentUser.id,
+          email: currentUser.email,
+          role: currentUser.user_metadata?.role || 'student',
+          full_name: currentUser.user_metadata?.full_name || 'User'
+        };
+        setProfile(finalFallback);
+        fetchingRef.current = null;
+        return finalFallback;
+      }
+
+      fetchingRef.current = null;
+      throw err;
     }
   };
 
   useEffect(() => {
-    const getSession = async () => {
+    let mounted = true;
+
+    const initAuth = async () => {
+      console.log('AuthContext: Initializing sequence...');
+      
+      // Global safety timeout - force loading to false after 7s
+      const globalTimeout = setTimeout(() => {
+        if (mounted && loading) {
+          console.warn('AuthContext: GLOBAL initialization timeout reached. Forcing loading false.');
+          setLoading(false);
+        }
+      }, 7000);
+
       try {
-        console.log('AuthContext: Fetching session...');
         const { data: { session }, error } = await supabase.auth.getSession();
-        
         if (error) throw error;
         
-        console.log('AuthContext: Session fetched:', !!session);
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          console.log('AuthContext: Initiating profile fetch for user:', session.user.id);
-          // Don't strictly await here if we want to show the app faster, 
-          // but we usually need the profile for routing.
-          await fetchProfile(session.user.id);
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            console.log('AuthContext: Found session, awaiting profile...');
+            await fetchProfile(session.user.id);
+          }
         }
       } catch (err) {
-        console.warn('AuthContext: Supabase session check failed', err);
+        console.warn('AuthContext: Initialization error', err);
       } finally {
-        console.log('AuthContext: Setting loading to false (getSession)');
-        setLoading(false);
+        clearTimeout(globalTimeout);
+        if (mounted) {
+          setLoading(false);
+          console.log('AuthContext: Initialization complete');
+        }
       }
     };
 
-    getSession();
+    initAuth();
 
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('AuthContext: Auth state change event:', event);
+      console.log(`AuthContext: Auth event [${event}]`);
+      
+      if (!mounted) return;
+      
+      const prevUserId = user?.id;
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        await fetchProfile(session.user.id);
+        if (session.user.id !== prevUserId || !profile) {
+          // If we're already loading, initAuth will handle it. 
+          // Otherwise, fetch it.
+          if (!loading) {
+            fetchProfile(session.user.id);
+          }
+        }
       } else {
         setProfile(null);
+        fetchingRef.current = null;
       }
       
-      console.log('AuthContext: Setting loading to false (onAuthStateChange)');
-      setLoading(false);
+      if (loading) setLoading(false);
     });
 
-    return () => subscription?.unsubscribe();
-  }, []);
+    return () => {
+      mounted = false;
+      subscription?.unsubscribe();
+    };
+  }, [user?.id, profile === null]);
+
+  // 2. Real-time profile subscription (Dependent on user.id)
+  useEffect(() => {
+    let profileSubscription = null;
+    
+    if (user?.id) {
+      profileSubscription = supabase
+        .channel(`profile:${user.id}`)
+        .on('postgres_changes', { 
+          event: 'UPDATE', 
+          schema: 'public', 
+          table: 'profiles',
+          filter: `id=eq.${user.id}`
+        }, (payload) => {
+          console.log('AuthContext: Profile updated in real-time:', payload.new);
+          setProfile(payload.new);
+        })
+        .subscribe();
+    }
+
+    return () => {
+      if (profileSubscription) profileSubscription.unsubscribe();
+    };
+  }, [user?.id]);
 
   const value = {
     signUp: (data) => supabase.auth.signUp(data),

@@ -167,22 +167,25 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
 
-  // Redirect if already logged in and profile is loaded
+  // Redirect if already logged in
   useEffect(() => {
-    if (user && profile) {
-      const role = profile.role || 'student';
-      // Map specific roles to their respective dashboard routes
+    if (user) {
+      // Prioritize profile role, fallback to metadata role
+      const role = profile?.role || user.user_metadata?.role || 'student';
+      
       const dashboardRoutes = {
-        student: '/dashboard/student',
-        instructor: '/dashboard/instructor',
+        student: '/student/dashboard',
+        instructor: '/instructor/dashboard',
         college_admin: '/dashboard/college',
         partner: '/dashboard/partner',
         super_admin: '/dashboard/admin'
       };
       
-      navigate(dashboardRoutes[role] || `/dashboard/student`);
+      const targetPath = dashboardRoutes[role] || '/student/dashboard';
+      console.log(`LoginPage: Redirecting to ${targetPath} (Role: ${role})`);
+      navigate(targetPath);
     }
-  }, [user, profile, navigate]);
+  }, [user, profile?.role, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

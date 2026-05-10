@@ -1,0 +1,45 @@
+# Martians Academy: Future Development Plan
+
+This document outlines the recommended features and page structure to build for the Martians Academy platform.
+
+## 📂 Frontend Structure
+
+###  Core Platform Features
+
+|-- 📚 **Course Management (for Instructors)**
+|   |-- `create-course.html` (Wizard for new course creation)
+|   |-- `edit-course.html` (To modify existing course details)
+|   |-- `course-curriculum.html` (Interface to add/edit lectures, quizzes, assignments)
+|   `-- `student-analytics.html` (Dashboard to track student progress)
+
+|-- 📖 **Course Experience (for Students)**
+|   |-- `course-catalog.html` (Browse all available courses)
+|   |-- `course-details.html` (View details of a specific course before enrolling)
+|   |-- `course-player.html` (The main view for taking a course, with video/text content)
+|   |-- `my-courses.html` (A section within the student dashboard to see enrolled courses)
+|   `-- `course-review.html` (Page for students to leave a rating and review)
+
+|-- 👤 **User Profile & Settings**
+|   |-- `user-profile.html` (Public-facing profile page)
+|   |-- `edit-profile.html` (For users to update their information)
+|   |-- `account-settings.html` (For managing account details like password, email)
+|   `-- `notification-settings.html` (To configure email/platform notifications)
+
+|-- 💳 **Payments & Subscriptions**
+|   |-- `pricing.html` (Page detailing different plans or course prices)
+|   |-- `checkout.html` (Payment form for purchasing a course or subscription)
+|   `-- `billing-history.html` (User's history of payments)
+
+|-- 💬 **Community & Communication**
+|   |-- `messaging.html` (Private messaging between users)
+|   |-- `course-forum.html` (Discussion forum for each course)
+|   `-- `notifications.html` (A center to view all platform notifications)
+
+### - 行政管理
+|-- 🛠️ **Site Administration (Super Admin)**
+|   |-- `admin-dashboard.html` (Overview of site activity)
+|   |-- `manage-users.html` (View, edit, or remove users)
+|   |-- `manage-courses.html` (Platform-wide course management)
+|   `-- `manage-applications.html` (Review instructor/partner applications)
+
+This structure provides a comprehensive roadmap for building out the Martians Academy platform.

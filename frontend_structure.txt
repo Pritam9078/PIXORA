@@ -1,0 +1,14 @@
+frontend/
+├── college-admin-dashboard.html
+├── college-admin.html
+├── index.html
+├── institutional-request-logged.html
+├── instructor-application.html
+├── instructor-dashboard.html
+├── login.html
+├── onboarding-initialized.html
+├── partner-application.html
+├── partner-dashboard.html
+├── role-selection.html
+├── student-dashboard.html
+└── student-signup.html

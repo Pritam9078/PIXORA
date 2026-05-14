@@ -319,9 +319,42 @@ export const InstructorService = {
       if (error) throw error;
       return data;
     } catch (error) {
-      const errorMsg = error.message || (typeof error === 'object' ? JSON.stringify(error) : String(error));
-      console.error('Error in createCourse:', errorMsg);
-      throw new Error(`Failed to create course: ${errorMsg}`);
+      console.error('createCourse error:', error.message);
+      throw error;
+    }
+  },
+
+  async updateCourse(courseId, courseData) {
+    try {
+      const { data, error } = await supabase
+        .from('courses')
+        .update(courseData)
+        .eq('id', courseId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('updateCourse error:', error.message);
+      throw error;
+    }
+  },
+
+  async getCourseById(courseId) {
+    try {
+      const { data, error } = await withTimeout(
+        supabase
+          .from('courses')
+          .select('*')
+          .eq('id', courseId)
+          .single()
+      );
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('getCourseById error:', error.message);
+      throw error;
     }
   },
 
@@ -331,13 +364,25 @@ export const InstructorService = {
       const { data, error } = await withTimeout(
         supabase
           .from('courses')
-          .select('*')
+          .select(`
+            *,
+            enrollments(count),
+            modules(count),
+            lessons(count)
+          `)
           .eq('instructor_id', session.user.id)
           .order('created_at', { ascending: false })
       );
 
       if (error) { console.warn('getMyCourses error:', error.message); return []; }
-      return data || [];
+      
+      // Flatten the counts for easier UI consumption
+      return (data || []).map(course => ({
+        ...course,
+        students_count: course.enrollments?.[0]?.count || 0,
+        modules_count: course.modules?.[0]?.count || 0,
+        lessons_count: course.lessons?.[0]?.count || 0,
+      }));
     } catch (error) {
       console.error('getMyCourses error:', error.message);
       return [];
@@ -602,6 +647,75 @@ export const InstructorService = {
       console.error('getQuizStats error:', error.message);
       return { avgScore: 0, completions: 0, passRate: 0, recentSuccess: [] };
     }
+  },
+  async deleteCourse(courseId) {
+    try {
+      const { error } = await supabase
+        .from('courses')
+        .delete()
+        .eq('id', courseId);
+      
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('deleteCourse error:', error.message);
+      throw error;
+    }
+  },
+
+  async getCourseAnalytics(courseId) {
+    try {
+      // 1. Get student count
+      const { count: studentCount, error: countError } = await supabase
+        .from('enrollments')
+        .select('*', { count: 'exact', head: true })
+        .eq('course_id', courseId);
+
+      if (countError) throw countError;
+
+      // 2. Get quiz stats for pass rate
+      const { data: quizzes } = await supabase
+        .from('quizzes')
+        .select('id')
+        .eq('course_id', courseId);
+      
+      let passRate = '0%';
+      if (quizzes && quizzes.length > 0) {
+        const quizIds = quizzes.map(q => q.id);
+        const { data: attempts } = await supabase
+          .from('quiz_attempts')
+          .select('score')
+          .in('quiz_id', quizIds);
+        
+        if (attempts && attempts.length > 0) {
+          const passCount = attempts.filter(a => a.score >= 70).length;
+          passRate = `${Math.round((passCount / attempts.length) * 100)}%`;
+        }
+      }
+
+      // 3. Mocking watch time and engagement for now as they require complex joins/tracking
+      return {
+        watchTime: `${studentCount * 2}h`, // Mock heuristic
+        retention: '84%', // Mock heuristic
+        passRate: passRate,
+        engagement: `${Math.min(10, Math.floor(studentCount / 2))}/10`,
+        studentCount: studentCount
+      };
+    } catch (error) {
+      console.error('getCourseAnalytics error:', error.message);
+      return { watchTime: '0h', retention: '0%', passRate: '0%', engagement: '0/10' };
+    }
+  },
+
+  async getCourseRetention(courseId) {
+    // Mocking retention data
+    return [
+      { name: 'Start', value: 100 },
+      { name: 'Module 1', value: 0 },
+      { name: 'Module 2', value: 0 },
+      { name: 'Module 3', value: 0 },
+      { name: 'End', value: 0 },
+    ];
   },
 };
 

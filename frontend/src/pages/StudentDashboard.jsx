@@ -1,29 +1,77 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import DashboardLayout from '../layouts/DashboardLayout';
+import { useAuth } from '../context/AuthContext';
+import { CourseService } from '../services/CourseService';
+import { Play, Shield, Layers, BookOpen, Clock, Award } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const StudentDashboard = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [courses, setCourses] = useState([]);
+  const [assignments, setAssignments] = useState([]);
+  const [submissions, setSubmissions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!user) return;
+      try {
+        setLoading(true);
+        const [courseData, assignmentData, submissionData] = await Promise.all([
+          CourseService.getEnrolledCourses(user.id),
+          CourseService.getStudentAssignments(user.id),
+          CourseService.getStudentSubmissions(user.id)
+        ]);
+        setCourses(courseData);
+        setAssignments(assignmentData);
+        setSubmissions(submissionData);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [user]);
+
+  const totalProgress = courses.reduce((acc, c) => acc + (c.progress || 0), 0);
+  const avgProgress = courses.length > 0 ? Math.round(totalProgress / courses.length) : 0;
+  const completedCount = courses.filter(c => c.progress === 100).length;
+  
+  // XP calculation (mock logic: 100 XP per 10% progress)
+  const totalXP = Math.round(totalProgress * 10);
+
+  // Filter for pending assignments (not submitted)
+  const submittedIds = new Set(submissions.map(s => s.assignment_id));
+  const pendingDirectives = assignments.filter(a => !submittedIds.has(a.id)).slice(0, 3);
+
   const stats = [
-    { label: 'Combat Hours', value: '120', trend: '+12% vs last cycle', color: 'lime' },
-    { label: 'Assignments', value: '15', sub: '2 pending submission', color: 'purple' },
-    { label: 'Avg Score', value: '92%', progress: 92, color: 'cyan' },
+    { label: 'Enrolled Tracks', value: courses.length, trend: 'Active Sequences', color: 'lime' },
+    { label: 'Completed', value: completedCount, sub: `${courses.length - completedCount} in progress`, color: 'purple' },
+    { label: 'Experience', value: `${totalXP} XP`, progress: Math.min(100, (totalXP % 1000) / 10), color: 'cyan' },
   ];
 
-  const activeTracks = [
-    {
-      title: 'Blockchain Engineering',
-      desc: 'Advanced consensus algorithms and smart contract security in hostile environments.',
-      progress: 85,
-      color: 'lime',
-      icon: 'shield'
-    },
-    {
-      title: 'Unreal Engine 5 Deep Systems',
-      desc: 'Spatial computing and physics-based rendering for tactical simulation environments.',
-      progress: 42,
-      color: 'purple',
-      icon: 'layers'
-    }
-  ];
+  const activeTracks = courses.slice(0, 2).map(item => ({
+    id: item.course.id,
+    title: item.course.title,
+    desc: item.course.description || 'No description provided for this mission.',
+    progress: item.progress || 0,
+    color: Math.random() > 0.5 ? 'lime' : 'purple',
+    icon: Math.random() > 0.5 ? 'shield' : 'layers'
+  }));
+
+  if (loading) {
+    return (
+      <DashboardLayout role="Senior Learner">
+        <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
+          <div className="w-10 h-10 border-4 border-lime-400/20 border-t-lime-400 rounded-full animate-spin"></div>
+          <p className="text-slate-500 font-headline font-bold text-[10px] uppercase tracking-[0.2em]">Synchronizing Neural Network...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout role="Senior Learner">
@@ -75,11 +123,16 @@ const StudentDashboard = () => {
                 <motion.div 
                   key={i}
                   whileHover={{ y: -4 }}
-                  className="glass-panel p-5 rounded group transition-all"
+                  onClick={() => navigate(`/student/course/${track.id}`)}
+                  className="glass-panel p-5 rounded group transition-all cursor-pointer"
                 >
                   <div className="flex justify-between items-start mb-4">
                     <span className={`p-2 rounded ${track.color === 'lime' ? 'bg-secondary-container/10' : 'bg-on-tertiary-container/10'}`}>
-                      <span className={`material-symbols-outlined ${track.color === 'lime' ? 'text-secondary-container' : 'text-on-tertiary-container'}`}>{track.icon}</span>
+                      {track.icon === 'shield' ? (
+                        <Shield className={track.color === 'lime' ? 'text-secondary-container' : 'text-on-tertiary-container'} size={18} />
+                      ) : (
+                        <Layers className={track.color === 'lime' ? 'text-secondary-container' : 'text-on-tertiary-container'} size={18} />
+                      )}
                     </span>
                     <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 border ${track.color === 'lime' ? 'text-secondary-container border-secondary-container/20 bg-secondary-container/5' : 'text-on-tertiary-container border-on-tertiary-container/20 bg-on-tertiary-container/5'}`}>
                       In Progress
@@ -112,16 +165,17 @@ const StudentDashboard = () => {
                 Pending Directives
               </h3>
               <div className="space-y-4">
-                <div className="bg-white/5 p-4 rounded border-l-2 border-secondary-container">
-                  <p className="text-[9px] font-bold text-secondary-container uppercase mb-1">Due in 4h</p>
-                  <h4 className="text-sm font-bold text-white mb-1">Smart Contract Audit</h4>
-                  <p className="text-xs text-slate-500">Secure the vault prototype against reentrancy.</p>
-                </div>
-                <div className="bg-white/5 p-4 rounded border-l-2 border-slate-700">
-                  <p className="text-[9px] font-bold text-slate-500 uppercase mb-1">Due in 2 days</p>
-                  <h4 className="text-sm font-bold text-white mb-1">Physics Engine Stress Test</h4>
-                  <p className="text-xs text-slate-500">Calculate projectile trajectories in high gravity.</p>
-                </div>
+                {pendingDirectives.length > 0 ? pendingDirectives.map((directive, idx) => (
+                  <div key={directive.id} className={`bg-white/5 p-4 rounded border-l-2 ${idx === 0 ? 'border-secondary-container' : 'border-slate-700'}`}>
+                    <p className={`text-[9px] font-bold uppercase mb-1 ${idx === 0 ? 'text-secondary-container' : 'text-slate-500'}`}>
+                      {directive.due_date ? `Due ${new Date(directive.due_date).toLocaleDateString()}` : 'No Deadline'}
+                    </p>
+                    <h4 className="text-sm font-bold text-white mb-1">{directive.title}</h4>
+                    <p className="text-xs text-slate-500 line-clamp-1">{directive.course?.title || 'Unknown Course'}</p>
+                  </div>
+                )) : (
+                  <p className="text-xs text-slate-500 text-center py-4">All directives synchronized. Neutral state achieved.</p>
+                )}
               </div>
             </div>
 
@@ -143,7 +197,7 @@ const StudentDashboard = () => {
                     <span className="font-black text-white">08</span>
                     <span className="text-white font-bold uppercase">You</span>
                   </div>
-                  <span className="text-secondary-container font-headline text-[10px]">1250 XP</span>
+                  <span className="text-secondary-container font-headline text-[10px]">{totalXP} XP</span>
                 </div>
               </div>
             </div>

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useRef } from 'react';
+import { createContext, useContext, useEffect, useState, useRef, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 
 const AuthContext = createContext({});
@@ -9,83 +9,52 @@ export const AuthProvider = ({ children }) => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const fetchingRef = useRef(null);
+  const initializedRef = useRef(false);
 
-  const fetchProfile = async (userId, attempt = 1) => {
+  const fetchProfile = async (userId, userObject = null) => {
     if (!userId) return null;
+    if (fetchingRef.current === userId && profile) return profile;
     
-    // Prevent multiple simultaneous fetches for the same user
-    if (fetchingRef.current === userId && attempt === 1) {
-      console.log('fetchProfile: Already fetching for this user, skipping.');
-      return null;
-    }
     fetchingRef.current = userId;
-
-    console.log(`fetchProfile: Starting fetch (attempt ${attempt}) for: ${userId}`);
-    
-    // Faster safety timeout promise (3s for first attempt, 5s for second)
-    const timeoutMs = attempt === 1 ? 3000 : 5000;
-    const timeout = (ms) => new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Profile fetch timeout')), ms)
-    );
+    console.log(`fetchProfile: Fetching profile for ${userId}`);
 
     try {
-      // Race the supabase query
-      const { data, error } = await Promise.race([
-        supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId),
-        timeout(timeoutMs)
-      ]);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
 
       if (error) throw error;
-      
-      const profileData = data?.[0];
-      if (profileData) {
-        console.log('fetchProfile: Successfully fetched profile:', profileData.role);
-        setProfile(profileData);
+
+      if (data) {
+        console.log('fetchProfile: Profile found:', data.role);
+        setProfile(data);
         fetchingRef.current = null;
-        return profileData;
-      } else {
-        throw new Error('Profile not found');
+        return data;
       }
+      throw new Error('Profile not found');
     } catch (err) {
-      console.warn(`fetchProfile: Attempt ${attempt} failed:`, err.message);
+      console.warn('fetchProfile: Fetch failed, using metadata fallback:', err.message);
       
-      // If first attempt failed, try to use metadata IMMEDIATELY as a temporary state
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      if (currentUser && !profile) {
-        const tempProfile = {
+      const currentUser = userObject || (await supabase.auth.getUser()).data.user;
+      
+      if (currentUser) {
+        const fallback = {
           id: currentUser.id,
           email: currentUser.email,
           role: currentUser.user_metadata?.role || 'student',
           full_name: currentUser.user_metadata?.full_name || 'User',
           is_temp: true
         };
-        console.log('fetchProfile: Setting temporary profile from metadata');
-        setProfile(tempProfile);
-      }
-
-      if (attempt < 2) {
-        console.log('fetchProfile: Retrying for final attempt...');
-        return fetchProfile(userId, attempt + 1);
-      }
-
-      // Final Fallback
-      if (currentUser) {
-        const finalFallback = {
-          id: currentUser.id,
-          email: currentUser.email,
-          role: currentUser.user_metadata?.role || 'student',
-          full_name: currentUser.user_metadata?.full_name || 'User'
-        };
-        setProfile(finalFallback);
+        setProfile(fallback);
         fetchingRef.current = null;
-        return finalFallback;
+        return fallback;
       }
-
+      
+      setProfile(null);
       fetchingRef.current = null;
-      throw err;
+      return null;
     }
   };
 
@@ -93,27 +62,35 @@ export const AuthProvider = ({ children }) => {
     let mounted = true;
 
     const initAuth = async () => {
+      if (initializedRef.current) return;
+      initializedRef.current = true;
+      
       console.log('AuthContext: Initializing sequence...');
       
-      // Global safety timeout - force loading to false after 7s
+      // Global safety timeout - force loading to false after 5s
       const globalTimeout = setTimeout(() => {
-        if (mounted && loading) {
-          console.warn('AuthContext: GLOBAL initialization timeout reached. Forcing loading false.');
-          setLoading(false);
-        }
-      }, 7000);
+        setLoading(prev => {
+          if (prev) {
+            console.warn('AuthContext: GLOBAL initialization timeout reached. Forcing loading false.');
+            return false;
+          }
+          return prev;
+        });
+      }, 5000);
 
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         if (error) throw error;
         
         if (mounted) {
-          setSession(session);
-          setUser(session?.user ?? null);
+          setSession(initialSession);
+          const currentUser = initialSession?.user ?? null;
+          setUser(currentUser);
           
-          if (session?.user) {
-            console.log('AuthContext: Found session, awaiting profile...');
-            await fetchProfile(session.user.id);
+          if (currentUser) {
+            console.log('AuthContext: Found session, fetching profile...');
+            // Don't await here to avoid blocking initialization
+            fetchProfile(currentUser.id, currentUser);
           }
         }
       } catch (err) {
@@ -130,36 +107,39 @@ export const AuthProvider = ({ children }) => {
     initAuth();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
       console.log(`AuthContext: Auth event [${event}]`);
       
       if (!mounted) return;
       
+      const currentUser = currentSession?.user ?? null;
       const prevUserId = user?.id;
-      setSession(session);
-      setUser(session?.user ?? null);
       
-      if (session?.user) {
-        if (session.user.id !== prevUserId || !profile) {
+      setSession(currentSession);
+      setUser(currentUser);
+      
+      if (currentUser) {
+        if (currentUser.id !== prevUserId || !profile) {
           // If we're already loading, initAuth will handle it. 
           // Otherwise, fetch it.
-          if (!loading) {
-            fetchProfile(session.user.id);
-          }
+          fetchProfile(currentUser.id, currentUser);
         }
       } else {
         setProfile(null);
         fetchingRef.current = null;
       }
       
-      if (loading) setLoading(false);
+      // Ensure loading is false after auth event
+      setLoading(false);
     });
+
+
 
     return () => {
       mounted = false;
       subscription?.unsubscribe();
     };
-  }, [user?.id, profile === null]);
+  }, []); // Only run once on mount
 
   // 2. Real-time profile subscription (Dependent on user.id)
   useEffect(() => {
@@ -185,7 +165,7 @@ export const AuthProvider = ({ children }) => {
     };
   }, [user?.id]);
 
-  const value = {
+  const value = useMemo(() => ({
     signUp: (data) => supabase.auth.signUp(data),
     signIn: (data) => supabase.auth.signInWithPassword(data),
     signOut: () => supabase.auth.signOut(),
@@ -196,7 +176,7 @@ export const AuthProvider = ({ children }) => {
     session,
     profile,
     loading,
-  };
+  }), [user, session, profile, loading]);
 
   return (
     <AuthContext.Provider value={value}>
@@ -214,3 +194,4 @@ export const AuthProvider = ({ children }) => {
 export const useAuth = () => {
   return useContext(AuthContext);
 };
+

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+
 import { 
   Play, Clock, Award, TrendingUp, 
   ChevronRight, Calendar, MessageSquare, 
@@ -83,48 +84,71 @@ const StudentDashboard = () => {
   const [quizzes, setQuizzes] = React.useState([]);
   const [liveClasses, setLiveClasses] = React.useState([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  const isFetching = useRef(false);
+  const mounted = useRef(true);
+
+  React.useEffect(() => {
+    return () => { mounted.current = false; };
+  }, []);
 
   React.useEffect(() => {
     const loadDashboardData = async () => {
-      if (!user) return;
+      // If we don't have a user, we can't fetch anything.
+      // If we're already fetching, don't start again.
+      if (!user?.id || isFetching.current) return;
       
       try {
+        isFetching.current = true;
+        setIsLoading(true);
+        
+        console.log('Dashboard: Fetching data for user', user.id);
+        
+        // We can fetch courses and assignments with just user.id
+        // availableCourses needs college_id which is in profile
         const [coursesData, availableData, assignmentsData, quizzesData] = await Promise.all([
           CourseService.getEnrolledCourses(user.id),
-          CourseService.getAvailableCourses(profile?.college_id),
+          profile?.college_id ? CourseService.getAvailableCourses(profile.college_id) : Promise.resolve([]),
           SubmissionService.getAssignments(user.id),
           QuizService.getQuizzes(user.id)
         ]);
 
-        setEnrolledCourses(coursesData || []);
-        
-        // Filter out already enrolled courses for discovery
-        const enrolledIds = new Set((coursesData || []).map(c => c.course_id));
-        const filteredAvailable = (availableData || []).filter(c => !enrolledIds.has(c.id));
-        setAvailableCourses(filteredAvailable.slice(0, 3));
-        
-        setAssignments(assignmentsData || []);
-        setQuizzes(quizzesData || []);
-        
-        // Fetch live classes for the first course
-        if (coursesData && coursesData.length > 0) {
-          const { data: live } = await supabase
-            .from('live_classes')
-            .select('*')
-            .eq('course_id', coursesData[0].course_id)
-            .eq('status', 'scheduled')
-            .limit(3);
-          setLiveClasses(live || []);
+        if (mounted.current) {
+          setEnrolledCourses(coursesData || []);
+          
+          const enrolledIds = new Set((coursesData || []).map(c => c.course_id));
+          const filteredAvailable = (availableData || []).filter(c => !enrolledIds.has(c.id));
+          setAvailableCourses(filteredAvailable.slice(0, 3));
+          
+          setAssignments(assignmentsData || []);
+          setQuizzes(quizzesData || []);
+          
+          if (coursesData && coursesData.length > 0) {
+            try {
+              const { data: live } = await supabase
+                .from('live_classes')
+                .select('*')
+                .eq('course_id', coursesData[0].course_id)
+                .eq('status', 'scheduled')
+                .limit(3);
+              setLiveClasses(live || []);
+            } catch (err) {
+              console.warn('Dashboard: Live classes fetch failed', err);
+            }
+          }
         }
       } catch (error) {
         console.error('Error loading dashboard data:', error);
       } finally {
-        setIsLoading(false);
+        if (mounted.current) {
+          setIsLoading(false);
+          isFetching.current = false;
+        }
       }
     };
 
     loadDashboardData();
-  }, [user]);
+  }, [user?.id, profile?.id]);
+
 
   if (isLoading) {
     return (
@@ -241,6 +265,25 @@ const StudentDashboard = () => {
                   image={enrollment.course?.thumbnail_url}
                   onResume={() => enrollment.course_id && navigate(`/student/course/${enrollment.course_id}`)}
                 />
+              ))
+            ) : availableCourses.length > 0 ? (
+              availableCourses.slice(0, 2).map((course) => (
+                <div key={course.id} className="relative group glass-card overflow-hidden hover-glow transition-all duration-500 border-white/5">
+                  <div className="absolute top-3 right-3 z-10">
+                    <span className="px-2 py-1 rounded-md bg-[var(--st-color-primary)]/10 border border-[var(--st-color-primary)]/20 text-[8px] font-headline font-bold text-[var(--st-color-primary)] uppercase tracking-wider">Recommended Mission</span>
+                  </div>
+                  <div className="aspect-video relative overflow-hidden">
+                    <img src={course.thumbnail_url || 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&auto=format&fit=crop&q=60'} alt={course.title} className="w-full h-full object-cover grayscale opacity-40 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 scale-110 group-hover:scale-100" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent"></div>
+                  </div>
+                  <div className="p-6 space-y-4">
+                    <h3 className="text-lg font-headline font-bold text-white group-hover:text-[var(--st-color-primary)] transition-colors">{course.title}</h3>
+                    <div className="flex items-center justify-between text-[10px] text-on-surface-variant/60 font-headline uppercase tracking-widest">
+                      <span>{course.category || 'Tech'}</span>
+                      <button onClick={() => navigate('/student/courses')} className="text-[var(--st-color-primary)] hover:underline">Enroll Now</button>
+                    </div>
+                  </div>
+                </div>
               ))
             ) : (
               <div className="col-span-2 glass-card p-10 text-center space-y-4 border-dashed border-white/5 bg-white/[0.01]">

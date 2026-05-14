@@ -20,13 +20,18 @@ BEGIN
     END IF;
 END $$;
 
--- 3. Quizzes Table Alignment
+-- 3. Lessons Table Alignment
+-- Add course_id to lessons for optimized counting and flat querying
+ALTER TABLE public.lessons 
+ADD COLUMN IF NOT EXISTS course_id UUID REFERENCES public.courses(id) ON DELETE CASCADE;
+
+-- 4. Quizzes Table Alignment
 -- The frontend expects certain fields. Let's ensure basic ones exist.
 ALTER TABLE public.quizzes 
 ADD COLUMN IF NOT EXISTS description TEXT,
 ADD COLUMN IF NOT EXISTS time_limit INTEGER DEFAULT 20;
 
--- 4. RLS Policy Fixes
+-- 5. RLS Policy Fixes
 -- Ensure instructors can insert their own courses
 DROP POLICY IF EXISTS "Instructors can insert courses" ON public.courses;
 CREATE POLICY "Instructors can insert courses" ON public.courses
@@ -42,10 +47,10 @@ DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profi
 CREATE POLICY "Public profiles are viewable by everyone" ON public.profiles
 FOR SELECT USING (true);
 
--- 5. Permissions
+-- 6. Permissions
 GRANT ALL ON ALL TABLES IN SCHEMA public TO authenticated;
 GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO authenticated;
 
--- 6. RELOAD SCHEMA CACHE
+-- 7. RELOAD SCHEMA CACHE
 -- This is CRITICAL for PostgREST to recognize the new columns
 NOTIFY pgrst, 'reload schema';

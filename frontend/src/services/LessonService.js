@@ -2,77 +2,121 @@ import { supabase } from '../lib/supabase';
 
 export const LessonService = {
   /**
-   * Fetch completed lessons for a student in a course
-   * @param {string} studentId 
-   * @param {string} courseId 
+   * Fetch detailed progress for all lessons in a course for a student
    */
-  getCompletedLessons: async (studentId, courseId) => {
-    // For now, we use a hybrid approach: try to get from enrollments metadata, 
-    // fallback to localStorage if needed.
-    const { data: enrollment } = await supabase
-      .from('enrollments')
-      .select('metadata')
+  getCourseProgress: async (studentId, courseId) => {
+    const { data, error } = await supabase
+      .from('lesson_progress')
+      .select('*')
       .eq('student_id', studentId)
-      .eq('course_id', courseId)
-      .single();
+      .eq('course_id', courseId);
 
-    return enrollment?.metadata?.completed_lessons || [];
+    if (error) throw error;
+    return data || [];
   },
 
   /**
-   * Mark a lesson as completed
-   * @param {string} studentId 
-   * @param {string} courseId 
-   * @param {string} lessonId 
+   * Update watch progress for a lesson
    */
-  markLessonComplete: async (studentId, courseId, lessonId) => {
-    // 1. Get current metadata
-    const { data: enrollment } = await supabase
-      .from('enrollments')
-      .select('metadata, progress')
-      .eq('student_id', studentId)
-      .eq('course_id', courseId)
+  updateWatchProgress: async (studentId, courseId, lessonId, timestamp, percentage) => {
+    const { data, error } = await supabase
+      .from('lesson_progress')
+      .upsert({
+        student_id: studentId,
+        course_id: courseId,
+        lesson_id: lessonId,
+        last_timestamp: timestamp,
+        completion_percentage: Math.max(0, Math.min(100, percentage)),
+        status: percentage >= 90 ? 'completed' : 'in_progress', // Auto-complete at 90%
+        last_accessed_at: new Date().toISOString()
+      }, { onConflict: 'student_id, lesson_id' })
+      .select()
       .single();
 
-    const currentLessons = enrollment?.metadata?.completed_lessons || [];
+    if (error) throw error;
     
-    if (currentLessons.includes(lessonId)) return enrollment;
+    // If marked as completed, update the overall enrollment progress
+    if (percentage >= 90) {
+      await LessonService.syncOverallProgress(studentId, courseId);
+    }
 
-    const newCompletedLessons = [...currentLessons, lessonId];
+    return data;
+  },
 
-    // 2. Fetch total lesson count for this course to calculate progress
-    const { count } = await supabase
-      .from('course_content')
-      .select('*', { count: 'exact', head: true })
-      .eq('course_id', courseId);
-
-    const totalLessons = count || 1;
-    const newProgress = Math.round((newCompletedLessons.length / totalLessons) * 100);
-
-    // 3. Update enrollment
+  /**
+   * Manually mark a lesson as completed
+   */
+  markLessonComplete: async (studentId, courseId, lessonId) => {
     const { data, error } = await supabase
-      .from('enrollments')
-      .update({
-        metadata: { ...enrollment?.metadata, completed_lessons: newCompletedLessons },
-        progress: newProgress,
-        status: newProgress >= 100 ? 'completed' : 'active'
-      })
-      .eq('student_id', studentId)
-      .eq('course_id', courseId)
+      .from('lesson_progress')
+      .upsert({
+        student_id: studentId,
+        course_id: courseId,
+        lesson_id: lessonId,
+        status: 'completed',
+        completion_percentage: 100,
+        last_accessed_at: new Date().toISOString()
+      }, { onConflict: 'student_id, lesson_id' })
       .select()
       .single();
 
     if (error) throw error;
 
-    // 4. Log activity
-    await supabase.from('audit_logs').insert({
-      actor_id: studentId,
-      action: 'LESSON_COMPLETED',
-      target_type: 'course_content',
-      target_id: lessonId,
-      metadata: { course_id: courseId, progress: newProgress }
-    });
+    await LessonService.syncOverallProgress(studentId, courseId);
+    return data;
+  },
 
+  /**
+   * Sync overall course progress in enrollments table
+   */
+  syncOverallProgress: async (studentId, courseId) => {
+    // 1. Count total lessons
+    const { count: totalLessons } = await supabase
+      .from('lessons')
+      .select('*', { count: 'exact', head: true })
+      .eq('course_id', courseId);
+
+    // 2. Count completed lessons from lesson_progress
+    const { count: completedLessons } = await supabase
+      .from('lesson_progress')
+      .select('*', { count: 'exact', head: true })
+      .eq('student_id', studentId)
+      .eq('course_id', courseId)
+      .eq('status', 'completed');
+
+    const progress = Math.round(((completedLessons || 0) / (totalLessons || 1)) * 100);
+
+    // 3. Update enrollment
+    await supabase
+      .from('enrollments')
+      .update({ 
+        progress,
+        status: progress >= 100 ? 'completed' : 'active',
+        updated_at: new Date().toISOString()
+      })
+      .eq('student_id', studentId)
+      .eq('course_id', courseId);
+
+    // 4. Update XP in profile if newly completed? (Optional logic here)
+  },
+
+  /**
+   * Generic update for lesson progress (e.g., last_accessed_at, notes)
+   */
+  updateLessonProgress: async (studentId, courseId, lessonId, updates) => {
+    const { data, error } = await supabase
+      .from('lesson_progress')
+      .upsert({
+        student_id: studentId,
+        course_id: courseId,
+        lesson_id: lessonId,
+        ...updates,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'student_id, lesson_id' })
+      .select()
+      .single();
+
+    if (error) throw error;
     return data;
   }
 };

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   BarChart2, TrendingUp, Clock, 
@@ -29,17 +30,34 @@ const cardStyle = {
 const Analytics = () => {
   const [metricsData, setMetricsData] = useState(null);
   const [retentionData, setRetentionData] = useState([]);
+  const [courseInfo, setCourseInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchParams] = useSearchParams();
+  const courseId = searchParams.get('courseId');
 
   useEffect(() => {
     const loadAnalytics = async () => {
       try {
-        const [m, r] = await Promise.all([
-          InstructorService.getAnalyticsMetrics(),
-          InstructorService.getRetentionData(),
-        ]);
+        setIsLoading(true);
+        // If courseId is provided, fetch specific analytics, else fetch overall
+        const promises = [
+          courseId 
+            ? InstructorService.getCourseAnalytics(courseId)
+            : InstructorService.getAnalyticsMetrics(),
+          courseId
+            ? InstructorService.getCourseRetention(courseId)
+            : InstructorService.getRetentionData(),
+        ];
+
+        if (courseId) {
+          // Fetch course details
+          promises.push(InstructorService.getCourseById(courseId).catch(() => null));
+        }
+
+        const [m, r, c] = await Promise.all(promises);
         setMetricsData(m);
         setRetentionData(r);
+        if (c) setCourseInfo(c);
       } catch (error) {
         console.error("Failed to load analytics:", error);
       } finally {
@@ -47,7 +65,7 @@ const Analytics = () => {
       }
     };
     loadAnalytics();
-  }, []);
+  }, [courseId]);
 
   const metrics = [
     { label: 'Watch Time', value: metricsData?.watchTime || '0h', trend: '+18.2%', icon: Play, up: true },
@@ -63,9 +81,13 @@ const Analytics = () => {
         <div>
           <div className="code-label" style={{ color: 'rgba(195,244,0,0.5)', marginBottom: 10 }}>// Real-Time Data Synthesis Engine</div>
           <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 30, color: '#fff', textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
-            Performance <span style={{ color: '#c3f400' }}>Intelligence</span>
+            {courseInfo ? `Intelligence: ${courseInfo.title}` : 'Performance Intelligence'}
           </h1>
-          <p className="code-label" style={{ color: 'rgba(255,255,255,0.3)', marginTop: 8 }}>Real-time Institutional Data Synthesis</p>
+          <p className="code-label" style={{ color: 'rgba(255,255,255,0.3)', marginTop: 8 }}>
+            {courseInfo 
+              ? `Real-time synchronization for CID: ${courseInfo.id.slice(0, 8)}`
+              : 'Real-time synchronization across all your active learning sequences.'}
+          </p>
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
           <button className="register-btn" style={{ width: 'auto', padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}>

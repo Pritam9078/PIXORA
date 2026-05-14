@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
+
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
@@ -167,9 +168,11 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
 
+  const redirectAttempted = useRef(false);
+
   // Redirect if already logged in
   useEffect(() => {
-    if (user) {
+    if (user && !redirectAttempted.current) {
       // Prioritize profile role, fallback to metadata role
       const role = profile?.role || user.user_metadata?.role || 'student';
       
@@ -182,10 +185,17 @@ export default function LoginPage() {
       };
       
       const targetPath = dashboardRoutes[role] || '/student/dashboard';
-      console.log(`LoginPage: Redirecting to ${targetPath} (Role: ${role})`);
-      navigate(targetPath);
+      
+      // Prevent redundant navigation if already at the target path
+      if (window.location.pathname !== targetPath) {
+        console.log(`LoginPage: Redirecting to ${targetPath} (Role: ${role})`);
+        redirectAttempted.current = true;
+        navigate(targetPath, { replace: true });
+      }
     }
   }, [user, profile?.role, navigate]);
+
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();

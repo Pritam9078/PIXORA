@@ -13,6 +13,7 @@ import { useStudentTheme } from '../../context/StudentThemeContext';
 import { CourseService } from '../../services/CourseService';
 import { SubmissionService } from '../../services/SubmissionService';
 import { QuizService } from '../../services/QuizService';
+import { RealtimeService } from '../../services/RealtimeService';
 import { supabase } from '../../lib/supabase';
 
 const StatCard = ({ title, value, icon: Icon, color, trend }) => (
@@ -78,42 +79,66 @@ const StudentDashboard = () => {
   const { profile, user } = useAuth();
   const { currentTheme } = useStudentTheme();
   
-  const [enrolledCourses, setEnrolledCourses] = React.useState([]);
-  const [availableCourses, setAvailableCourses] = React.useState([]);
-  const [assignments, setAssignments] = React.useState([]);
-  const [quizzes, setQuizzes] = React.useState([]);
-  const [liveClasses, setLiveClasses] = React.useState([]);
-  const [isLoading, setIsLoading] = React.useState(true);
+  console.log('--- PIXORA DASHBOARD V3 ---');
+
+  
+  const [enrolledCourses, setEnrolledCourses] = useState([]);
+  const [availableCourses, setAvailableCourses] = useState([]);
+  const [assignments, setAssignments] = useState([]);
+  const [quizzes, setQuizzes] = useState([]);
+  const [liveClasses, setLiveClasses] = useState([]);
+  const [learningStats, setLearningStats] = useState(null);
+  const [resumeData, setResumeData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const isFetching = useRef(false);
   const mounted = useRef(true);
 
-  React.useEffect(() => {
+  useEffect(() => {
     return () => { mounted.current = false; };
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const loadDashboardData = async () => {
-      // If we don't have a user, we can't fetch anything.
-      // If we're already fetching, don't start again.
       if (!user?.id || isFetching.current) return;
       
+      const safetyTimeout = setTimeout(() => {
+        if (mounted.current && isLoading) {
+          console.warn('Dashboard: Safety timeout reached, forcing render');
+          setIsLoading(false);
+        }
+      }, 3000);
+
       try {
         isFetching.current = true;
         setIsLoading(true);
         
-        console.log('Dashboard: Fetching data for user', user.id);
+        console.log('Dashboard: Initializing data fetch for:', user.id);
         
-        // We can fetch courses and assignments with just user.id
-        // availableCourses needs college_id which is in profile
-        const [coursesData, availableData, assignmentsData, quizzesData] = await Promise.all([
-          CourseService.getEnrolledCourses(user.id),
-          profile?.college_id ? CourseService.getAvailableCourses(profile.college_id) : Promise.resolve([]),
-          SubmissionService.getAssignments(user.id),
-          QuizService.getQuizzes(user.id)
-        ]);
+        // Fetch core data with a race against a timeout to prevent hanging
+        const fetchData = async () => {
+          try {
+            const [coursesData, availableData, assignmentsData, quizzesData, statsData, lastLesson] = await Promise.all([
+              CourseService.getEnrolledCourses(user.id).catch(e => { console.warn(e); return []; }),
+              profile?.college_id ? CourseService.getAvailableCourses(profile.college_id).catch(e => { console.warn(e); return []; }) : CourseService.getAvailableCourses().catch(e => { console.warn(e); return []; }),
+              SubmissionService.getAssignments(user.id).catch(e => { console.warn(e); return []; }),
+              QuizService.getQuizzes(user.id).catch(e => { console.warn(e); return []; }),
+              CourseService.getStudentLearningStats(user.id).catch(e => { console.warn(e); return null; }),
+              CourseService.getContinueLearning(user.id).catch(e => { console.warn(e); return null; })
+            ]);
+            return { coursesData, availableData, assignmentsData, quizzesData, statsData, lastLesson };
+          } catch (e) {
+            console.error('Dashboard: Data fetch failed', e);
+            return null;
+          }
+        };
 
-        if (mounted.current) {
+        const result = await fetchData();
+
+        if (mounted.current && result) {
+          const { coursesData, availableData, assignmentsData, quizzesData, statsData, lastLesson } = result;
           setEnrolledCourses(coursesData || []);
+          setLearningStats(statsData);
+          setResumeData(lastLesson);
           
           const enrolledIds = new Set((coursesData || []).map(c => c.course_id));
           const filteredAvailable = (availableData || []).filter(c => !enrolledIds.has(c.id));
@@ -121,6 +146,7 @@ const StudentDashboard = () => {
           
           setAssignments(assignmentsData || []);
           setQuizzes(quizzesData || []);
+
           
           if (coursesData && coursesData.length > 0) {
             try {
@@ -139,6 +165,7 @@ const StudentDashboard = () => {
       } catch (error) {
         console.error('Error loading dashboard data:', error);
       } finally {
+        clearTimeout(safetyTimeout);
         if (mounted.current) {
           setIsLoading(false);
           isFetching.current = false;
@@ -149,15 +176,38 @@ const StudentDashboard = () => {
     loadDashboardData();
   }, [user?.id, profile?.id]);
 
+  // --- Real-time Subscriptions ---
+  useEffect(() => {
+    if (!user?.id || enrolledCourses.length === 0) return;
 
-  if (isLoading) {
-    return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
-        <Loader2 className="w-10 h-10 text-[var(--st-color-primary)] animate-spin" />
-        <p className="text-on-surface-variant/40 font-headline font-bold text-[10px] uppercase tracking-[0.2em]">Synchronizing Portal Access...</p>
-      </div>
-    );
-  }
+    console.log('Dashboard: Initializing real-time synchronization...');
+    
+    // 1. Subscribe to progress updates
+    const progressSub = RealtimeService.subscribeToProgress(user.id, (payload) => {
+      console.log('Dashboard: Progress update received', payload);
+      // Refresh only the affected course if possible, or reload all
+      setEnrolledCourses(prev => prev.map(c => 
+        c.id === payload.new.id ? { ...c, ...payload.new } : c
+      ));
+    });
+
+    // 2. Subscribe to all course-related changes
+    const courseIds = enrolledCourses.map(c => c.course_id);
+    const multiSub = RealtimeService.subscribeToAllCourses(courseIds, (payload) => {
+      console.log('Dashboard: Course update received', payload);
+      // For curriculum/assessment changes, we usually want to refresh relevant states
+      // but for now we'll just log and let the user know data is fresh.
+    });
+
+    return () => {
+      RealtimeService.unsubscribe(progressSub);
+      multiSub.unsubscribe();
+    };
+  }, [user?.id, enrolledCourses.length]);
+
+
+
+
 
   const isGameDev = currentTheme.id === 'game_dev';
   const isBlockchain = currentTheme.id === 'blockchain';
@@ -168,11 +218,13 @@ const StudentDashboard = () => {
   const levelProgress = ((currentLevelXP % 1000) / 1000) * 100;
 
   const stats = [
-    { title: 'Enrolled Tracks', value: enrolledCourses.length.toString().padStart(2, '0'), icon: BookOpen, color: 'var(--st-color-primary)' },
-    { title: 'Knowledge XP', value: (profile?.xp_points || 0).toLocaleString(), icon: Zap, color: 'var(--st-color-primary)' },
-    { title: 'Learning Streak', value: `${profile?.current_streak || 0} Days`, icon: Flame, color: 'var(--st-color-primary)' },
+    { title: 'Enrolled Tracks', value: (learningStats?.totalEnrolled || 0).toString().padStart(2, '0'), icon: BookOpen, color: 'var(--st-color-primary)' },
+    { title: 'Knowledge XP', value: (learningStats?.xp || 0).toLocaleString(), icon: Zap, color: 'var(--st-color-primary)' },
+    { title: 'Learning Streak', value: `${learningStats?.streak || 0} Days`, icon: Flame, color: 'var(--st-color-primary)' },
     { title: 'Pending Tasks', value: assignments.filter(a => !a.mySubmission).length.toString().padStart(2, '0'), icon: Target, color: 'var(--st-color-primary)' },
   ];
+
+
 
   return (
     <div className="max-w-7xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-1000">
@@ -199,11 +251,11 @@ const StudentDashboard = () => {
             </p>
             <div className="flex flex-wrap justify-center md:justify-start gap-4">
               <button 
-                onClick={() => enrolledCourses && enrolledCourses.length > 0 && enrolledCourses[0].course_id && navigate(`/student/course/${enrolledCourses[0].course_id}`)}
+                onClick={() => resumeData ? navigate(`/student/course/${resumeData.course_id}?lesson=${resumeData.lesson_id}`) : navigate('/student/courses')}
                 className="btn-primary !px-8"
               >
                 <Play size={18} fill="currentColor" />
-                <span>Jump Back In</span>
+                <span>{resumeData ? 'Jump Back In' : 'Start Mission'}</span>
               </button>
               <button 
                 onClick={() => navigate('/student/community')}

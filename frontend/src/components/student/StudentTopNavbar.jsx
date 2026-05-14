@@ -15,13 +15,19 @@ const StudentTopNavbar = ({ isSidebarOpen, setSidebarOpen }) => {
             <Menu size={20} />
           </button>
         )}
-        <div className="relative max-w-md w-full hidden md:block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" size={18} />
-          <input 
-            type="text" 
-            placeholder="Search terminal..."
-            className="w-full bg-white/5 border border-white/10 rounded-full py-2 pl-10 pr-4 text-xs font-body focus:outline-none focus:border-[var(--st-color-primary)]/50 focus:ring-1 focus:ring-[var(--st-color-primary)]/20 transition-all placeholder:text-on-surface-variant/50"
-          />
+        <div className="flex items-center gap-3">
+          <div className="relative max-w-md w-full hidden md:block">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" size={18} />
+            <input 
+              type="text" 
+              placeholder="Search terminal..."
+              className="w-full bg-white/5 border border-white/10 rounded-full py-2 pl-10 pr-4 text-xs font-body focus:outline-none focus:border-[var(--st-color-primary)]/50 focus:ring-1 focus:ring-[var(--st-color-primary)]/20 transition-all placeholder:text-on-surface-variant/50"
+            />
+          </div>
+          <div className="hidden lg:flex items-center gap-2 px-3 py-1 bg-green-500/5 rounded-full border border-green-500/10 transition-all hover:bg-green-500/10">
+            <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e]"></div>
+            <span className="text-[10px] font-headline font-black text-green-500 uppercase tracking-widest">Systems Operational</span>
+          </div>
         </div>
       </div>
 

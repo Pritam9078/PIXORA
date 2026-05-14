@@ -103,6 +103,27 @@ export const RealtimeService = {
   },
 
   /**
+   * Subscribe to multiple courses at once
+   */
+  subscribeToAllCourses: (courseIds, callback) => {
+    const channels = courseIds.map(id => ({
+      curriculum: RealtimeService.subscribeToCurriculum(id, callback),
+      assessments: RealtimeService.subscribeToAssessments(id, callback),
+      announcements: RealtimeService.subscribeToAnnouncements(id, callback)
+    }));
+
+    return {
+      unsubscribe: () => {
+        channels.forEach(ch => {
+          RealtimeService.unsubscribe(ch.curriculum);
+          RealtimeService.unsubscribe(ch.assessments);
+          RealtimeService.unsubscribe(ch.announcements);
+        });
+      }
+    };
+  },
+
+  /**
    * Clean up a specific subscription
    */
   unsubscribe: (channel) => {
@@ -111,3 +132,4 @@ export const RealtimeService = {
     }
   }
 };
+

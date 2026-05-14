@@ -157,7 +157,8 @@ const MyCourses = () => {
               </div>
               <div className="text-right">
                 <p className="text-[9px] font-headline font-black text-on-surface-variant/30 uppercase tracking-widest mb-1">Streak</p>
-                <p className="text-3xl font-headline font-bold text-white tracking-tight">{stats.streak} <span className="text-sm text-white/40">Days</span></p>
+                <p className="text-xl font-headline font-bold text-white tracking-tight">{stats.streak} <span className="text-[10px] text-white/40">Days</span></p>
+
               </div>
             </div>
             <div className="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden relative z-10">
@@ -175,7 +176,8 @@ const MyCourses = () => {
               </div>
               <div className="text-right">
                 <p className="text-[9px] font-headline font-black text-on-surface-variant/30 uppercase tracking-widest mb-1">Experience</p>
-                <p className="text-3xl font-headline font-bold text-white tracking-tight">{stats.xp} <span className="text-sm text-white/40">XP</span></p>
+                <p className="text-xl font-headline font-bold text-white tracking-tight">{stats.xp} <span className="text-[10px] text-white/40">XP</span></p>
+
               </div>
             </div>
             <div className="mt-4 flex gap-1 relative z-10">
@@ -194,7 +196,8 @@ const MyCourses = () => {
               <div className="flex-1 space-y-2">
                 <div className="flex justify-between items-end">
                   <p className="text-[9px] font-headline font-black text-on-surface-variant/40 uppercase tracking-widest">Global Completion Matrix</p>
-                  <p className="text-2xl font-headline font-bold text-white">{stats.avgProgress}%</p>
+                  <p className="text-xl font-headline font-bold text-white">{stats.avgProgress}%</p>
+
                 </div>
                 <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden p-0.5">
                   <motion.div 

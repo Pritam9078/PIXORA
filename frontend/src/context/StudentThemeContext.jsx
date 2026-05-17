@@ -91,8 +91,14 @@ export const StudentThemeProvider = ({ children }) => {
     root.style.setProperty('--st-theme-id', currentTheme.id);
   }, [currentTheme]);
 
+  const setTheme = (themeId) => {
+    if (themes[themeId]) {
+      setCurrentTheme(themes[themeId]);
+    }
+  };
+
   return (
-    <StudentThemeContext.Provider value={{ currentTheme, themes }}>
+    <StudentThemeContext.Provider value={{ currentTheme, themes, setTheme }}>
       <div className={`student-theme-${currentTheme.id} min-h-screen bg-[var(--st-color-background)] text-[var(--st-color-text)]`}>
         {children}
       </div>

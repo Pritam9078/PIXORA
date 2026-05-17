@@ -4,7 +4,8 @@ import {
   LayoutDashboard, BookOpen, PlusCircle, Library, 
   FileText, Target, Users, BarChart, Monitor, 
   MessageSquare, Bell, Wallet, Settings, LogOut,
-  Menu, X, Search, Zap, GraduationCap, ChevronRight
+  Menu, X, Search, Zap, GraduationCap, ChevronRight,
+  Calendar, CheckSquare, Award
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Toaster } from 'react-hot-toast';
@@ -15,21 +16,31 @@ const InstructorLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const navItems = [
+  const coreItems = [
     { name: 'Dashboard', path: '/instructor/dashboard', icon: LayoutDashboard },
     { name: 'My Courses', path: '/instructor/courses', icon: BookOpen },
     { name: 'Course Builder', path: '/instructor/builder', icon: PlusCircle },
-    { name: 'Content Library', path: '/instructor/library', icon: Library },
     { name: 'Assignments', path: '/instructor/assignments', icon: FileText },
     { name: 'Quizzes', path: '/instructor/quizzes', icon: Target },
     { name: 'Students', path: '/instructor/students', icon: Users },
-    { name: 'Analytics', path: '/instructor/analytics', icon: BarChart },
   ];
 
-  const networkItems = [
+  const coachingItems = [
+    { name: 'Mentorship', path: '/instructor/mentorship', icon: Calendar },
+    { name: 'Deliverables', path: '/instructor/deliverables', icon: CheckSquare },
+    { name: 'Evaluations', path: '/instructor/evaluations', icon: Award },
+  ];
+
+  const operationsItems = [
+    { name: 'Analytics', path: '/instructor/analytics', icon: BarChart },
     { name: 'Live Classes', path: '/instructor/live', icon: Monitor },
     { name: 'Community', path: '/instructor/community', icon: MessageSquare },
     { name: 'Notifications', path: '/instructor/notifications', icon: Bell },
+    { name: 'Resources', path: '/instructor/resources', icon: Library },
+  ];
+
+  const financialItems = [
+    { name: 'Certificates', path: '/instructor/certificates', icon: GraduationCap },
     { name: 'Earnings', path: '/instructor/earnings', icon: Wallet },
   ];
 
@@ -79,12 +90,12 @@ const InstructorLayout = () => {
         </div>
 
         {/* Nav */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 24 }} className="custom-scrollbar">
+        <div style={{ flex: 1, overflowY: 'auto', padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 20 }} className="custom-scrollbar">
           <div>
             {isSidebarOpen && (
-              <div style={{ fontFamily: "'Space Grotesk', monospace", fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0 8px', marginBottom: 8 }}>Management</div>
+              <div style={{ fontFamily: "'Space Grotesk', monospace", fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0 8px', marginBottom: 6 }}>Ecosystem Core</div>
             )}
-            {navItems.map((item) => {
+            {coreItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
                 <Link
@@ -94,11 +105,11 @@ const InstructorLayout = () => {
                     display: 'flex',
                     alignItems: 'center',
                     gap: 12,
-                    padding: '10px 12px',
+                    padding: '8px 12px',
                     marginBottom: 2,
                     fontFamily: "'Space Grotesk', sans-serif",
                     fontWeight: 600,
-                    fontSize: 13,
+                    fontSize: 12,
                     letterSpacing: '0.05em',
                     textTransform: 'uppercase',
                     textDecoration: 'none',
@@ -108,7 +119,7 @@ const InstructorLayout = () => {
                     transition: 'all 0.15s ease',
                   }}
                 >
-                  <item.icon size={17} style={{ flexShrink: 0, color: isActive ? '#c3f400' : 'rgba(255,255,255,0.3)' }} />
+                  <item.icon size={16} style={{ flexShrink: 0, color: isActive ? '#c3f400' : 'rgba(255,255,255,0.3)' }} />
                   {isSidebarOpen && <span>{item.name}</span>}
                 </Link>
               );
@@ -117,9 +128,9 @@ const InstructorLayout = () => {
 
           <div>
             {isSidebarOpen && (
-              <div style={{ fontFamily: "'Space Grotesk', monospace", fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0 8px', marginBottom: 8 }}>Operations</div>
+              <div style={{ fontFamily: "'Space Grotesk', monospace", fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0 8px', marginBottom: 6 }}>Coaching</div>
             )}
-            {networkItems.map((item) => {
+            {coachingItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
                 <Link
@@ -129,11 +140,11 @@ const InstructorLayout = () => {
                     display: 'flex',
                     alignItems: 'center',
                     gap: 12,
-                    padding: '10px 12px',
+                    padding: '8px 12px',
                     marginBottom: 2,
                     fontFamily: "'Space Grotesk', sans-serif",
                     fontWeight: 600,
-                    fontSize: 13,
+                    fontSize: 12,
                     letterSpacing: '0.05em',
                     textTransform: 'uppercase',
                     textDecoration: 'none',
@@ -143,7 +154,77 @@ const InstructorLayout = () => {
                     transition: 'all 0.15s ease',
                   }}
                 >
-                  <item.icon size={17} style={{ flexShrink: 0, color: isActive ? '#c3f400' : 'rgba(255,255,255,0.3)' }} />
+                  <item.icon size={16} style={{ flexShrink: 0, color: isActive ? '#c3f400' : 'rgba(255,255,255,0.3)' }} />
+                  {isSidebarOpen && <span>{item.name}</span>}
+                </Link>
+              );
+            })}
+          </div>
+
+          <div>
+            {isSidebarOpen && (
+              <div style={{ fontFamily: "'Space Grotesk', monospace", fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0 8px', marginBottom: 6 }}>Operations</div>
+            )}
+            {operationsItems.map((item) => {
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.name}
+                  to={item.path}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '8px 12px',
+                    marginBottom: 2,
+                    fontFamily: "'Space Grotesk', sans-serif",
+                    fontWeight: 600,
+                    fontSize: 12,
+                    letterSpacing: '0.05em',
+                    textTransform: 'uppercase',
+                    textDecoration: 'none',
+                    color: isActive ? '#c3f400' : 'rgba(255,255,255,0.4)',
+                    background: isActive ? 'rgba(195,244,0,0.08)' : 'transparent',
+                    borderLeft: isActive ? '2px solid #c3f400' : '2px solid transparent',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <item.icon size={16} style={{ flexShrink: 0, color: isActive ? '#c3f400' : 'rgba(255,255,255,0.3)' }} />
+                  {isSidebarOpen && <span>{item.name}</span>}
+                </Link>
+              );
+            })}
+          </div>
+
+          <div>
+            {isSidebarOpen && (
+              <div style={{ fontFamily: "'Space Grotesk', monospace", fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0 8px', marginBottom: 6 }}>Rewards</div>
+            )}
+            {financialItems.map((item) => {
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.name}
+                  to={item.path}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '8px 12px',
+                    marginBottom: 2,
+                    fontFamily: "'Space Grotesk', sans-serif",
+                    fontWeight: 600,
+                    fontSize: 12,
+                    letterSpacing: '0.05em',
+                    textTransform: 'uppercase',
+                    textDecoration: 'none',
+                    color: isActive ? '#c3f400' : 'rgba(255,255,255,0.4)',
+                    background: isActive ? 'rgba(195,244,0,0.08)' : 'transparent',
+                    borderLeft: isActive ? '2px solid #c3f400' : '2px solid transparent',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <item.icon size={16} style={{ flexShrink: 0, color: isActive ? '#c3f400' : 'rgba(255,255,255,0.3)' }} />
                   {isSidebarOpen && <span>{item.name}</span>}
                 </Link>
               );

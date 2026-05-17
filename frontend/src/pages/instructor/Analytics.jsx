@@ -154,7 +154,7 @@ const Analytics = () => {
             {isLoading ? (
               <div style={{ width: '100%', height: '100%', background: 'rgba(255,255,255,0.02)', animation: 'shimmer 1.5s infinite' }} />
             ) : retentionData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <BarChart data={retentionData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                   <XAxis 

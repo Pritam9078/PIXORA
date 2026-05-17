@@ -6,8 +6,11 @@ import {
   Save, RotateCcw, AlertTriangle, Monitor,
   CheckCircle2, Loader2
 } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import { useSupabaseData } from '../../hooks/useSupabaseData';
 
 const PlatformSettings = () => {
+  const { data: rawSettings } = useSupabaseData('platform_settings');
   const [isSyncing, setIsSyncing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [settings, setSettings] = useState({
@@ -23,13 +26,44 @@ const PlatformSettings = () => {
     { id: 'mobile', title: 'Mobile App Sync', desc: 'Real-time push notifications', enabled: true },
   ]);
 
-  const handleSync = () => {
+  React.useEffect(() => {
+    if (rawSettings && rawSettings.length > 0) {
+      const coreSettings = rawSettings.find(s => s.key === 'core_settings');
+      if (coreSettings) {
+        setSettings({
+          platformName: coreSettings.value.platformName || 'Pixora Cloud',
+          supportEmail: coreSettings.value.supportEmail || 'ops@pixora.io',
+          statusMessage: coreSettings.value.statusMessage || 'All systems operational.',
+        });
+      }
+
+      const featureFlags = rawSettings.find(s => s.key === 'feature_flags');
+      if (featureFlags) {
+        setFeatures(featureFlags.value.features || []);
+      }
+    }
+  }, [rawSettings]);
+
+  const handleSync = async () => {
     setIsSyncing(true);
-    setTimeout(() => {
-      setIsSyncing(false);
+    try {
+      await supabase.from('platform_settings').upsert({
+        key: 'core_settings',
+        value: settings
+      }, { onConflict: 'key' });
+
+      await supabase.from('platform_settings').upsert({
+        key: 'feature_flags',
+        value: { features }
+      }, { onConflict: 'key' });
+
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
-    }, 1500);
+    } catch (err) {
+      console.error('Error saving settings', err);
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   const toggleFeature = (id) => {

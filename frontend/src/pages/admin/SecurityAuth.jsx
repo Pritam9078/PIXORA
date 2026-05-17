@@ -21,6 +21,7 @@ const SecurityAuth = () => {
   const [activeTab, setActiveTab] = useState('Roles');
   const [permissions, setPermissions] = useState(initialPermissions);
   const { data: users } = useSupabaseData('profiles');
+  const { data: rawAdminLogs } = useSupabaseData('admin_logs');
 
   // Calculate role counts dynamically
   const roleStats = useMemo(() => {
@@ -219,20 +220,17 @@ const SecurityAuth = () => {
               </div>
               
               <div className="p-4 space-y-3">
-                {[
-                  { time: '16:45:02', user: 'super_admin', event: 'LOGIN_SUCCESS', method: 'MFA_BYPASS', status: 'OK', ip: '192.168.1.42' },
-                  { time: '16:42:15', user: 'unknown_node', event: 'AUTH_FAILURE', method: 'BRUTE_FORCE', status: 'BLOCKED', ip: '45.22.11.9' },
-                  { time: '16:38:42', user: 'college_admin_3', event: 'PASSWORD_RESET', method: 'RECOVERY_LINK', status: 'OK', ip: '10.0.0.12' },
-                  { time: '16:35:00', user: 'instructor_24', event: 'SESSION_REVOKED', method: 'ADMIN_ACTION', status: 'OK', ip: 'internal' },
-                ].map((log, i) => (
-                  <div key={i} className="flex gap-6 p-2 rounded hover:bg-white/5 transition-all cursor-pointer group">
-                    <span className="text-slate-600 w-16">{log.time}</span>
-                    <span className="text-blue-500 font-bold w-32">[{log.user}]</span>
-                    <span className="text-white font-black w-32">{log.event}</span>
-                    <span className="text-slate-400 flex-1 truncate">{log.method}</span>
-                    <span className={`font-black w-20 text-right ${log.status === 'OK' ? 'text-emerald-500' : 'text-rose-500'}`}>{log.status}</span>
+                {rawAdminLogs && rawAdminLogs.length > 0 ? rawAdminLogs.map((log) => (
+                  <div key={log.id} className="flex gap-6 p-2 rounded hover:bg-white/5 transition-all cursor-pointer group">
+                    <span className="text-slate-600 w-24 truncate">{new Date(log.created_at).toLocaleTimeString()}</span>
+                    <span className="text-blue-500 font-bold w-32 truncate">[{log.admin_email?.split('@')[0] || log.admin_id?.substring(0,8) || 'system'}]</span>
+                    <span className="text-white font-black w-32 truncate">{log.action}</span>
+                    <span className="text-slate-400 flex-1 truncate">{log.details || 'N/A'}</span>
+                    <span className={`font-black w-20 text-right text-emerald-500`}>OK</span>
                   </div>
-                ))}
+                )) : (
+                  <div className="text-slate-500 text-center py-4">No Auth Logs Found</div>
+                )}
               </div>
             </motion.div>
           )}
@@ -244,28 +242,24 @@ const SecurityAuth = () => {
               exit={{ opacity: 0, y: -10 }}
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
             >
-              {[
-                { name: 'Pritam (Super Admin)', device: 'MacBook Pro 16"', location: 'California, US', ip: '192.168.1.42', active: 'NOW' },
-                { name: 'Dr. Sarah (Instructor)', device: 'iPad Air', location: 'London, UK', ip: '82.14.92.1', active: '2m ago' },
-                { name: 'Neo Tokyo Admin', device: 'Windows 11 Desktop', location: 'Tokyo, JP', ip: '114.12.9.22', active: '15m ago' },
-              ].map((session, i) => (
+              {users && users.slice(0,6).map((session, i) => (
                 <div key={i} className="p-6 bg-[#111113] border border-white/5 rounded-xl relative group hover:border-blue-600/30 transition-all">
                   <div className="flex justify-between items-start mb-6">
                     <div className="p-3 bg-white/5 rounded-lg text-slate-400 group-hover:text-blue-500 transition-all">
                       <Monitor size={20} />
                     </div>
-                    <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">{session.active}</span>
+                    <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Active Session</span>
                   </div>
-                  <h3 className="text-sm font-bold text-white mb-1">{session.name}</h3>
-                  <p className="text-xs text-slate-500 mb-4">{session.device}</p>
+                  <h3 className="text-sm font-bold text-white mb-1">{session.full_name || session.email}</h3>
+                  <p className="text-xs text-slate-500 mb-4">{session.role.toUpperCase()}</p>
                   <div className="space-y-2 border-t border-white/5 pt-4">
                     <div className="flex justify-between text-[10px]">
                       <span className="text-slate-600 uppercase font-bold tracking-widest">Location</span>
-                      <span className="text-slate-400">{session.location}</span>
+                      <span className="text-slate-400">Global</span>
                     </div>
                     <div className="flex justify-between text-[10px]">
                       <span className="text-slate-600 uppercase font-bold tracking-widest">Network_IP</span>
-                      <span className="text-slate-400">{session.ip}</span>
+                      <span className="text-slate-400">127.0.0.1</span>
                     </div>
                   </div>
                   <button className="mt-6 w-full py-2 bg-rose-600/10 text-rose-500 text-[10px] font-black uppercase tracking-widest rounded hover:bg-rose-600/20 transition-all">

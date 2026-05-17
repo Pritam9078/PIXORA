@@ -90,7 +90,7 @@ export const EvaluationService = {
       const studentIds = [...new Set(submissions.map(s => s.student_id))];
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, full_name, email, avatar_url')
+        .select('id, full_name, avatar_url')
         .in('id', studentIds);
 
       const profileMap = Object.fromEntries((profiles || []).map(p => [p.id, p]));

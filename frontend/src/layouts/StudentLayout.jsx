@@ -1,13 +1,29 @@
 import React, { useState } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, Navigate } from 'react-router-dom';
 import { useStudentTheme } from '../context/StudentThemeContext';
+import { useAuth } from '../context/AuthContext';
 import GlobalSidebar from '../components/student/GlobalSidebar';
 import StudentTopNavbar from '../components/student/StudentTopNavbar';
 
 const StudentLayout = () => {
   const { currentTheme } = useStudentTheme();
+  const { profile } = useAuth();
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const location = useLocation();
+
+  const isAgnostic = profile && profile.learning_track === 'agnostic';
+  const allowedAgnosticPaths = [
+    '/student/dashboard',
+    '/student/enroll-now',
+    '/student/document-verification',
+    '/student/checkout',
+    '/student/settings'
+  ];
+
+  // Gatekeeper: if agnostic cadet tries to access locked tabs, redirect to dashboard
+  if (isAgnostic && !allowedAgnosticPaths.some(path => location.pathname === path || location.pathname.startsWith(path))) {
+    return <Navigate to="/student/dashboard" replace />;
+  }
 
   // Check if we are in the course player (which needs a specialized layout)
   const isCoursePlayer = location.pathname.includes('/student/course/');

@@ -124,6 +124,82 @@ export const RealtimeService = {
   },
 
   /**
+   * Subscribe to Mentor Feedback updates for a student
+   */
+  subscribeToMentorFeedback: (studentId, callback) => {
+    return supabase
+      .channel(`mentor-feedback-${studentId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'mentor_feedback',
+          filter: `student_id=eq.${studentId}`
+        },
+        payload => callback(payload)
+      )
+      .subscribe();
+  },
+
+  /**
+   * Subscribe to Evaluation Reports for a student
+   */
+  subscribeToEvaluations: (studentId, callback) => {
+    return supabase
+      .channel(`evaluations-${studentId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'evaluation_reports',
+          filter: `student_id=eq.${studentId}`
+        },
+        payload => callback(payload)
+      )
+      .subscribe();
+  },
+
+  /**
+   * Subscribe to Internship Status updates
+   */
+  subscribeToInternships: (studentId, callback) => {
+    return supabase
+      .channel(`internships-${studentId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'internship_status',
+          filter: `student_id=eq.${studentId}`
+        },
+        payload => callback(payload)
+      )
+      .subscribe();
+  },
+
+  /**
+   * Subscribe to GitHub Activity updates
+   */
+  subscribeToGitHub: (studentId, callback) => {
+    return supabase
+      .channel(`github-${studentId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'github_activity',
+          filter: `student_id=eq.${studentId}`
+        },
+        payload => callback(payload)
+      )
+      .subscribe();
+  },
+
+  /**
    * Clean up a specific subscription
    */
   unsubscribe: (channel) => {

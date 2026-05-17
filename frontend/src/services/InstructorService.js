@@ -256,7 +256,7 @@ export const InstructorService = {
       const { data: profiles, error: profilesError } = await withTimeout(
         supabase
           .from('profiles')
-          .select('id, full_name, email, avatar_url')
+          .select('id, full_name, avatar_url, email')
           .in('id', studentIds)
       );
 
@@ -266,10 +266,95 @@ export const InstructorService = {
 
       const profileMap = Object.fromEntries((profiles || []).map(p => [p.id, p]));
 
+      // Step 2b: Parallel fetches for cohort, github, internship, evaluations
+      let cohortsMap = {};
+      try {
+        const { data: cohorts } = await supabase
+          .from('cohort_progress')
+          .select('student_id, cohort_id, attendance_percentage, assignments_completed, quizzes_completed, status')
+          .in('student_id', studentIds);
+        cohorts?.forEach(c => {
+          cohortsMap[c.student_id] = c;
+        });
+      } catch (err) {
+        console.warn('cohort_progress fetch failed:', err.message);
+      }
+
+      let githubMap = {};
+      try {
+        const { data: gh } = await supabase
+          .from('github_activity')
+          .select('student_id, repo_name, commits_count, pull_requests_count, additions, deletions')
+          .in('student_id', studentIds);
+        gh?.forEach(g => {
+          if (!githubMap[g.student_id]) githubMap[g.student_id] = [];
+          githubMap[g.student_id].push(g);
+        });
+      } catch (err) {
+        console.warn('github_activity fetch failed:', err.message);
+      }
+
+      let internshipMap = {};
+      try {
+        const { data: intern } = await supabase
+          .from('internship_status')
+          .select('student_id, company_name, role_title, status')
+          .in('student_id', studentIds);
+        intern?.forEach(i => {
+          internshipMap[i.student_id] = i;
+        });
+      } catch (err) {
+        console.warn('internship_status fetch failed:', err.message);
+      }
+
+      let evaluationsMap = {};
+      try {
+        const { data: evals } = await supabase
+          .from('evaluation_reports')
+          .select('student_id, technical_score, soft_skills_score, remarks, evaluation_type, created_at')
+          .in('student_id', studentIds);
+        evals?.forEach(ev => {
+          if (!evaluationsMap[ev.student_id]) evaluationsMap[ev.student_id] = [];
+          evaluationsMap[ev.student_id].push(ev);
+        });
+      } catch (err) {
+        console.warn('evaluation_reports fetch failed:', err.message);
+      }
+
       // Step 3: Merge
       return enrollments.map(e => {
         const profile = profileMap[e.student_id] || {};
         const pct = e.progress ?? 0;
+        const cohort = cohortsMap[e.student_id] || { attendance_percentage: 100, assignments_completed: 0, quizzes_completed: 0, status: 'active', cohort_id: null };
+        const gh = githubMap[e.student_id] || [];
+        const internship = internshipMap[e.student_id] || null;
+        const evals = evaluationsMap[e.student_id] || [];
+
+        const totalCommits = gh.reduce((acc, curr) => acc + (curr.commits_count || 0), 0);
+        const totalPRs = gh.reduce((acc, curr) => acc + (curr.pull_requests_count || 0), 0);
+
+        let riskScore = 0; // 0 = Low, 1 = Med, 2 = High
+        let riskReasons = [];
+        const daysJoined = Math.floor((Date.now() - new Date(e.created_at).getTime()) / 86400000);
+
+        if (pct < 20 && daysJoined > 3) {
+          riskScore = 2;
+          riskReasons.push('Low module progress relative to tenure');
+        }
+        if (cohort.attendance_percentage < 85) {
+          riskScore = Math.max(riskScore, 2);
+          riskReasons.push(`Critically low attendance: ${cohort.attendance_percentage}%`);
+        } else if (cohort.attendance_percentage < 92) {
+          riskScore = Math.max(riskScore, 1);
+          riskReasons.push(`Sub-optimal attendance: ${cohort.attendance_percentage}%`);
+        }
+        if (totalCommits === 0 && daysJoined > 5) {
+          riskScore = Math.max(riskScore, 1);
+          riskReasons.push('Zero active code commits in GitHub');
+        }
+
+        const calculatedStatus = pct >= 100 ? 'completed' : riskScore === 2 ? 'struggling' : 'active';
+
         return {
           id: e.student_id,
           enrollmentId: e.id,
@@ -279,9 +364,17 @@ export const InstructorService = {
           course: courseMap[e.course_id] || 'Unknown Course',
           courseId: e.course_id,
           progress: pct,
-          status: pct >= 100 ? 'completed' : pct > 10 ? 'active' : 'struggling',
-          grade: 'N/A',
+          status: calculatedStatus,
           joinedAt: e.created_at,
+          cohortAttendance: cohort.attendance_percentage,
+          cohortStatus: cohort.status,
+          cohortId: cohort.cohort_id,
+          totalCommits,
+          totalPRs,
+          internship,
+          evals,
+          riskScore,
+          riskReasons
         };
       });
     } catch (error) {
@@ -716,6 +809,40 @@ export const InstructorService = {
       { name: 'Module 3', value: 0 },
       { name: 'End', value: 0 },
     ];
+  },
+
+  async addMentorFeedback(mentorId, studentId, feedbackText, rating) {
+    const { data, error } = await supabase
+      .from('mentor_feedback')
+      .insert([{
+        mentor_id: mentorId,
+        student_id: studentId,
+        feedback_text: feedbackText,
+        rating: parseInt(rating),
+        session_date: new Date().toISOString().split('T')[0]
+      }])
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async addEvaluationReport(evaluatorId, studentId, cohortId, evaluationType, technicalScore, softSkillsScore, remarks) {
+    const { data, error } = await supabase
+      .from('evaluation_reports')
+      .insert([{
+        evaluator_id: evaluatorId,
+        student_id: studentId,
+        cohort_id: cohortId || null,
+        evaluation_type: evaluationType,
+        technical_score: parseInt(technicalScore),
+        soft_skills_score: parseInt(softSkillsScore),
+        remarks
+      }])
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
   },
 };
 

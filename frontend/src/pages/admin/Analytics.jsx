@@ -25,9 +25,12 @@ const data = [
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
 const Analytics = () => {
-  const { data: profiles } = useSupabaseData('profiles');
-  const { data: colleges } = useSupabaseData('colleges');
-  const { data: courses } = useSupabaseData('courses');
+  const { data: profiles, loading: profilesLoading } = useSupabaseData('profiles');
+  const { data: colleges, loading: collegesLoading } = useSupabaseData('colleges');
+  const { data: courses, loading: coursesLoading } = useSupabaseData('courses');
+  const { data: payments, loading: paymentsLoading } = useSupabaseData('payments');
+
+  const isLoading = profilesLoading || collegesLoading || coursesLoading || paymentsLoading;
 
   const stats = useMemo(() => {
     const totalUsers = profiles.length;
@@ -53,6 +56,11 @@ const Analytics = () => {
 
   return (
     <AdminLayout>
+      {isLoading ? (
+        <div className="flex justify-center items-center h-full min-h-[400px]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        </div>
+      ) : (
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
@@ -156,6 +164,7 @@ const Analytics = () => {
           </div>
         </div>
       </div>
+      )}
     </AdminLayout>
   );
 };

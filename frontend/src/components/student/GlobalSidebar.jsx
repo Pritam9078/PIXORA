@@ -13,8 +13,10 @@ const GlobalSidebar = ({ isOpen, setIsOpen }) => {
   const { currentTheme } = useStudentTheme();
   const location = useLocation();
 
-  const isGameDev = currentTheme.id === 'game_dev';
-  const isBlockchain = currentTheme.id === 'blockchain';
+  const { profile } = useAuth();
+  const isAgnostic = !profile || profile.learning_track === 'agnostic';
+  const isGameDev = currentTheme?.id === 'game_dev';
+  const isBlockchain = currentTheme?.id === 'blockchain';
 
   const navItems = [
     { name: 'Dashboard', path: '/student/dashboard', icon: LayoutDashboard },
@@ -55,21 +57,77 @@ const GlobalSidebar = ({ isOpen, setIsOpen }) => {
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 space-y-6 py-4 custom-scrollbar">
+        {/* Onboarding Cadet Pipeline Steps Card */}
+        {isAgnostic && isOpen && (
+          <div className="mx-1 p-3.5 rounded-2xl bg-gradient-to-br from-orange-500/10 to-yellow-500/5 border border-orange-500/20 shadow-lg shadow-orange-500/5 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-headline font-black text-orange-400 uppercase tracking-wider">Cadet Onboarding</span>
+              <span className="text-[9px] bg-orange-500/20 text-orange-300 px-1.5 py-0.5 rounded font-black">INITIALIZING</span>
+            </div>
+            
+            <div className="space-y-2">
+              <Link to="/student/enroll-now" className="flex items-center gap-2.5 group">
+                <div className={`w-4 h-4 rounded-full border flex items-center justify-center text-[9px] font-black transition-all ${
+                  location.pathname === '/student/enroll-now' 
+                    ? 'border-orange-400 text-orange-400 animate-pulse bg-orange-400/10'
+                    : 'border-orange-500/30 text-orange-500/50 group-hover:border-orange-400/50'
+                }`}>1</div>
+                <span className={`text-[11px] font-medium transition-colors ${location.pathname === '/student/enroll-now' ? 'text-orange-300 font-bold' : 'text-on-surface-variant/60 group-hover:text-on-surface-variant'}`}>Choose Track</span>
+              </Link>
+              
+              <Link to="/student/document-verification" className="flex items-center gap-2.5 group">
+                <div className={`w-4 h-4 rounded-full border flex items-center justify-center text-[9px] font-black transition-all ${
+                  location.pathname === '/student/document-verification' 
+                    ? 'border-orange-400 text-orange-400 animate-pulse bg-orange-400/10'
+                    : 'border-orange-500/30 text-orange-500/50 group-hover:border-orange-400/50'
+                }`}>2</div>
+                <span className={`text-[11px] font-medium transition-colors ${location.pathname === '/student/document-verification' ? 'text-orange-300 font-bold' : 'text-on-surface-variant/60 group-hover:text-on-surface-variant'}`}>ID Verification</span>
+              </Link>
+              
+              <Link to="/student/checkout" className="flex items-center gap-2.5 group">
+                <div className={`w-4 h-4 rounded-full border flex items-center justify-center text-[9px] font-black transition-all ${
+                  location.pathname === '/student/checkout' 
+                    ? 'border-orange-400 text-orange-400 animate-pulse bg-orange-400/10'
+                    : 'border-orange-500/30 text-orange-500/50 group-hover:border-orange-400/50'
+                }`}>3</div>
+                <span className={`text-[11px] font-medium transition-colors ${location.pathname === '/student/checkout' ? 'text-orange-300 font-bold' : 'text-on-surface-variant/60 group-hover:text-on-surface-variant'}`}>Secure Payment</span>
+              </Link>
+            </div>
+          </div>
+        )}
+
         <nav className="space-y-1">
-          {navItems.map((item) => (
-            <Link
-              key={item.name}
-              to={item.path}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all font-headline ${
-                location.pathname === item.path 
-                  ? 'bg-[var(--st-gradient-primary)] text-on-secondary shadow-lg shadow-[var(--st-color-glow)]' 
-                  : 'text-on-surface-variant hover:bg-white/5 hover:text-white'
-              }`}
-            >
-              <item.icon size={20} className={location.pathname === item.path ? 'animate-pulse' : ''} />
-              {isOpen && <span className="text-sm font-semibold tracking-wide">{item.name}</span>}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const isLocked = isAgnostic && item.path !== '/student/dashboard';
+            return isLocked ? (
+              <div
+                key={item.name}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl font-headline text-on-surface-variant/30 cursor-not-allowed border border-dashed border-white/5"
+                title="Complete Onboarding to unlock"
+              >
+                <item.icon size={20} className="opacity-40" />
+                {isOpen && (
+                  <div className="flex items-center justify-between flex-1">
+                    <span className="text-sm font-semibold tracking-wide">{item.name}</span>
+                    <span className="text-[9px] bg-white/5 text-on-surface-variant/40 px-1.5 py-0.5 rounded font-black uppercase tracking-widest">Locked</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                key={item.name}
+                to={item.path}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all font-headline ${
+                  location.pathname === item.path 
+                    ? 'bg-[var(--st-gradient-primary)] text-on-secondary shadow-lg shadow-[var(--st-color-glow)]' 
+                    : 'text-on-surface-variant hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <item.icon size={20} className={location.pathname === item.path ? 'animate-pulse' : ''} />
+                {isOpen && <span className="text-sm font-semibold tracking-wide">{item.name}</span>}
+              </Link>
+            );
+          })}
           
           {specializedItem && (
             <Link
@@ -88,20 +146,37 @@ const GlobalSidebar = ({ isOpen, setIsOpen }) => {
 
         {isOpen && <div className="text-[10px] font-headline font-bold text-on-surface-variant/50 uppercase tracking-[0.2em] px-3 pt-4">Network</div>}
         <nav className="space-y-1">
-          {communityItems.map((item) => (
-            <Link
-              key={item.name}
-              to={item.path}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all font-headline ${
-                location.pathname === item.path 
-                  ? 'bg-white/10 text-white border border-white/10' 
-                  : 'text-on-surface-variant hover:bg-white/5 hover:text-white'
-              }`}
-            >
-              <item.icon size={20} />
-              {isOpen && <span className="text-sm font-semibold tracking-wide">{item.name}</span>}
-            </Link>
-          ))}
+          {communityItems.map((item) => {
+            const isLocked = isAgnostic;
+            return isLocked ? (
+              <div
+                key={item.name}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl font-headline text-on-surface-variant/30 cursor-not-allowed border border-dashed border-white/5"
+                title="Complete Onboarding to unlock"
+              >
+                <item.icon size={20} className="opacity-40" />
+                {isOpen && (
+                  <div className="flex items-center justify-between flex-1">
+                    <span className="text-sm font-semibold tracking-wide">{item.name}</span>
+                    <span className="text-[9px] bg-white/5 text-on-surface-variant/40 px-1.5 py-0.5 rounded font-black uppercase tracking-widest">Locked</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                key={item.name}
+                to={item.path}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all font-headline ${
+                  location.pathname === item.path 
+                    ? 'bg-white/10 text-white border border-white/10' 
+                    : 'text-on-surface-variant hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <item.icon size={20} />
+                {isOpen && <span className="text-sm font-semibold tracking-wide">{item.name}</span>}
+              </Link>
+            );
+          })}
         </nav>
       </div>
 

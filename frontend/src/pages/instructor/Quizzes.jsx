@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Plus, HelpCircle, Trophy, Users, 
   ChevronRight, Search, Filter, Loader2,
-  AlertCircle, CheckCircle2, BarChart, Clock
+  AlertCircle, CheckCircle2, BarChart, Clock, RefreshCw
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';

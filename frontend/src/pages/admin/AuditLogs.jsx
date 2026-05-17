@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 
 const AuditLogs = () => {
-  const { data: logs, loading } = useSupabaseData('audit_logs', '*, profiles(full_name)');
+  const { data: logs, loading } = useSupabaseData('audit_logs', '*, profiles(full_name, email)');
   const [expandedLogId, setExpandedLogId] = useState(null);
 
   return (
@@ -58,12 +58,12 @@ const AuditLogs = () => {
                     className="flex gap-6 p-2 rounded hover:bg-white/5 transition-all cursor-pointer border-l border-transparent hover:border-blue-500"
                   >
                     <span className="text-slate-600 w-24">{new Date(log.created_at).toLocaleTimeString()}</span>
-                    <span className="text-blue-500 font-bold w-32 truncate">[{log.profiles?.full_name || 'SYSTEM'}]</span>
+                    <span className="text-blue-500 font-bold w-32 truncate">[{log.profiles?.full_name || log.profiles?.email || 'SYSTEM'}]</span>
                     <span className="text-white font-black w-40 truncate">{log.action}</span>
-                    <span className="text-slate-400 flex-1 truncate">{log.details || 'No details provided'}</span>
+                    <span className="text-slate-400 flex-1 truncate">{log.details ? JSON.stringify(log.details) : 'No details provided'}</span>
                   </motion.div>
                   <AnimatePresence>
-                    {expandedLogId === log.id && (log.previous_state || log.new_state) && (
+                    {expandedLogId === log.id && (log.details?.previous_state || log.details?.new_state) && (
                       <motion.div 
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
@@ -74,13 +74,13 @@ const AuditLogs = () => {
                           <div>
                             <p className="text-slate-500 font-bold uppercase tracking-widest mb-2 text-[9px]">Previous State</p>
                             <pre className="text-slate-400 overflow-x-auto whitespace-pre-wrap">
-                              {log.previous_state ? JSON.stringify(log.previous_state, null, 2) : 'null'}
+                              {log.details?.previous_state ? JSON.stringify(log.details.previous_state, null, 2) : 'null'}
                             </pre>
                           </div>
                           <div>
                             <p className="text-blue-500 font-bold uppercase tracking-widest mb-2 text-[9px]">New State</p>
                             <pre className="text-white overflow-x-auto whitespace-pre-wrap">
-                              {log.new_state ? JSON.stringify(log.new_state, null, 2) : 'null'}
+                              {log.details?.new_state ? JSON.stringify(log.details.new_state, null, 2) : 'null'}
                             </pre>
                           </div>
                         </div>

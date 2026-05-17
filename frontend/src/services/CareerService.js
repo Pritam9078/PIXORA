@@ -48,7 +48,7 @@ export const CareerService = {
           progress,
           course:courses (
             title,
-            difficulty
+            level
           )
         `)
         .eq('student_id', studentId);
@@ -59,20 +59,20 @@ export const CareerService = {
       return [
         { 
           name: "Core Fundamentals", 
-          level: Math.min(5, Math.floor((enrollments.filter(e => e.course.difficulty === 'Beginner').length / 2) * 5)),
-          status: enrollments.some(e => e.course.difficulty === 'Beginner' && e.progress > 80) ? "completed" : "in-progress",
+          level: Math.min(5, Math.floor((enrollments.filter(e => e.course.level === 'Beginner').length / 2) * 5)),
+          status: enrollments.some(e => e.course.level === 'Beginner' && e.progress > 80) ? "completed" : "in-progress",
           skills: ["Logic", "Data Struct", "Math"] 
         },
         { 
           name: "Advanced Development", 
-          level: Math.min(5, Math.floor((enrollments.filter(e => e.course.difficulty === 'Intermediate').length / 2) * 5)),
-          status: enrollments.some(e => e.course.difficulty === 'Intermediate' && e.progress > 0) ? "in-progress" : "locked",
+          level: Math.min(5, Math.floor((enrollments.filter(e => e.course.level === 'Intermediate').length / 2) * 5)),
+          status: enrollments.some(e => e.course.level === 'Intermediate' && e.progress > 0) ? "in-progress" : "locked",
           skills: ["Shaders", "Multiplayer", "AI"] 
         },
         { 
           name: "Architecture & Optimization", 
-          level: Math.min(5, Math.floor((enrollments.filter(e => e.course.difficulty === 'Advanced').length / 2) * 5)),
-          status: enrollments.some(e => e.course.difficulty === 'Advanced' && e.progress > 0) ? "in-progress" : "locked",
+          level: Math.min(5, Math.floor((enrollments.filter(e => e.course.level === 'Advanced').length / 2) * 5)),
+          status: enrollments.some(e => e.course.level === 'Advanced' && e.progress > 0) ? "in-progress" : "locked",
           skills: ["ECS", "DOTS", "Low-Level"] 
         }
       ];
@@ -90,7 +90,7 @@ export const CareerService = {
     return [
       { id: 1, title: "Junior Solidity Engineer", company: "Aave Protocol", location: "Remote / London", type: "Full-time", salary: "$120k - $160k", tags: ["Web3", "Security"], logo: "https://cryptologos.cc/logos/aave-aave-logo.png" },
       { id: 2, title: "UE5 Gameplay Programmer", company: "Respawn Entertainment", location: "Los Angeles", type: "Hybrid", salary: "$110k - $140k", tags: ["C++", "UE5"], logo: "https://upload.wikimedia.org/wikipedia/en/thumb/f/f6/Respawn_Entertainment_logo.svg/1200px-Respawn_Entertainment_logo.svg.png" },
-      { id: 3, title: "Smart Contract Auditor", company: "Trail of Bits", location: "Remote", type: "Contract", salary: "$180k+", tags: ["Rust", "ZKP"], logo: "https://pbs.twimg.com/profile_images/1458853755498803204/9O3X3gX-_400x400.jpg" },
+      { id: 3, title: "Smart Contract Auditor", company: "Trail of Bits", location: "Remote", type: "Contract", salary: "$180k+", tags: ["Rust", "ZKP"], logo: "https://avatars.githubusercontent.com/u/231267?s=200&v=4" },
       { id: 4, title: "AI Research Engineer", company: "OpenAI", location: "San Francisco", type: "Full-time", salary: "$250k+", tags: ["Python", "PyTorch"], logo: "https://upload.wikimedia.org/wikipedia/commons/4/4d/OpenAI_Logo.svg" }
     ];
   }

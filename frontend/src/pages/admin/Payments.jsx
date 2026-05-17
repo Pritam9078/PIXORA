@@ -83,7 +83,7 @@ const Payments = () => {
                       <td className="px-6 py-4 text-[10px] font-mono text-slate-400 truncate max-w-[120px]">{p.id}</td>
                       <td className="px-6 py-4">
                         <p className="text-xs font-bold text-white">{p.profiles?.full_name || 'Anonymous'}</p>
-                        <p className="text-[10px] text-slate-500 font-mono lowercase">{p.profiles?.email}</p>
+                        <p className="text-[10px] text-slate-500 font-mono lowercase">{p.profiles?.email || 'N/A'}</p>
                       </td>
                       <td className="px-6 py-4 text-xs font-bold text-white">${Number(p.amount).toFixed(2)}</td>
                       <td className="px-6 py-4">

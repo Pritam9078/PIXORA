@@ -4,7 +4,8 @@ import {
   LayoutDashboard, ShieldCheck, Users, School, GraduationCap, 
   Briefcase, BookOpen, FileText, CheckSquare, Award, CreditCard, 
   BarChart3, MessageSquare, Image, Activity, HelpCircle, 
-  Search as SearchIcon, Command
+  Search as SearchIcon, Command, FileCheck, Eye, Layers,
+  Sparkles, Hash, Video, Cpu, Compass, AlertTriangle, Terminal
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
@@ -48,36 +49,46 @@ const AdminLayout = ({ children }) => {
       title: 'Management',
       items: [
         { label: 'Users', icon: <Users size={18} />, href: '/admin/users' },
-        { label: 'Colleges', icon: <School size={18} />, href: '/admin/colleges' },
-        { label: 'Students', icon: <GraduationCap size={18} />, href: '/admin/students' },
-        { label: 'Instructors', icon: <Briefcase size={18} />, href: '/admin/instructors' },
-        { label: 'Partners', icon: <Users size={18} />, href: '/admin/partners' },
+        { label: 'Applications', icon: <FileCheck size={18} />, href: '/admin/applications' },
+        { label: 'Verification', icon: <Eye size={18} />, href: '/admin/verification' },
+        { label: 'Enrollment', icon: <Layers size={18} />, href: '/admin/enrollment' },
+        { label: 'Payments', icon: <CreditCard size={18} />, href: '/admin/payments' },
       ]
     },
     {
       title: 'LMS Core',
       items: [
         { label: 'Courses', icon: <BookOpen size={18} />, href: '/admin/courses' },
-        { label: 'Content Library', icon: <Image size={18} />, href: '/admin/media' },
-        { label: 'Assignments', icon: <FileText size={18} />, href: '/admin/assignments' },
-        { label: 'Quizzes', icon: <CheckSquare size={18} />, href: '/admin/quizzes' },
-        { label: 'Certificates', icon: <Award size={18} />, href: '/admin/certificates' },
+        { label: 'Instructors', icon: <Briefcase size={18} />, href: '/admin/instructors' },
+        { label: 'Mentors', icon: <Sparkles size={18} />, href: '/admin/mentors' },
+        { label: 'Students', icon: <GraduationCap size={18} />, href: '/admin/students' },
+        { label: 'Colleges', icon: <School size={18} />, href: '/admin/colleges' },
+        { label: 'Community', icon: <Hash size={18} />, href: '/admin/community' },
+        { label: 'Live Classes', icon: <Video size={18} />, href: '/admin/live-classes' },
       ]
     },
     {
-      title: 'Operations',
+      title: 'Credentials & Careers',
       items: [
-        { label: 'Payments', icon: <CreditCard size={18} />, href: '/admin/payments' },
-        { label: 'Security', icon: <ShieldCheck size={18} />, href: '/admin/security' },
-        { label: 'Audit Logs', icon: <Activity size={18} />, href: '/admin/audit-logs' },
+        { label: 'Certificates', icon: <Award size={18} />, href: '/admin/certificates' },
+        { label: 'NFT Certificates', icon: <Cpu size={18} />, href: '/admin/nft-certificates' },
+        { label: 'Career Hub', icon: <Compass size={18} />, href: '/admin/career-hub' },
+      ]
+    },
+    {
+      title: 'Security & Operations',
+      items: [
         { label: 'Notifications', icon: <Bell size={18} />, href: '/admin/notifications' },
+        { label: 'Content Moderation', icon: <AlertTriangle size={18} />, href: '/admin/moderation' },
+        { label: 'Audit Logs', icon: <Activity size={18} />, href: '/admin/audit-logs' },
       ]
     },
     {
       title: 'System',
       items: [
-        { label: 'Settings', icon: <Settings size={18} />, href: '/admin/settings' },
         { label: 'Support', icon: <HelpCircle size={18} />, href: '/admin/support' },
+        { label: 'Settings', icon: <Settings size={18} />, href: '/admin/settings' },
+        { label: 'System Control', icon: <Terminal size={18} />, href: '/admin/system-control' },
       ]
     }
   ];

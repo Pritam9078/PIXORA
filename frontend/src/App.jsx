@@ -16,6 +16,9 @@ import Community from './pages/student/Community';
 import LiveClasses from './pages/student/LiveClasses';
 import Settings from './pages/student/Settings';
 import CourseDiscovery from './pages/student/CourseDiscovery';
+import EnrollNow from './pages/student/EnrollNow';
+import DocumentVerification from './pages/student/DocumentVerification';
+import Checkout from './pages/student/Checkout';
 import { StudentThemeProvider } from './context/StudentThemeContext';
 import CollegeAdminDashboard from './pages/CollegeAdminDashboard';
 
@@ -42,6 +45,17 @@ import Payments from './pages/admin/Payments';
 import AuditLogs from './pages/admin/AuditLogs';
 import Notifications from './pages/admin/Notifications';
 import Support from './pages/admin/Support';
+import Applications from './pages/admin/Applications';
+import Verification from './pages/admin/Verification';
+import Enrollment from './pages/admin/Enrollment';
+import Mentors from './pages/admin/Mentors';
+import AdminSettings from './pages/admin/Settings';
+import AdminCommunity from './pages/admin/Community';
+import AdminLiveClasses from './pages/admin/LiveClasses';
+import NFTCertificates from './pages/admin/NFTCertificates';
+import AdminCareerHub from './pages/admin/CareerHub';
+import ContentModeration from './pages/admin/ContentModeration';
+import SystemControl from './pages/admin/SystemControl';
 import InstructorLayout from './layouts/InstructorLayout';
 import InstructorDashboardPage from './pages/instructor/Dashboard';
 import InstructorMyCourses from './pages/instructor/MyCourses';
@@ -98,6 +112,9 @@ function App() {
                 <Routes>
                   <Route element={<StudentLayout />}>
                     <Route path="dashboard" element={<StudentDashboard />} />
+                    <Route path="enroll-now" element={<EnrollNow />} />
+                    <Route path="document-verification" element={<DocumentVerification />} />
+                    <Route path="checkout" element={<Checkout />} />
                     <Route path="courses" element={<CourseDiscovery />} />
                     <Route path="my-courses" element={<MyCourses />} />
                     <Route path="course/:courseId" element={<CoursePlayer />} />
@@ -189,6 +206,42 @@ function App() {
         />
 
         <Route 
+          path="/admin/applications" 
+          element={
+            <ProtectedRoute allowedRoles={['super_admin']}>
+              <Applications />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/admin/verification" 
+          element={
+            <ProtectedRoute allowedRoles={['super_admin']}>
+              <Verification />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/admin/enrollment" 
+          element={
+            <ProtectedRoute allowedRoles={['super_admin']}>
+              <Enrollment />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/admin/mentors" 
+          element={
+            <ProtectedRoute allowedRoles={['super_admin']}>
+              <Mentors />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
           path="/admin/colleges" 
           element={
             <ProtectedRoute allowedRoles={['super_admin']}>
@@ -228,7 +281,7 @@ function App() {
           path="/admin/settings" 
           element={
             <ProtectedRoute allowedRoles={['super_admin']}>
-              <PlatformSettings />
+              <AdminSettings />
             </ProtectedRoute>
           } 
         />
@@ -328,6 +381,60 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['super_admin']}>
               <Support />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/admin/community" 
+          element={
+            <ProtectedRoute allowedRoles={['super_admin']}>
+              <AdminCommunity />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/admin/live-classes" 
+          element={
+            <ProtectedRoute allowedRoles={['super_admin']}>
+              <AdminLiveClasses />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/admin/nft-certificates" 
+          element={
+            <ProtectedRoute allowedRoles={['super_admin']}>
+              <NFTCertificates />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/admin/career-hub" 
+          element={
+            <ProtectedRoute allowedRoles={['super_admin']}>
+              <AdminCareerHub />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/admin/moderation" 
+          element={
+            <ProtectedRoute allowedRoles={['super_admin']}>
+              <ContentModeration />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/admin/system-control" 
+          element={
+            <ProtectedRoute allowedRoles={['super_admin']}>
+              <SystemControl />
             </ProtectedRoute>
           } 
         />

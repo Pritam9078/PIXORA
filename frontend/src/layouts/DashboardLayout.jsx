@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Menu, X, Bell, User, Search, LogOut, Settings, ChevronDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import Logo from '../components/common/Logo';
 
 const DashboardLayout = ({ children, role = 'Learner', navigation = [] }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -45,7 +46,7 @@ const DashboardLayout = ({ children, role = 'Learner', navigation = [] }) => {
             >
               {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
-            <span className="text-xl font-bold tracking-[0.2em] text-white font-headline uppercase">PIXORA</span>
+            <Logo height={28} />
           </div>
           
           <div className="flex items-center gap-4">

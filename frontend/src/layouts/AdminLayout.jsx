@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { LogoMark } from '../components/common/Logo';
 
 const AdminLayout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -100,9 +101,7 @@ const AdminLayout = ({ children }) => {
       {/* Sidebar */}
       <aside className={`fixed left-0 top-0 h-full z-50 flex flex-col w-64 bg-[#09090B] border-r border-white/5 transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <div className="p-6 flex items-center gap-3">
-          <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
-            <span className="text-[#09090B] font-black text-xl">P</span>
-          </div>
+          <LogoMark size={28} />
           <span className="text-lg font-bold tracking-tight text-white uppercase">PIXORA<span className="text-slate-500 ml-1 font-medium">OS</span></span>
         </div>
 

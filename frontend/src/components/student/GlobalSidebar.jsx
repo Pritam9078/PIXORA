@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useStudentTheme } from '../../context/StudentThemeContext';
+import { LogoMark } from '../common/Logo';
 
 const GlobalSidebar = ({ isOpen, setIsOpen }) => {
   const { signOut } = useAuth();
@@ -45,9 +46,7 @@ const GlobalSidebar = ({ isOpen, setIsOpen }) => {
     >
       <div className="p-6 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2 group">
-          <div className="w-8 h-8 rounded-lg bg-[var(--st-gradient-primary)] flex items-center justify-center text-on-secondary font-bold shadow-lg shadow-secondary-container/20 group-hover:scale-110 transition-transform">
-            P
-          </div>
+          <LogoMark size={28} />
           {isOpen && <span className="font-headline font-bold text-xl tracking-tight text-white">PIXORA</span>}
         </Link>
         {isOpen && (

@@ -1,9 +1,11 @@
+import Logo from './Logo';
+
 const Footer = () => {
   return (
     <footer className="bg-[#0D0E12] border-t border-white/10 w-full py-12 px-8">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
         <div className="space-y-4">
-          <div className="text-lg font-black text-white font-headline">PIXORA</div>
+          <Logo height={24} />
           <p className="font-headline text-xs font-light text-slate-600">
             © 2026 Pixora. Engineered for the Next Frontier.
           </p>

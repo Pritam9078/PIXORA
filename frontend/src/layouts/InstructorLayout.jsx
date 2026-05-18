@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Toaster } from 'react-hot-toast';
+import { LogoMark } from '../components/common/Logo';
 
 const InstructorLayout = () => {
   const { profile, signOut } = useAuth();
@@ -72,9 +73,7 @@ const InstructorLayout = () => {
         {/* Logo */}
         <div style={{ padding: '28px 20px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
-            <div style={{ width: 36, height: 36, background: '#c3f400', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Space Grotesk', sans-serif", fontWeight: 900, fontSize: 18, color: '#283500', flexShrink: 0 }}>
-              P
-            </div>
+            <LogoMark size={32} />
             {isSidebarOpen && (
               <div>
                 <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 16, color: '#fff', letterSpacing: '0.08em', lineHeight: 1 }}>PIXORA</div>

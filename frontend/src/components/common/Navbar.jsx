@@ -1,10 +1,13 @@
 import { Link } from 'react-router-dom';
+import Logo from './Logo';
 
 const Navbar = () => {
   return (
     <header className="fixed top-0 w-full z-50 flex justify-between items-center px-8 h-16 bg-[#0D0E12]/70 backdrop-blur-xl border-b border-white/5">
-      <div className="text-2xl font-bold tracking-tighter text-white font-headline">
-        <Link to="/">PIXORA</Link>
+      <div className="flex items-center">
+        <Link to="/" className="flex items-center">
+          <Logo height={32} />
+        </Link>
       </div>
       <nav className="hidden md:flex items-center space-x-8">
         <Link className="font-headline text-slate-400 hover:text-white transition-colors text-sm uppercase tracking-widest pb-1" to="/catalog">Catalog</Link>

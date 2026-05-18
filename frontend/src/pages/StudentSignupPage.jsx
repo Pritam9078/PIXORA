@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import Logo from '../components/common/Logo';
 
 const StudentSignupPage = () => {
   const [formData, setFormData] = useState({
@@ -94,9 +95,8 @@ const StudentSignupPage = () => {
       {/* Right Section - Form */}
       <section className="flex-1 flex flex-col min-h-screen bg-[#051424]">
         <header className="h-20 flex items-center justify-between px-8 md:px-12">
-          <Link to="/" className="flex items-center gap-3">
-            <div className="h-8 w-1 bg-secondary-container"></div>
-            <span className="font-headline text-xl text-white tracking-tighter uppercase font-bold">PIXORA</span>
+          <Link to="/" className="flex items-center">
+            <Logo height={32} />
           </Link>
           <div className="hidden sm:flex items-center gap-2 text-slate-500">
             <span className="text-[10px] font-headline uppercase tracking-widest">Security:</span>
@@ -200,7 +200,7 @@ const StudentSignupPage = () => {
 
           <footer className="mt-auto pt-12">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-[9px] font-headline text-slate-500 tracking-[0.2em] uppercase">
-              <span>© 2024 PIXORA ACADEMY</span>
+              <span>© 2026 PIXORA ACADEMY</span>
               <div className="flex gap-6">
                 <a className="hover:text-secondary-container transition-colors" href="#">Privacy</a>
                 <a className="hover:text-secondary-container transition-colors" href="#">Neural Terms</a>

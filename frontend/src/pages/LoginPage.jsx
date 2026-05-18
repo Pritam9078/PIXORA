@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
+import Logo from "../components/common/Logo";
 
 
 const styles = `
@@ -270,12 +271,8 @@ export default function LoginPage() {
           borderBottom: "1px solid rgba(255,255,255,0.05)",
           boxSizing: "border-box"
         }}>
-          <Link to="/" style={{
-            fontFamily: "'Space Grotesk', sans-serif", fontSize: "20px", fontWeight: 700,
-            letterSpacing: "-0.02em", color: "white", textDecoration: "none",
-            borderLeft: "4px solid #c3f400", paddingLeft: "12px"
-          }}>
-            PIXORA
+          <Link to="/" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
+            <Logo height={32} />
           </Link>
           <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "rgba(195,244,0,0.5)" }} className="code-label">
@@ -524,7 +521,7 @@ export default function LoginPage() {
             fontFamily: "'Space Grotesk', sans-serif", fontSize: "10px",
             letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 300, color: "#64748b"
           }}>
-            © 2024 PIXORA INTERSTELLAR ACADEMY. ALL RIGHTS RESERVED.
+            © 2026 PIXORA INTERSTELLAR ACADEMY. ALL RIGHTS RESERVED.
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "32px" }}>
             {["Protocol", "Privacy", "Neural Link Terms"].map((link) => (

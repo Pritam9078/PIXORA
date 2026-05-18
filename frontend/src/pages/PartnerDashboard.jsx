@@ -189,7 +189,7 @@ const PartnerDashboard = () => {
               NETWORK SYNC: 99.8%
             </div>
           </div>
-          <p>© 2024 PIXORA ACADEMY - PARTNER TERMINAL V2.4.0</p>
+          <p>© 2026 PIXORA ACADEMY - PARTNER TERMINAL V2.4.0</p>
         </div>
       </div>
     </DashboardLayout>

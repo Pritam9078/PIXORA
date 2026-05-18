@@ -3,6 +3,28 @@ import { motion } from 'framer-motion';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/common/Footer';
 
+// Blinking Terminal Cursor Component for authentic shell feel
+const TerminalCursor = () => (
+  <span 
+    className="inline-block w-2 h-4 ml-1 bg-secondary-container align-middle"
+    style={{
+      animation: 'blink 1s step-end infinite'
+    }}
+  />
+);
+
+// Add custom blink animation using standard inline style inject or custom Tailwind class
+if (typeof document !== 'undefined') {
+  const style = document.createElement('style');
+  style.innerHTML = `
+    @keyframes blink {
+      from, to { background-color: transparent }
+      50% { background-color: var(--secondary-container, #C3F400) }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 // Sequential Typewriter Custom Hook
 const useTypewriter = (text, speed = 30, start = false) => {
   const [displayedText, setDisplayedText] = useState('');
@@ -36,7 +58,7 @@ const LandingPage = () => {
   const [line1, line1Complete] = useTypewriter('init_admission_sequence --track="ENGINEERING"', 25, startTyping);
   const [line2, line2Complete] = useTypewriter('Scanning credentials...', 20, line1Complete);
   const [line3, line3Complete] = useTypewriter('Validating technical readiness...', 20, line2Complete);
-  const [line4, line4Complete] = useTypewriter('[SUCCESS] Access granted to 2024 cohorts.', 20, line3Complete);
+  const [line4, line4Complete] = useTypewriter('[SUCCESS] Access granted to 2026 cohorts.', 20, line3Complete);
 
   return (
     <div className="min-h-screen bg-surface">
@@ -58,7 +80,7 @@ const LandingPage = () => {
             >
               <div className="inline-flex items-center space-x-3 px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
                 <span className="w-2 h-2 rounded-full bg-secondary-container animate-pulse"></span>
-                <span className="font-headline text-[10px] uppercase tracking-widest text-on-surface-variant">Now enrolling: 2024 Engineering Cohort</span>
+                <span className="font-headline text-[10px] uppercase tracking-widest text-on-surface-variant">Now enrolling: 2026 Engineering Cohort</span>
               </div>
               
               <h1 className="font-headline text-headline-xl text-white max-w-xl leading-[1.1] tracking-tight">
@@ -70,14 +92,35 @@ const LandingPage = () => {
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <button className="bg-secondary-container text-on-secondary px-8 py-4 rounded font-headline text-sm flex items-center justify-center space-x-2 hover:shadow-[0_0_20px_rgba(195,244,0,0.4)] transition-all">
+                <motion.button 
+                  whileHover={{ scale: 1.03, boxShadow: "0 0 25px rgba(195,244,0,0.45)" }}
+                  whileTap={{ scale: 0.98 }}
+                  className="bg-secondary-container text-on-secondary px-8 py-4 rounded font-headline text-sm flex items-center justify-center space-x-2 transition-all duration-300"
+                >
                   <span>EXPLORE GAME DEV</span>
-                  <span className="material-symbols-outlined text-sm">rocket_launch</span>
-                </button>
-                <button className="border border-on-tertiary-container text-on-tertiary-container px-8 py-4 rounded font-headline text-sm flex items-center justify-center space-x-2 hover:bg-on-tertiary-container/10 transition-all">
+                  <motion.span 
+                    animate={{ y: [0, -4, 0] }}
+                    transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
+                    className="material-symbols-outlined text-sm"
+                  >
+                    rocket_launch
+                  </motion.span>
+                </motion.button>
+                
+                <motion.button 
+                  whileHover={{ scale: 1.03, backgroundColor: "rgba(188,119,255,0.12)" }}
+                  whileTap={{ scale: 0.98 }}
+                  className="border border-on-tertiary-container text-on-tertiary-container px-8 py-4 rounded font-headline text-sm flex items-center justify-center space-x-2 transition-all duration-300"
+                >
                   <span>MASTER BLOCKCHAIN</span>
-                  <span className="material-symbols-outlined text-sm">account_balance_wallet</span>
-                </button>
+                  <motion.span 
+                    animate={{ rotate: [0, 8, -8, 0] }}
+                    transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut", repeatDelay: 1 }}
+                    className="material-symbols-outlined text-sm"
+                  >
+                    account_balance_wallet
+                  </motion.span>
+                </motion.button>
               </div>
             </motion.div>
 
@@ -89,7 +132,11 @@ const LandingPage = () => {
               className="relative hidden lg:block"
             >
               <div className="grid grid-cols-2 gap-4 p-4">
-                <div className="space-y-4 pt-12">
+                <motion.div 
+                  animate={{ y: [0, -12, 0] }}
+                  transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
+                  className="space-y-4 pt-12"
+                >
                   <div className="glass-panel rounded-xl p-1 overflow-hidden">
                     <img alt="Game Dev" className="w-full h-48 object-cover rounded-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXUd_Wzz5IO3tFyJgZwAeEViC3g2wqMJP77ixq2yLTGN6ERqGPDg_j_Os4cl_WxSE8Kt4faCNfDSfxThcodxbBNKR8MtyI0ucXq1caq5LvLaSgNfWYdam-fLP7TedGmwOoXTGcNFX3AiXIYaIq3McAu_tg2DwyUetwlHQNoSY5AGVlIF9_V4HhjZu4FJiXICn1XOykuV83_hAkJp2KzPPbOL-3Fhc1XPVHXqP71z-7PV0HB5zNXDgKlacK1Ef7Do7FV2iWGJesV28B"/>
                   </div>
@@ -98,8 +145,13 @@ const LandingPage = () => {
                     <h3 className="font-headline text-white text-lg">AAA Pipeline</h3>
                     <p className="text-xs text-on-surface-variant mt-2">Unreal Engine 5 mastery from greybox to gold.</p>
                   </div>
-                </div>
-                <div className="space-y-4">
+                </motion.div>
+                
+                <motion.div 
+                  animate={{ y: [0, 12, 0] }}
+                  transition={{ repeat: Infinity, duration: 6, ease: "easeInOut", delay: 0.5 }}
+                  className="space-y-4"
+                >
                   <div className="glass-panel rounded-xl p-6 border-on-tertiary-container/30">
                     <span className="material-symbols-outlined text-on-tertiary-container mb-4">hub</span>
                     <h3 className="font-headline text-white text-lg">Smart Contracts</h3>
@@ -108,7 +160,7 @@ const LandingPage = () => {
                   <div className="glass-panel rounded-xl p-1 overflow-hidden">
                     <img alt="Blockchain" className="w-full h-48 object-cover rounded-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB99J2100FTdbnMJc2JEbBEuOEpcZsMyeTbpc5YH9JLDdqbwRK5hGOYfWeZzjlCgamLhQ5ImQAfc1Z-bnsrZW7wZtcbpaHXg2ie3fvs7hVM5sxx2uy1D4fovcYOSSuVhnwi0ghjyi218Y6zPTsWHYbTIVb5MurF3j0nQvtqQMprbWVBnaVRFI7qZIXptGBcKj55LZM9UyStPd3iAYkH_b50xDnN8zU5E0b86vvY7fdb3_MPupnfvmbzjjGbDhtj6x1T1jj9VN1YyfrF"/>
                   </div>
-                </div>
+                </motion.div>
               </div>
             </motion.div>
           </div>
@@ -127,12 +179,29 @@ const LandingPage = () => {
               <h2 className="font-headline text-headline-xl text-white mt-4">Why Pixora?</h2>
             </motion.div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+            <motion.div 
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: "-100px" }}
+              variants={{
+                hidden: {},
+                show: {
+                  transition: {
+                    staggerChildren: 0.15
+                  }
+                }
+              }}
+              className="grid grid-cols-1 md:grid-cols-3 gap-gutter"
+            >
               <motion.div 
-                whileHover={{ y: -10 }}
-                className="glass-panel p-8 rounded-xl border-white/5 hover:border-secondary-container/30 transition-all group"
+                variants={{
+                  hidden: { opacity: 0, y: 30 },
+                  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+                }}
+                whileHover={{ y: -10, boxShadow: "0 15px 35px -10px rgba(195,244,0,0.15)" }}
+                className="glass-panel p-8 rounded-xl border-white/5 hover:border-secondary-container/30 transition-all duration-300 group"
               >
-                <div className="w-12 h-12 rounded flex items-center justify-center bg-secondary-container/10 text-secondary-container mb-6 group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 rounded flex items-center justify-center bg-secondary-container/10 text-secondary-container mb-6 group-hover:scale-110 transition-transform duration-300">
                   <span className="material-symbols-outlined">podcasts</span>
                 </div>
                 <h3 className="font-headline text-white mb-4">Live Satellite Classes</h3>
@@ -142,10 +211,14 @@ const LandingPage = () => {
               </motion.div>
               
               <motion.div 
-                whileHover={{ y: -10 }}
-                className="glass-panel p-8 rounded-xl border-white/5 hover:border-on-tertiary-container/30 transition-all group"
+                variants={{
+                  hidden: { opacity: 0, y: 30 },
+                  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+                }}
+                whileHover={{ y: -10, boxShadow: "0 15px 35px -10px rgba(188,119,255,0.15)" }}
+                className="glass-panel p-8 rounded-xl border-white/5 hover:border-on-tertiary-container/30 transition-all duration-300 group"
               >
-                <div className="w-12 h-12 rounded flex items-center justify-center bg-on-tertiary-container/10 text-on-tertiary-container mb-6 group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 rounded flex items-center justify-center bg-on-tertiary-container/10 text-on-tertiary-container mb-6 group-hover:scale-110 transition-transform duration-300">
                   <span className="material-symbols-outlined">groups</span>
                 </div>
                 <h3 className="font-headline text-white mb-4">Tactical Mentorship</h3>
@@ -155,10 +228,14 @@ const LandingPage = () => {
               </motion.div>
               
               <motion.div 
-                whileHover={{ y: -10 }}
-                className="glass-panel p-8 rounded-xl border-white/5 hover:border-white/20 transition-all group"
+                variants={{
+                  hidden: { opacity: 0, y: 30 },
+                  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+                }}
+                whileHover={{ y: -10, boxShadow: "0 15px 35px -10px rgba(255,255,255,0.08)" }}
+                className="glass-panel p-8 rounded-xl border-white/5 hover:border-white/20 transition-all duration-300 group"
               >
-                <div className="w-12 h-12 rounded flex items-center justify-center bg-white/10 text-white mb-6 group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 rounded flex items-center justify-center bg-white/10 text-white mb-6 group-hover:scale-110 transition-transform duration-300">
                   <span className="material-symbols-outlined">rocket</span>
                 </div>
                 <h3 className="font-headline text-white mb-4">Industry-Ready Projects</h3>
@@ -166,7 +243,7 @@ const LandingPage = () => {
                   Build production-grade games and protocols. Our capstone projects are co-designed with top industry hiring partners.
                 </p>
               </motion.div>
-            </div>
+            </motion.div>
           </div>
         </section>
 
@@ -266,18 +343,28 @@ const LandingPage = () => {
                   <p className="text-secondary-container flex items-center">
                     <span className="mr-3 text-white/30">$</span>
                     <span className="text-white">{line1}</span>
+                    {startTyping && !line1Complete && <TerminalCursor />}
                   </p>
                   
                   {line1Complete && (
-                    <p className="text-slate-500">{line2}</p>
+                    <p className="text-slate-500">
+                      {line2}
+                      {!line2Complete && <TerminalCursor />}
+                    </p>
                   )}
                   
                   {line2Complete && (
-                    <p className="text-slate-500">{line3}</p>
+                    <p className="text-slate-500">
+                      {line3}
+                      {!line3Complete && <TerminalCursor />}
+                    </p>
                   )}
                   
                   {line3Complete && (
-                    <p className="text-on-tertiary-container font-semibold">{line4}</p>
+                    <p className="text-on-tertiary-container font-semibold">
+                      {line4}
+                      {!line4Complete && <TerminalCursor />}
+                    </p>
                   )}
 
                   {line4Complete && (

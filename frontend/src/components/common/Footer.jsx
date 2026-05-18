@@ -5,7 +5,7 @@ const Footer = () => {
         <div className="space-y-4">
           <div className="text-lg font-black text-white font-headline">PIXORA</div>
           <p className="font-headline text-xs font-light text-slate-600">
-            © 2024 Pixora. Engineered for the Next Frontier.
+            © 2026 Pixora. Engineered for the Next Frontier.
           </p>
         </div>
         <div className="flex flex-wrap justify-center gap-8">

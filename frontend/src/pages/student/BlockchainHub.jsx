@@ -3,7 +3,8 @@ import {
   Wallet, Database, Activity, Cpu, 
   ExternalLink, Code, ShieldCheck, 
   ArrowUpRight, RefreshCw, BarChart3,
-  Coins, Box, Globe, Lock
+  Coins, Box, Globe, Lock, Award, Target,
+  Users
 } from 'lucide-react';
 import { useStudentTheme } from '../../context/StudentThemeContext';
 

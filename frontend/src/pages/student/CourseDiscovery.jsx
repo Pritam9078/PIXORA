@@ -146,6 +146,16 @@ const CourseDiscovery = () => {
                     {course.level}
                   </span>
                 </div>
+
+                <div className="absolute bottom-5 left-5 flex gap-2">
+                  <span className={`text-[10px] font-headline font-black uppercase tracking-[0.15em] px-3 py-1.5 rounded-lg backdrop-blur-xl border shadow-lg ${
+                    !course.price || course.price === 0
+                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30 shadow-emerald-500/5'
+                      : 'bg-amber-500/20 text-amber-400 border-amber-500/30 shadow-amber-500/5'
+                  }`}>
+                    {!course.price || course.price === 0 ? 'FREE' : `$${course.price}`}
+                  </span>
+                </div>
               </div>
 
               <div className="p-8 flex-1 flex flex-col space-y-6">
@@ -180,7 +190,13 @@ const CourseDiscovery = () => {
                     </button>
                   ) : (
                     <button 
-                      onClick={() => handleEnroll(course.id)}
+                      onClick={() => {
+                        if (course.price > 0) {
+                          navigate(`/student/checkout?courseId=${course.id}`, { state: { course } });
+                        } else {
+                          handleEnroll(course.id);
+                        }
+                      }}
                       disabled={enrollingId === course.id}
                       className="w-full btn-primary flex items-center justify-center gap-2 py-4 !rounded-2xl shadow-[0_0_20px_var(--st-color-glow)] hover:shadow-[0_0_40px_var(--st-color-glow)] transition-all"
                     >
@@ -189,7 +205,9 @@ const CourseDiscovery = () => {
                       ) : (
                         <PlusCircle size={18} />
                       )}
-                      <span className="text-[10px] font-headline font-bold uppercase tracking-widest">Initialize Mission</span>
+                      <span className="text-[10px] font-headline font-bold uppercase tracking-widest">
+                        {course.price > 0 ? `Unlock Mission ($${course.price})` : 'Initialize Mission (FREE)'}
+                      </span>
                     </button>
                   )}
                 </div>

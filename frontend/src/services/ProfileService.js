@@ -25,8 +25,8 @@ export const ProfileService = {
    */
   uploadAvatar: async (userId, file) => {
     const fileExt = file.name.split('.').pop();
-    const fileName = `${userId}-${Math.random()}.${fileExt}`;
-    const filePath = `avatars/${fileName}`;
+    const fileName = `${userId}-${Date.now()}.${fileExt}`;
+    const filePath = fileName;
 
     // Upload image to storage
     const { error: uploadError } = await supabase.storage

@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Play, CheckCircle2, ChevronRight, Download,
   FileText, MessageSquare, Plus,
   SkipForward, ArrowLeft, Award,
   Loader2, Layout, Send, Sparkles, Trophy,
-  Search, ChevronDown, List, BookOpen, Clock, Info, Lock
+  List, BookOpen, Clock, Info, Lock,
+  Maximize2, Minimize2, Volume2, VolumeX, Settings
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -31,26 +32,33 @@ const CoursePlayer = () => {
   const [progressMap, setProgressMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(false);
-  
-  // Panels State
-  const [activeTab, setActiveTab] = useState('notes'); // 'notes' | 'ai' | 'discussions'
+
+  // Panels
+  const [activeTab, setActiveTab] = useState('notes');
   const [isCurriculumOpen, setIsCurriculumOpen] = useState(true);
   const [isUtilityOpen, setIsUtilityOpen] = useState(true);
-  
-  // Notes State
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+
+  // Notes
   const [notes, setNotes] = useState('');
   const [recentNotes, setRecentNotes] = useState([]);
   const [savingNote, setSavingNote] = useState(false);
+  const [autoSaveTimeout, setAutoSaveTimeout] = useState(null);
 
-  // Watch Tracking State
-  const [watchProgress, setWatchProgress] = useState(0); // 0 to 100
+  // Watch progress
+  const [watchProgress, setWatchProgress] = useState(0);
+  const [watchTimeSpent, setWatchTimeSpent] = useState(0);
   const watchTimerRef = useRef(null);
+  const videoRef = useRef(null);
+  const mainContentRef = useRef(null);
 
-  const fetchCourseData = async () => {
+  const fetchCourseData = useCallback(async () => {
+    if (!user || !courseId) return;
     try {
       setLoading(true);
       const data = await CourseService.getCourseWithFullProgress(user.id, courseId);
-      
+
       if (!data) {
         setCourse(null);
         setLoading(false);
@@ -59,9 +67,9 @@ const CoursePlayer = () => {
 
       const flattened = (data.modules || []).reduce((acc, m) => {
         const items = [
-          ...(m.lessons || []).map(l => ({ ...l, type: 'lesson' })),
-          ...(m.assignments || []).map(a => ({ ...a, type: 'assignment' })),
-          ...(m.quizzes || []).map(q => ({ ...q, type: 'quiz' }))
+          ...(m.lessons || []).map(l => ({ ...l, type: 'lesson', moduleId: m.id, moduleTitle: m.title })),
+          ...(m.assignments || []).map(a => ({ ...a, type: 'assignment', moduleId: m.id, moduleTitle: m.title })),
+          ...(m.quizzes || []).map(q => ({ ...q, type: 'quiz', moduleId: m.id, moduleTitle: m.title })),
         ].sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
         return [...acc, ...items];
       }, []);
@@ -75,89 +83,132 @@ const CoursePlayer = () => {
       setLessons(flattened);
       setProgressMap(pMap);
 
-      if (!activeLesson && flattened.length > 0) {
-        // Find first incomplete lesson
+      // Resume from last accessed lesson
+      const lastAccessed = flattened.find(l => pMap[l.id]?.last_accessed_at);
+      if (lastAccessed && !activeLesson) {
+        setActiveLesson(lastAccessed);
+      } else if (!activeLesson && flattened.length > 0) {
         const firstIncomplete = flattened.find(l => !pMap[l.id] || pMap[l.id].status !== 'completed');
         setActiveLesson(firstIncomplete || flattened[0]);
       }
     } catch (error) {
       console.error('Error initializing player:', error);
-      toast.error('Initialization failed');
+      toast.error('Failed to load course content');
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, courseId, activeLesson]);
 
   useEffect(() => {
-    if (user && courseId) fetchCourseData();
+    fetchCourseData();
+
     const curriculumChannel = RealtimeService.subscribeToCurriculum(courseId, fetchCourseData);
+
     if (user && courseId) {
       NoteService.getCourseNotes(user.id, courseId).then(setRecentNotes);
     }
-    return () => RealtimeService.unsubscribe(curriculumChannel);
-  }, [courseId, user]);
 
-  // Handle Watch Tracker logic
+    // Load saved watch time from localStorage
+    const savedTime = localStorage.getItem(`watch-time-${courseId}-${activeLesson?.id}`);
+    if (savedTime && activeLesson?.type === 'lesson') {
+      setWatchTimeSpent(parseInt(savedTime));
+      setWatchProgress(Math.min((parseInt(savedTime) / 600) * 100, 100));
+    }
+
+    return () => {
+      RealtimeService.unsubscribe(curriculumChannel);
+      if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
+    };
+  }, [courseId, user, fetchCourseData]);
+
+  // Enhanced watch tracker with time-based progress
   useEffect(() => {
-    if (!activeLesson || progressMap[activeLesson.id]?.status === 'completed') {
+    if (!activeLesson || activeLesson.type !== 'lesson') return;
+
+    const isCompleted = progressMap[activeLesson?.id]?.status === 'completed';
+    if (isCompleted) {
       setWatchProgress(100);
       return;
     }
 
-    setWatchProgress(0); // reset when switching lesson
-    
-    // Simulate watching the video/reading the lesson (1% every 2 seconds for demo)
-    // In a real app, this would tie to the YouTube Player API 'onStateChange'
-    watchTimerRef.current = setInterval(() => {
-      setWatchProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(watchTimerRef.current);
-          return 100;
-        }
-        return prev + 5; // increment 5% per interval for faster testing
-      });
-    }, 2000);
+    // Load saved progress
+    const savedProgress = localStorage.getItem(`lesson-progress-${activeLesson.id}`);
+    if (savedProgress) {
+      setWatchProgress(parseInt(savedProgress));
+    }
 
-    return () => clearInterval(watchTimerRef.current);
-  }, [activeLesson]);
+    let startTime = Date.now();
+    let accumulatedTime = watchTimeSpent;
 
-  // Auto-save progress
-  useEffect(() => {
-    const saveInterval = setInterval(() => {
-      if (activeLesson?.type === 'lesson' && watchProgress > 0 && watchProgress < 100) {
-         LessonService.updateWatchProgress(user.id, courseId, activeLesson.id, null, watchProgress);
+    const interval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const newTotalTime = accumulatedTime + elapsed;
+      const newProgress = Math.min((newTotalTime / 600) * 100, 100); // 10 minutes = 100%
+
+      setWatchTimeSpent(newTotalTime);
+      setWatchProgress(newProgress);
+
+      // Save to localStorage every 5 seconds
+      localStorage.setItem(`lesson-progress-${activeLesson.id}`, newProgress.toString());
+      localStorage.setItem(`watch-time-${courseId}-${activeLesson.id}`, newTotalTime.toString());
+
+      // Auto-save to backend every 30 seconds
+      if (newTotalTime % 30 === 0 && newTotalTime > 0) {
+        LessonService.updateWatchProgress(user.id, courseId, activeLesson.id, null, newProgress);
       }
-    }, 15000); // Autosave every 15s
+    }, 1000);
 
-    return () => clearInterval(saveInterval);
-  }, [watchProgress, activeLesson]);
-
-  useEffect(() => {
-    const loadLessonNotes = async () => {
-      if (!user || !activeLesson || activeLesson.type !== 'lesson') {
-        setNotes('');
-        return;
-      }
-      try {
-        const lessonNotes = await NoteService.getLessonNotes(user.id, activeLesson.id);
-        setNotes(lessonNotes.length > 0 ? lessonNotes[0].content : '');
-      } catch (error) {
-        console.error('Error loading notes:', error);
-      }
+    return () => {
+      clearInterval(interval);
+      // Final save on unmount
+      LessonService.updateWatchProgress(user.id, courseId, activeLesson.id, null, watchProgress);
     };
-    loadLessonNotes();
-  }, [activeLesson, user]);
+  }, [activeLesson, courseId, user, progressMap]);
 
-  const handleSaveNote = async () => {
+  // Auto-save notes with debounce
+  useEffect(() => {
+    if (!user || !activeLesson || activeLesson.type !== 'lesson') return;
+
+    if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
+
+    const timeout = setTimeout(() => {
+      if (notes.trim()) {
+        handleSaveNote(true);
+      }
+    }, 3000);
+
+    setAutoSaveTimeout(timeout);
+
+    return () => clearTimeout(timeout);
+  }, [notes]);
+
+  const loadLessonNotes = useCallback(async () => {
+    if (!user || !activeLesson || activeLesson.type !== 'lesson') {
+      setNotes('');
+      return;
+    }
+    try {
+      const lessonNotes = await NoteService.getLessonNotes(user.id, activeLesson.id);
+      setNotes(lessonNotes.length > 0 ? lessonNotes[0].content : '');
+    } catch (error) {
+      console.error('Error loading notes:', error);
+    }
+  }, [user, activeLesson]);
+
+  useEffect(() => {
+    loadLessonNotes();
+  }, [loadLessonNotes]);
+
+  const handleSaveNote = async (isAutoSave = false) => {
     if (!user || !activeLesson || !notes.trim() || savingNote) return;
     try {
       setSavingNote(true);
       await NoteService.saveNote(user.id, courseId, activeLesson.id, notes);
-      toast.success('Archived');
+      if (!isAutoSave) toast.success('Note saved');
       const updatedNotes = await NoteService.getCourseNotes(user.id, courseId);
       setRecentNotes(updatedNotes);
     } catch (error) {
-      toast.error('Sync failed');
+      if (!isAutoSave) toast.error('Failed to save note');
     } finally {
       setSavingNote(false);
     }
@@ -165,27 +216,42 @@ const CoursePlayer = () => {
 
   const isItemLocked = (index) => {
     if (index === 0) return false;
-    // Sequential learning: locked if previous is not completed
     const previousItem = lessons[index - 1];
     if (!previousItem) return false;
-
+    // Only lock if previous item is a lesson and not completed
     if (previousItem.type === 'lesson') {
       return progressMap[previousItem.id]?.status !== 'completed';
     }
-    // Simple check for now, can be expanded for quizzes/assignments
     return false;
   };
 
-  const handleLessonSelect = (item, index) => {
+  const handleLessonSelect = async (item, index) => {
     if (isItemLocked(index)) {
-      toast.error('Complete previous objectives to unlock this node.');
+      toast.error('Complete the previous lesson first', {
+        icon: '🔒',
+        style: { background: '#1a1a1a', color: '#fff' }
+      });
       return;
     }
+
+    // Save current lesson progress before switching
+    if (activeLesson && activeLesson.type === 'lesson' && watchProgress > 0) {
+      await LessonService.updateWatchProgress(user.id, courseId, activeLesson.id, null, watchProgress);
+    }
+
     setActiveLesson(item);
+    setWatchProgress(0);
+    setWatchTimeSpent(0);
+
     if (item.type === 'lesson') {
-      LessonService.updateLessonProgress(user.id, courseId, item.id, {
+      const savedProgress = localStorage.getItem(`lesson-progress-${item.id}`);
+      if (savedProgress) {
+        setWatchProgress(parseInt(savedProgress));
+      }
+
+      await LessonService.updateLessonProgress(user.id, courseId, item.id, {
         last_accessed_at: new Date().toISOString(),
-        status: progressMap[item.id]?.status || 'in_progress'
+        status: progressMap[item.id]?.status || 'in_progress',
       });
     }
   };
@@ -194,508 +260,813 @@ const CoursePlayer = () => {
     const currentIndex = lessons.findIndex(l => l.id === activeLesson.id && l.type === activeLesson.type);
     if (currentIndex < lessons.length - 1) {
       handleLessonSelect(lessons[currentIndex + 1], currentIndex + 1);
+      // Scroll to top
+      if (mainContentRef.current) {
+        mainContentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     } else {
-      toast.success('Course Completed! Generating Certificate...');
+      toast.success('🎉 Congratulations! You\'ve completed the course!', {
+        duration: 5000,
+        icon: '🏆',
+        style: { background: '#10b981', color: '#fff' }
+      });
+    }
+  };
+
+  const handlePreviousObjective = () => {
+    const currentIndex = lessons.findIndex(l => l.id === activeLesson.id && l.type === activeLesson.type);
+    if (currentIndex > 0) {
+      handleLessonSelect(lessons[currentIndex - 1], currentIndex - 1);
+      if (mainContentRef.current) {
+        mainContentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     }
   };
 
   const handleMarkComplete = async () => {
     if (!activeLesson || activeLesson.type !== 'lesson' || completing) return;
+
     if (watchProgress < 90) {
-       toast.error('Analyze at least 90% of the material to proceed.');
-       return;
+      toast.error(`Please watch ${Math.ceil(90 - watchProgress)}% more to complete`, {
+        duration: 3000,
+        icon: '⚠️'
+      });
+      return;
     }
-    
+
     try {
       setCompleting(true);
       await LessonService.markLessonComplete(user.id, courseId, activeLesson.id);
+
       setProgressMap(prev => ({
         ...prev,
-        [activeLesson.id]: { ...(prev[activeLesson.id] || {}), status: 'completed' }
+        [activeLesson.id]: {
+          ...(prev[activeLesson.id] || {}),
+          status: 'completed',
+          completed_at: new Date().toISOString()
+        },
       }));
-      toast.success('Objective Synchronized');
-      setTimeout(handleNextObjective, 1500);
+
+      // Clear local storage for this lesson
+      localStorage.removeItem(`lesson-progress-${activeLesson.id}`);
+
+      toast.success('Lesson completed! 🎉', {
+        duration: 2000,
+        icon: '✅'
+      });
+
+      // Auto-advance to next lesson after completion
+      setTimeout(() => {
+        handleNextObjective();
+      }, 1500);
     } catch (error) {
-      toast.error('Sync failed');
+      toast.error('Failed to mark as complete');
     } finally {
       setCompleting(false);
     }
   };
 
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      // Space: play/pause (if video)
+      if (e.code === 'Space' && activeLesson?.type === 'lesson') {
+        e.preventDefault();
+        const iframe = document.querySelector('iframe');
+        if (iframe) {
+          // Post message to YouTube iframe
+          iframe.contentWindow?.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+        }
+      }
+      // Arrow right: next lesson
+      if (e.code === 'ArrowRight' && e.ctrlKey) {
+        e.preventDefault();
+        handleNextObjective();
+      }
+      // Arrow left: previous lesson
+      if (e.code === 'ArrowLeft' && e.ctrlKey) {
+        e.preventDefault();
+        handlePreviousObjective();
+      }
+      // C key: mark complete
+      if (e.code === 'KeyC' && e.ctrlKey && activeLesson?.type === 'lesson') {
+        e.preventDefault();
+        handleMarkComplete();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [activeLesson, watchProgress]);
+
+  // Derived state
+  const isLessonCompleted = activeLesson && progressMap[activeLesson.id]?.status === 'completed';
+  const canMarkComplete = activeLesson?.type === 'lesson' && !isLessonCompleted && watchProgress >= 90;
+  const completedCount = Object.values(progressMap).filter(p => p.status === 'completed').length;
+  const totalItems = lessons.length || 1;
+  const courseProgressPercentage = Math.round((completedCount / totalItems) * 100);
+  const currentLessonIndex = lessons.findIndex(l => l.id === activeLesson?.id && l.type === activeLesson?.type);
+
+  // Loading state
   if (loading) {
     return (
-      <div className="h-full flex flex-col items-center justify-center space-y-6 bg-[#030B14]">
-        <Loader2 className="w-12 h-12 text-[var(--st-color-primary)] animate-spin" />
-        <p className="text-[var(--st-color-primary)] font-headline font-bold text-xs uppercase tracking-widest animate-pulse">Decrypting Neural Core...</p>
+      <div className="h-full flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-[#030B14] to-[#0a1620]">
+        <div className="relative">
+          <div className="w-16 h-16 border-4 border-[var(--st-color-primary)]/20 border-t-[var(--st-color-primary)] rounded-full animate-spin" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Play size={20} className="text-[var(--st-color-primary)] animate-pulse" />
+          </div>
+        </div>
+        <p className="text-white/40 text-sm font-medium animate-pulse">Loading course content...</p>
       </div>
     );
   }
 
   if (!course) {
     return (
-      <div className="h-full flex flex-col items-center justify-center space-y-6 bg-[#030B14] p-8 text-center">
-        <div className="w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center border border-red-500/20 mb-4">
-          <Lock className="w-10 h-10 text-red-500" />
+      <div className="h-full flex flex-col items-center justify-center gap-6 bg-gradient-to-br from-[#030B14] to-[#0a1620] p-8 text-center">
+        <div className="relative">
+          <div className="w-24 h-24 rounded-full bg-red-500/10 flex items-center justify-center border border-red-500/20 animate-pulse">
+            <Lock className="w-10 h-10 text-red-500" />
+          </div>
+          <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full animate-ping" />
         </div>
-        <div className="space-y-2 max-w-md">
-          <h2 className="text-xl font-headline font-bold text-white uppercase tracking-wider">Access Denied / Not Found</h2>
+        <div className="max-w-md space-y-3">
+          <h2 className="text-2xl font-bold text-white">Access Restricted</h2>
           <p className="text-sm text-white/40 leading-relaxed">
-            The requested course module is either unpublished or restricted to authorized personnel only. 
-            Please verify your enrollment status or contact central command.
+            This course is either unpublished or you are not enrolled. Please verify your enrollment status.
           </p>
         </div>
-        <button 
+        <button
           onClick={() => navigate('/student/my-courses')}
-          className="mt-8 px-8 py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-headline font-bold text-[11px] uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-3"
+          className="mt-6 px-8 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm font-semibold hover:bg-white/10 hover:scale-105 transition-all duration-300 flex items-center gap-2 group"
         >
-          <ArrowLeft size={16} /> Return to Dashboard
+          <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+          Back to My Courses
         </button>
       </div>
     );
   }
 
-  const completedCount = Object.values(progressMap).filter(p => p.status === 'completed').length;
-  const totalItems = lessons.length || 1;
-  const courseProgressPercentage = Math.round((completedCount / totalItems) * 100);
-
   return (
-    <div className="h-full flex flex-col bg-[#030B14] overflow-hidden">
-      {/* 4-COLUMN INNER HEADER */}
-      <header className="h-16 border-b border-white/5 flex items-center justify-between px-6 bg-black/40 backdrop-blur-xl z-30 flex-shrink-0 shadow-xl">
-        <div className="flex items-center gap-4">
+    <div className="h-full flex flex-col bg-gradient-to-br from-[#030B14] to-[#0a1620] overflow-hidden">
+      {/* Header */}
+      <header className="h-14 flex-shrink-0 border-b border-white/10 bg-black/40 backdrop-blur-xl flex items-center justify-between px-4 gap-4 z-30">
+        <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => navigate('/student/my-courses')}
-            className="p-2.5 rounded-xl hover:bg-white/5 text-on-surface-variant transition-colors border border-transparent hover:border-white/10"
+            className="flex-shrink-0 p-2 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-all duration-200 group"
+            title="Back to courses"
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft size={18} className="group-hover:-translate-x-0.5 transition-transform" />
           </button>
-          <div className="h-6 w-px bg-white/10 mx-2"></div>
-          <div>
-            <h2 className="text-sm font-headline font-bold text-white truncate max-w-[250px] md:max-w-[400px] tracking-tight">{course?.title}</h2>
-            <div className="flex items-center gap-2 mt-0.5">
-               <span className="text-[10px] font-bold text-[var(--st-color-primary)] uppercase tracking-widest">{activeLesson?.title}</span>
-               {watchProgress > 0 && watchProgress < 100 && (
-                  <span className="text-[9px] text-white/40">({watchProgress}% Analyzed)</span>
-               )}
-            </div>
+          <div className="h-6 w-px bg-white/20" />
+          <div className="min-w-0">
+            <p className="text-xs font-semibold text-white/80 truncate max-w-[180px] sm:max-w-[400px]">
+              {course?.title}
+            </p>
+            <p className="text-[10px] text-white/40 truncate flex items-center gap-1">
+              <span className="inline-block w-1 h-1 rounded-full bg-[var(--st-color-primary)]" />
+              {activeLesson?.title}
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="hidden sm:flex items-center gap-3 px-4 py-2 rounded-xl bg-white/[0.02] border border-white/5 shadow-inner">
-            <Trophy size={16} className="text-yellow-500" />
-            <div className="flex items-center gap-2">
-               <div className="w-16 h-1 bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-yellow-500" style={{ width: `${courseProgressPercentage}%`}}></div>
-               </div>
-               <span className="text-[11px] font-bold text-white">{courseProgressPercentage}%</span>
-            </div>
+        <div className="hidden md:flex items-center gap-3 px-4 py-1.5 rounded-full bg-white/5 border border-white/10">
+          <Trophy size={14} className="text-yellow-400" />
+          <div className="w-32 h-1.5 bg-white/10 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-gradient-to-r from-[var(--st-color-primary)] to-[var(--st-color-primary)]/60 rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${courseProgressPercentage}%` }}
+              transition={{ duration: 0.5 }}
+            />
           </div>
+          <span className="text-xs font-bold text-white/80 tabular-nums">{courseProgressPercentage}% Complete</span>
+        </div>
 
+        <div className="flex items-center gap-2">
           {activeLesson?.type === 'lesson' && (
-            <button
-              onClick={handleMarkComplete}
-              disabled={progressMap[activeLesson?.id]?.status === 'completed' || completing || watchProgress < 90}
-              className={`px-5 py-2.5 rounded-xl font-headline font-black text-[10px] uppercase tracking-widest flex items-center gap-2 transition-all ${
-                progressMap[activeLesson?.id]?.status === 'completed'
-                  ? 'bg-[var(--st-color-primary)] text-black shadow-[0_0_20px_var(--st-color-glow)]'
-                  : watchProgress < 90
-                    ? 'bg-white/5 text-white/30 cursor-not-allowed'
-                    : 'bg-white/10 text-white hover:bg-[var(--st-color-primary)]/20 hover:border-[var(--st-color-primary)]/40 hover:text-[var(--st-color-primary)] border border-white/5'
-              }`}
-            >
-              {completing ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-              {progressMap[activeLesson?.id]?.status === 'completed' ? 'Completed' : 'Mark Done'}
-            </button>
+            <>
+              {isLessonCompleted ? (
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="hidden sm:flex items-center gap-2 px-4 py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-semibold"
+                >
+                  <CheckCircle2 size={14} /> Completed
+                </motion.span>
+              ) : (
+                <motion.button
+                  whileHover={canMarkComplete ? { scale: 1.02 } : {}}
+                  whileTap={canMarkComplete ? { scale: 0.98 } : {}}
+                  onClick={handleMarkComplete}
+                  disabled={!canMarkComplete || completing}
+                  className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200
+                    ${canMarkComplete
+                      ? 'bg-[var(--st-color-primary)] text-black hover:opacity-90 shadow-lg shadow-[var(--st-color-primary)]/20'
+                      : 'bg-white/10 border border-white/20 text-white/40 cursor-not-allowed'
+                    }`}
+                >
+                  {completing ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <CheckCircle2 size={14} />
+                  )}
+                  <span className="hidden sm:inline">
+                    {completing ? 'Completing...' : watchProgress < 90 ? `${Math.floor(watchProgress)}% Watched` : 'Complete'}
+                  </span>
+                </motion.button>
+              )}
+            </>
           )}
 
-          <div className="flex items-center gap-2 border-l border-white/10 pl-4 ml-2">
-            <button 
-              onClick={() => setIsCurriculumOpen(!isCurriculumOpen)}
-              className={`p-2.5 rounded-xl transition-all ${isCurriculumOpen ? 'text-[var(--st-color-primary)] bg-[var(--st-color-primary)]/10 shadow-[inset_0_0_10px_rgba(var(--st-color-primary-rgb),0.2)]' : 'text-on-surface-variant hover:bg-white/5'}`}
-              title="Toggle Curriculum"
+          <div className="flex gap-1">
+            <button
+              onClick={handlePreviousObjective}
+              disabled={currentLessonIndex <= 0}
+              className="p-2 rounded-lg bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              title="Previous (Ctrl+←)"
             >
-              <List size={20} />
+              <ArrowLeft size={16} />
             </button>
-            <button 
-              onClick={() => setIsUtilityOpen(!isUtilityOpen)}
-              className={`p-2.5 rounded-xl transition-all ${isUtilityOpen ? 'text-[var(--st-color-primary)] bg-[var(--st-color-primary)]/10 shadow-[inset_0_0_10px_rgba(var(--st-color-primary-rgb),0.2)]' : 'text-on-surface-variant hover:bg-white/5'}`}
-              title="Toggle Utility Panel"
+            <button
+              onClick={handleNextObjective}
+              disabled={currentLessonIndex >= lessons.length - 1}
+              className="p-2 rounded-lg bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              title="Next (Ctrl+→)"
             >
-              <Layout size={20} />
+              <SkipForward size={16} />
             </button>
           </div>
+
+          <div className="w-px h-6 bg-white/20" />
+
+          <button
+            onClick={toggleFullscreen}
+            className="p-2 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-all"
+            title="Fullscreen"
+          >
+            {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+          </button>
+
+          <button
+            onClick={() => setIsCurriculumOpen(v => !v)}
+            className={`p-2 rounded-lg transition-all duration-200 ${isCurriculumOpen ? 'text-[var(--st-color-primary)] bg-[var(--st-color-primary)]/10' : 'text-white/40 hover:text-white hover:bg-white/10'}`}
+            title={isCurriculumOpen ? 'Hide curriculum' : 'Show curriculum'}
+          >
+            <List size={18} />
+          </button>
+          <button
+            onClick={() => setIsUtilityOpen(v => !v)}
+            className={`p-2 rounded-lg transition-all duration-200 ${isUtilityOpen ? 'text-[var(--st-color-primary)] bg-[var(--st-color-primary)]/10' : 'text-white/40 hover:text-white hover:bg-white/10'}`}
+            title={isUtilityOpen ? 'Hide utilities' : 'Show utilities'}
+          >
+            <Layout size={18} />
+          </button>
         </div>
       </header>
 
-      <div className="flex-1 flex overflow-hidden relative">
-        {/* COLUMN 2: CURRICULUM SIDEBAR */}
-        <AnimatePresence initial={false}>
+      {/* Main Content */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Curriculum Sidebar */}
+        <AnimatePresence mode="wait">
           {isCurriculumOpen && (
             <motion.aside
               initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 340, opacity: 1 }}
+              animate={{ width: 320, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
-              className="border-r border-white/5 bg-black/40 flex flex-col overflow-hidden flex-shrink-0 z-20 shadow-2xl"
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              className="flex-shrink-0 border-r border-white/10 bg-black/20 backdrop-blur-sm flex flex-col overflow-hidden"
             >
-              <div className="px-6 py-5 border-b border-white/5 bg-white/[0.01]">
-                <h3 className="text-[11px] font-black text-on-surface-variant/40 uppercase tracking-[0.2em] flex items-center gap-2">
-                   <BookOpen size={14} /> Course Curriculum
+              <div className="px-5 py-4 border-b border-white/10 bg-black/30">
+                <h3 className="text-[11px] font-bold text-white/40 uppercase tracking-wider flex items-center gap-2">
+                  <BookOpen size={14} /> Course Curriculum
                 </h3>
               </div>
-              <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-8">
-                {(course?.modules || []).map((module, mIdx) => (
-                  <div key={module.id} className="space-y-4">
-                    <div className="px-2 flex items-center gap-3">
-                      <span className="text-[10px] font-black text-[var(--st-color-primary)]/50 uppercase tracking-widest border border-[var(--st-color-primary)]/20 px-2 py-0.5 rounded-md bg-[var(--st-color-primary)]/5">PHASE {mIdx + 1}</span>
-                      <h4 className="text-xs font-bold text-white/80 uppercase tracking-widest truncate">{module.title}</h4>
-                    </div>
-                    <div className="space-y-1.5">
-                      {[
-                        ...(module.lessons || []).map(l => ({ ...l, type: 'lesson' })),
-                        ...(module.assignments || []).map(a => ({ ...a, type: 'assignment' })),
-                        ...(module.quizzes || []).map(q => ({ ...q, type: 'quiz' }))
-                      ].sort((a, b) => (a.order_index || 0) - (b.order_index || 0)).map((item, idx) => {
-                        const isCompleted = item.type === 'lesson'
-                          ? progressMap[item.id]?.status === 'completed'
-                          : item.type === 'quiz'
-                            ? (course.quizAttempts || []).some(a => a.quiz_id === item.id && a.status === 'passed')
-                            : (course.submissions || []).some(s => s.assignment_id === item.id && s.status === 'graded');
-                        const isActive = activeLesson?.id === item.id && activeLesson?.type === item.type;
-                        
-                        // Need global index for lock logic
-                        const globalIndex = lessons.findIndex(l => l.id === item.id && l.type === item.type);
-                        const locked = isItemLocked(globalIndex);
 
-                        return (
-                          <button
-                            key={`${item.type}-${item.id}`}
-                            onClick={() => handleLessonSelect(item, globalIndex)}
-                            disabled={locked}
-                            className={`w-full flex items-center gap-4 p-3.5 rounded-2xl transition-all group border ${
-                              isActive 
-                                ? 'bg-[var(--st-color-primary)]/10 border-[var(--st-color-primary)]/30 shadow-[inset_0_0_15px_rgba(var(--st-color-primary-rgb),0.1)]' 
-                                : locked
-                                  ? 'opacity-40 cursor-not-allowed border-transparent'
-                                  : 'hover:bg-white/[0.03] border-transparent hover:border-white/5'
-                            }`}
-                          >
-                            <div className={`w-9 h-9 rounded-xl border flex flex-shrink-0 items-center justify-center transition-all ${
-                              isCompleted 
-                                ? 'bg-[var(--st-color-primary)] border-[var(--st-color-primary)] text-black shadow-[0_0_10px_var(--st-color-glow)]' 
-                                : isActive 
-                                  ? 'border-[var(--st-color-primary)]/50 text-[var(--st-color-primary)] bg-[var(--st-color-primary)]/5' 
+              <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scroll">
+                {(course?.modules || []).map((module, mIdx) => {
+                  const moduleItems = [
+                    ...(module.lessons || []).map(l => ({ ...l, type: 'lesson' })),
+                    ...(module.assignments || []).map(a => ({ ...a, type: 'assignment' })),
+                    ...(module.quizzes || []).map(q => ({ ...q, type: 'quiz' })),
+                  ].sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+
+                  const completedInModule = moduleItems.filter(item => {
+                    if (item.type === 'lesson') return progressMap[item.id]?.status === 'completed';
+                    if (item.type === 'quiz') return (course.quizAttempts || []).some(a => a.quiz_id === item.id && a.status === 'passed');
+                    return (course.submissions || []).some(s => s.assignment_id === item.id && s.status === 'graded');
+                  }).length;
+
+                  const moduleProgress = (completedInModule / moduleItems.length) * 100;
+
+                  return (
+                    <div key={module.id} className="space-y-2">
+                      <div className="flex items-center justify-between px-2 mb-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold text-[var(--st-color-primary)]/70 bg-[var(--st-color-primary)]/10 px-2 py-0.5 rounded">
+                            Module {mIdx + 1}
+                          </span>
+                          <h4 className="text-xs font-semibold text-white/70">{module.title}</h4>
+                        </div>
+                        <span className="text-[10px] text-white/30">{Math.round(moduleProgress)}%</span>
+                      </div>
+                      <div className="h-0.5 bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-full bg-[var(--st-color-primary)]/50 rounded-full" style={{ width: `${moduleProgress}%` }} />
+                      </div>
+
+                      <div className="space-y-1 mt-3">
+                        {moduleItems.map((item) => {
+                          const isCompleted = item.type === 'lesson'
+                            ? progressMap[item.id]?.status === 'completed'
+                            : item.type === 'quiz'
+                              ? (course.quizAttempts || []).some(a => a.quiz_id === item.id && a.status === 'passed')
+                              : (course.submissions || []).some(s => s.assignment_id === item.id && s.status === 'graded');
+                          const isActive = activeLesson?.id === item.id && activeLesson?.type === item.type;
+                          const globalIndex = lessons.findIndex(l => l.id === item.id && l.type === item.type);
+                          const locked = isItemLocked(globalIndex);
+
+                          return (
+                            <button
+                              key={`${item.type}-${item.id}`}
+                              onClick={() => handleLessonSelect(item, globalIndex)}
+                              disabled={locked}
+                              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-left group
+                                ${isActive
+                                  ? 'bg-[var(--st-color-primary)]/15 border border-[var(--st-color-primary)]/30 shadow-lg'
                                   : locked
-                                     ? 'border-white/5 text-white/20 bg-white/5'
-                                     : 'border-white/10 text-white/30 bg-white/[0.02] group-hover:text-white/60'
-                            }`}>
-                              {locked ? <Lock size={14} /> : isCompleted ? <CheckCircle2 size={16} strokeWidth={2.5} /> : <Play size={14} className={isActive ? "ml-1" : ""} />}
-                            </div>
-                            <div className="flex flex-col items-start min-w-0">
-                               <span className={`text-xs font-bold text-left truncate w-full ${isActive ? 'text-white' : locked ? 'text-white/30' : 'text-white/60 group-hover:text-white/90'}`}>
-                                 {item.title}
-                               </span>
-                               <span className="text-[9px] font-black uppercase tracking-widest text-[var(--st-color-primary)]/50 mt-1">{item.type}</span>
-                            </div>
-                          </button>
-                        );
-                      })}
+                                    ? 'opacity-40 cursor-not-allowed'
+                                    : 'hover:bg-white/5 border border-transparent hover:border-white/10'
+                                }`}
+                            >
+                              <div className={`w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center transition-all duration-200
+                                ${isCompleted
+                                  ? 'bg-emerald-500/20 text-emerald-400'
+                                  : isActive
+                                    ? 'bg-[var(--st-color-primary)]/20 text-[var(--st-color-primary)]'
+                                    : 'bg-white/5 text-white/30'
+                                }`}
+                              >
+                                {locked ? <Lock size={12} /> : isCompleted ? <CheckCircle2 size={13} /> : <Play size={12} />}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className={`text-xs font-medium truncate ${isActive ? 'text-white' : locked ? 'text-white/30' : 'text-white/60'}`}>
+                                  {item.title}
+                                </p>
+                                <span className={`text-[9px] uppercase tracking-wider font-semibold
+                                  ${item.type === 'lesson' ? 'text-blue-400/60' : item.type === 'quiz' ? 'text-purple-400/60' : 'text-orange-400/60'}`}
+                                >
+                                  {item.type}
+                                </span>
+                              </div>
+                              {isActive && (
+                                <ChevronRight size={14} className="text-[var(--st-color-primary)] flex-shrink-0" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </motion.aside>
           )}
         </AnimatePresence>
 
-        {/* COLUMN 3: MAIN LEARNING AREA */}
-        <main className="flex-1 flex flex-col min-w-0 relative overflow-y-auto custom-scrollbar">
-          {/* VIDEO CONTAINER */}
-          <div className="w-full bg-[#02060A] relative group shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-            <div className="w-full max-w-[1200px] mx-auto aspect-video max-h-[70vh] relative overflow-hidden rounded-b-[40px] border-b border-white/5 bg-black/80">
+        {/* Main Content Area */}
+        <main ref={mainContentRef} className="flex-1 flex flex-col min-w-0 overflow-y-auto custom-scroll">
+          {/* Video/Content Area */}
+          <div className="w-full bg-black/50 flex-shrink-0 relative">
+            <div className="w-full aspect-video max-h-[70vh] relative overflow-hidden bg-gradient-to-br from-black to-gray-900">
               {activeLesson ? (
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={`${activeLesson.type}-${activeLesson.id}`}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="w-full h-full relative"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3 }}
+                    className="w-full h-full"
                   >
-                    {activeLesson.type === 'lesson' ? (
-                      (activeLesson.content_type === 'video' || (!activeLesson.content_type && activeLesson.content_url)) ? (
-                        <>
-                           <iframe
-                             className="w-full h-full"
-                             src={getYoutubeEmbedUrl(activeLesson.content_url)}
-                             title={activeLesson.title}
-                             frameBorder="0"
-                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                             allowFullScreen
-                           ></iframe>
-                           {/* Watch Progress Indicator */}
-                           {progressMap[activeLesson.id]?.status !== 'completed' && (
-                              <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10">
-                                 <div className="h-full bg-[var(--st-color-primary)] shadow-[0_0_10px_var(--st-color-glow)] transition-all duration-1000" style={{ width: `${watchProgress}%`}}></div>
-                              </div>
-                           )}
-                        </>
-                      ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center p-12 text-center space-y-8 bg-gradient-to-b from-white/[0.02] to-transparent">
-                          <div className="p-10 rounded-[48px] bg-[var(--st-color-primary)]/5 border border-[var(--st-color-primary)]/10 relative overflow-hidden">
-                            <div className="absolute inset-0 bg-[var(--st-color-primary)]/20 blur-2xl"></div>
-                            <FileText size={80} className="text-[var(--st-color-primary)] opacity-80 relative z-10" />
+                    {activeLesson.type === 'lesson' && activeLesson.content_url ? (
+                      <>
+                        <iframe
+                          ref={videoRef}
+                          className="w-full h-full"
+                          src={getYoutubeEmbedUrl(activeLesson.content_url)}
+                          title={activeLesson.title}
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                        {!isLessonCompleted && watchProgress < 100 && (
+                          <div className="absolute bottom-0 left-0 right-0">
+                            <div className="h-1.5 bg-white/10">
+                              <motion.div
+                                className="h-full bg-gradient-to-r from-[var(--st-color-primary)] to-[var(--st-color-primary)]/70"
+                                initial={{ width: 0 }}
+                                animate={{ width: `${watchProgress}%` }}
+                                transition={{ duration: 0.3 }}
+                              />
+                            </div>
+                            <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-sm rounded-lg px-2 py-1 text-xs text-white/80">
+                              {Math.floor(watchProgress)}% watched
+                            </div>
                           </div>
-                          <div className="space-y-4">
-                             <h2 className="text-4xl font-headline font-bold text-white tracking-tight">{activeLesson.title}</h2>
-                             <p className="text-white/40 max-w-xl mx-auto text-lg">{activeLesson.description}</p>
+                        )}
+                      </>
+                    ) : activeLesson.type === 'lesson' ? (
+                      <div className="w-full h-full flex flex-col items-center justify-center gap-6 bg-gradient-to-br from-white/5 to-transparent p-12 text-center">
+                        <div className="p-8 rounded-full bg-[var(--st-color-primary)]/10 border border-[var(--st-color-primary)]/20 animate-pulse">
+                          <FileText size={64} className="text-[var(--st-color-primary)]" />
+                        </div>
+                        <div>
+                          <h2 className="text-3xl font-bold text-white mb-2">{activeLesson.title}</h2>
+                          {activeLesson.description && (
+                            <p className="text-white/50 max-w-lg mx-auto">{activeLesson.description}</p>
+                          )}
+                        </div>
+                        <div className="w-64 space-y-2">
+                          <div className="flex justify-between text-[10px] text-white/40 font-semibold">
+                            <span>Reading Progress</span>
+                            <span>{Math.floor(watchProgress)}%</span>
                           </div>
-                          
-                          {/* Reading Timer */}
-                          <div className="w-64 space-y-2 mt-8">
-                             <div className="flex justify-between text-[10px] font-black uppercase text-white/30 tracking-widest">
-                                <span>Analysis</span>
-                                <span>{watchProgress}%</span>
-                             </div>
-                             <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                                 <div className="h-full bg-[var(--st-color-primary)] transition-all duration-1000" style={{ width: `${watchProgress}%`}}></div>
-                             </div>
+                          <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                            <motion.div
+                              className="h-full bg-[var(--st-color-primary)] rounded-full"
+                              initial={{ width: 0 }}
+                              animate={{ width: `${watchProgress}%` }}
+                              transition={{ duration: 0.5 }}
+                            />
                           </div>
                         </div>
-                      )
+                      </div>
                     ) : activeLesson.type === 'assignment' ? (
-                      <div className="h-full overflow-y-auto custom-scrollbar p-8">
-                         <AssignmentViewer assignment={activeLesson} studentId={user.id} onComplete={fetchCourseData} />
+                      <div className="h-full overflow-y-auto p-6">
+                        <AssignmentViewer assignment={activeLesson} studentId={user.id} onComplete={fetchCourseData} />
                       </div>
                     ) : activeLesson.type === 'quiz' ? (
-                      <div className="h-full overflow-y-auto custom-scrollbar p-8">
-                         <QuizViewer quiz={activeLesson} studentId={user.id} onComplete={fetchCourseData} />
+                      <div className="h-full overflow-y-auto p-6">
+                        <QuizViewer quiz={activeLesson} studentId={user.id} onComplete={fetchCourseData} />
                       </div>
                     ) : null}
                   </motion.div>
                 </AnimatePresence>
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <Loader2 className="w-10 h-10 text-[var(--st-color-primary)] animate-spin" />
+                  <Loader2 className="w-8 h-8 text-[var(--st-color-primary)] animate-spin" />
                 </div>
               )}
             </div>
           </div>
 
-          {/* CONTENT DETAILS */}
-          <div className="max-w-[1200px] mx-auto w-full px-8 py-12 space-y-12">
-            <div className="flex flex-col md:flex-row md:items-start justify-between gap-8">
-              <div className="space-y-5">
-                <div className="flex items-center gap-4">
-                  <span className="px-4 py-1.5 rounded-full bg-[var(--st-color-primary)]/10 text-[var(--st-color-primary)] text-[10px] font-black uppercase tracking-[0.2em] border border-[var(--st-color-primary)]/20 shadow-[0_0_15px_var(--st-color-glow)]">
-                    {activeLesson?.type}
-                  </span>
-                  <div className="flex items-center gap-1.5 text-white/30 text-xs font-bold bg-white/[0.02] px-3 py-1 rounded-full border border-white/5">
-                    <Clock size={14} />
-                    <span>Est. 15 min</span>
-                  </div>
-                </div>
-                <h1 className="text-4xl md:text-5xl font-headline font-bold text-white tracking-tight leading-tight">{activeLesson?.title}</h1>
-                <div className="flex items-center gap-5 pt-2">
-                  <div className="flex items-center gap-3 bg-white/[0.02] pr-4 rounded-full border border-white/5">
-                    <img src={course?.instructor?.avatar_url} className="w-10 h-10 rounded-full border-2 border-black/50" alt="" />
-                    <span className="text-sm font-bold text-white/80">{course?.instructor?.full_name}</span>
-                  </div>
-                  <div className="w-1 h-1 rounded-full bg-white/20"></div>
-                  <div className="flex items-center gap-2 text-white/40 text-xs font-medium">
-                    <BookOpen size={16} />
-                    <span>Module Sequence {lessons.findIndex(l => l.id === activeLesson?.id) + 1} / {lessons.length}</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-4 pt-2">
-                {activeLesson?.type === 'lesson' && (
-                  <button 
-                    onClick={handleMarkComplete} 
-                    disabled={progressMap[activeLesson?.id]?.status === 'completed' || completing || watchProgress < 90}
-                    className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-xs transition-all border ${
-                       progressMap[activeLesson?.id]?.status === 'completed'
-                        ? 'bg-[var(--st-color-primary)]/10 border-[var(--st-color-primary)]/30 text-[var(--st-color-primary)]'
-                        : watchProgress < 90
-                          ? 'bg-white/5 border-white/5 text-white/30 cursor-not-allowed'
-                          : 'bg-white/[0.02] border-white/10 text-white hover:bg-white/5'
+          {/* Lesson Details */}
+          <div className="max-w-4xl mx-auto w-full px-6 py-8 space-y-6">
+            <div className="flex flex-col lg:flex-row lg:items-start gap-6">
+              <div className="flex-1 space-y-4">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border
+                    ${activeLesson?.type === 'lesson'
+                      ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                      : activeLesson?.type === 'quiz'
+                        ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                        : 'bg-orange-500/10 text-orange-400 border-orange-500/20'
                     }`}
                   >
-                    <CheckCircle2 size={18} /> {progressMap[activeLesson?.id]?.status === 'completed' ? 'Objective Cleared' : 'Complete Objective'}
-                  </button>
+                    {activeLesson?.type}
+                  </span>
+                  <div className="flex items-center gap-2 text-white/40 text-xs">
+                    <Clock size={12} />
+                    <span>~15 min</span>
+                    <span className="w-1 h-1 rounded-full bg-white/20" />
+                    <span>Lesson {currentLessonIndex + 1} of {lessons.length}</span>
+                  </div>
+                </div>
+
+                <h1 className="text-2xl lg:text-3xl font-bold text-white leading-tight">
+                  {activeLesson?.title}
+                </h1>
+
+                {course?.instructor && (
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 w-fit">
+                    <img
+                      src={course.instructor.avatar_url}
+                      className="w-8 h-8 rounded-full border border-white/20"
+                      alt={course.instructor.full_name}
+                    />
+                    <div>
+                      <p className="text-xs text-white/50">Instructor</p>
+                      <p className="text-sm font-semibold text-white">{course.instructor.full_name}</p>
+                    </div>
+                  </div>
                 )}
-                <button onClick={handleNextObjective} className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs transition-all border border-white/10 shadow-lg">
-                  Next Sequence <SkipForward size={18} />
-                </button>
+              </div>
+
+              <div className="flex items-center gap-3 flex-shrink-0">
+                {activeLesson?.type === 'lesson' && (
+                  isLessonCompleted ? (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm font-semibold"
+                    >
+                      <CheckCircle2 size={18} /> Completed
+                    </motion.div>
+                  ) : (
+                    <motion.button
+                      whileHover={canMarkComplete ? { scale: 1.02 } : {}}
+                      whileTap={canMarkComplete ? { scale: 0.98 } : {}}
+                      onClick={handleMarkComplete}
+                      disabled={!canMarkComplete || completing}
+                      className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200
+                        ${canMarkComplete
+                          ? 'bg-[var(--st-color-primary)] text-black hover:opacity-90 shadow-lg'
+                          : 'bg-white/10 border border-white/20 text-white/40 cursor-not-allowed'
+                        }`}
+                    >
+                      {completing ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                      {completing ? 'Completing...' : !canMarkComplete ? `${Math.floor(watchProgress)}% Watched` : 'Mark Complete'}
+                    </motion.button>
+                  )
+                )}
               </div>
             </div>
 
+            {/* Description */}
             {activeLesson?.description && (
-              <div className="glass-panel p-10 rounded-[40px] border-white/5 bg-gradient-to-br from-white/[0.02] to-transparent relative overflow-hidden group hover:border-[var(--st-color-primary)]/20 transition-colors duration-500">
-                <div className="absolute top-0 right-0 p-8 text-white/5 group-hover:scale-110 transition-transform duration-700 group-hover:text-[var(--st-color-primary)]/5">
-                  <Info size={80} />
-                </div>
-                <h3 className="text-xs font-black text-[var(--st-color-primary)] uppercase tracking-[0.3em] mb-6 relative z-10 flex items-center gap-3">
-                   <div className="w-1.5 h-1.5 rounded-full bg-[var(--st-color-primary)] animate-pulse"></div>
-                   Mission Briefing
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="p-6 rounded-2xl bg-white/5 border border-white/10"
+              >
+                <h3 className="text-[11px] font-bold text-white/40 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <Info size={12} /> Lesson Description
                 </h3>
-                <div className="prose prose-invert max-w-none text-base text-white/70 leading-relaxed font-medium relative z-10">
-                   {activeLesson.description.split('\n').map((para, i) => (
-                      <p key={i} className="mb-4">{para}</p>
-                   ))}
-                </div>
-              </div>
-            )}
-
-            {activeLesson?.resources?.length > 0 && (
-              <div className="space-y-6 pt-4">
-                <h4 className="text-[11px] font-black text-white/30 uppercase tracking-[0.2em] px-2 flex items-center gap-3">
-                   <Download size={16} /> Asset Downloads
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {activeLesson.resources.map((res, i) => (
-                    <a key={i} href={res.url} target="_blank" rel="noreferrer" className="flex items-center gap-5 p-5 rounded-3xl bg-white/[0.02] border border-white/5 hover:bg-[var(--st-color-primary)]/10 hover:border-[var(--st-color-primary)]/30 transition-all group shadow-lg">
-                      <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-white/40 group-hover:text-[var(--st-color-primary)] group-hover:scale-110 transition-all">
-                        <Download size={24} />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold text-white truncate group-hover:text-[var(--st-color-primary)] transition-colors">{res.title || 'Resource File'}</p>
-                        <p className="text-[10px] text-white/30 uppercase tracking-widest mt-0.5">Encrypted Asset</p>
-                      </div>
-                    </a>
+                <div className="text-sm text-white/60 leading-relaxed space-y-3">
+                  {activeLesson.description.split('\n').map((para, i) => (
+                    <p key={i}>{para}</p>
                   ))}
                 </div>
-              </div>
+              </motion.div>
             )}
+
+            {/* Resources */}
+            {activeLesson?.resources?.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="space-y-3"
+              >
+                <h4 className="text-[11px] font-bold text-white/40 uppercase tracking-wider flex items-center gap-2">
+                  <Download size={12} /> Resources & Materials
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {activeLesson.resources.map((res, i) => (
+                    <motion.a
+                      key={i}
+                      href={res.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      whileHover={{ scale: 1.02, x: 4 }}
+                      className="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-[var(--st-color-primary)]/10 hover:border-[var(--st-color-primary)]/30 transition-all duration-200 group cursor-pointer"
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center group-hover:bg-[var(--st-color-primary)]/20 transition-colors">
+                        <Download size={16} className="text-white/50 group-hover:text-[var(--st-color-primary)] transition-colors" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-white/70 group-hover:text-white truncate">
+                          {res.title || 'Resource File'}
+                        </p>
+                        <p className="text-[10px] text-white/30">Click to download</p>
+                      </div>
+                    </motion.a>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Navigation buttons at bottom */}
+            <div className="flex justify-between items-center pt-6 border-t border-white/10">
+              <button
+                onClick={handlePreviousObjective}
+                disabled={currentLessonIndex <= 0}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >
+                <ArrowLeft size={16} /> Previous
+              </button>
+              <button
+                onClick={handleNextObjective}
+                disabled={currentLessonIndex >= lessons.length - 1}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >
+                Next Lesson <SkipForward size={16} />
+              </button>
+            </div>
           </div>
         </main>
 
-        {/* COLUMN 4: UTILITY PANEL */}
-        <AnimatePresence initial={false}>
+        {/* Utility Panel */}
+        <AnimatePresence mode="wait">
           {isUtilityOpen && (
             <motion.aside
               initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 380, opacity: 1 }}
+              animate={{ width: 360, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
-              className="border-l border-white/5 bg-black/40 flex flex-col overflow-hidden flex-shrink-0 z-20 shadow-2xl"
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              className="flex-shrink-0 border-l border-white/10 bg-black/20 backdrop-blur-sm flex flex-col overflow-hidden"
             >
-              <div className="flex border-b border-white/5 bg-white/[0.01]">
+              <div className="flex border-b border-white/10">
                 {[
-                  { id: 'notes', icon: <FileText size={18} />, label: 'Archives' },
-                  { id: 'discussions', icon: <MessageSquare size={18} />, label: 'Comms' },
-                  { id: 'ai', icon: <Sparkles size={18} />, label: 'AI Tutor' }
+                  { id: 'notes', icon: <FileText size={15} />, label: 'Notes' },
+                  { id: 'discussions', icon: <MessageSquare size={15} />, label: 'Discuss' },
+                  { id: 'ai', icon: <Sparkles size={15} />, label: 'AI Tutor' },
                 ].map(tab => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex-1 flex flex-col items-center gap-2 py-5 text-[10px] font-black uppercase tracking-widest transition-all relative ${
-                      activeTab === tab.id ? 'text-[var(--st-color-primary)] bg-white/[0.02]' : 'text-on-surface-variant/40 hover:text-white/60 hover:bg-white/[0.01]'
-                    }`}
+                    className={`flex-1 flex flex-col items-center gap-1.5 py-3.5 text-[11px] font-bold uppercase tracking-wider transition-all duration-200 relative
+                      ${activeTab === tab.id ? 'text-[var(--st-color-primary)]' : 'text-white/40 hover:text-white/70'}`}
                   >
                     {tab.icon}
-                    <span>{tab.label}</span>
-                    {activeTab === tab.id && <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--st-color-primary)] shadow-[0_0_15px_var(--st-color-glow)]" />}
+                    {tab.label}
+                    {activeTab === tab.id && (
+                      <motion.span
+                        layoutId="activeTab"
+                        className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-[var(--st-color-primary)]"
+                      />
+                    )}
                   </button>
                 ))}
               </div>
 
-              <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+              <div className="flex-1 overflow-y-auto custom-scroll">
                 <AnimatePresence mode="wait">
-                  {/* ARCHIVES / NOTES TAB */}
                   {activeTab === 'notes' && (
-                    <motion.div key="notes" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between px-2">
-                          <h3 className="text-[10px] font-black text-white/40 uppercase tracking-widest flex items-center gap-2">
-                             <FileText size={14} /> Tactical Notes
-                          </h3>
-                          <button onClick={handleSaveNote} disabled={savingNote || !notes.trim()} className="text-[9px] font-black text-[var(--st-color-primary)] uppercase tracking-[0.2em] flex items-center gap-2 hover:bg-[var(--st-color-primary)]/10 px-3 py-1.5 rounded-lg transition-colors">
-                            {savingNote ? <Loader2 size={12} className="animate-spin" /> : <Plus size={14} />} Save Entry
+                    <motion.div
+                      key="notes"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.2 }}
+                      className="p-5 space-y-5"
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <p className="text-[11px] font-bold text-white/40 uppercase tracking-wider">
+                            Lesson Notes
+                          </p>
+                          <button
+                            onClick={() => handleSaveNote(false)}
+                            disabled={savingNote || !notes.trim()}
+                            className="flex items-center gap-1.5 text-[11px] font-bold text-[var(--st-color-primary)] uppercase tracking-wider hover:bg-[var(--st-color-primary)]/10 px-3 py-1.5 rounded-lg transition-all disabled:opacity-40"
+                          >
+                            {savingNote ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+                            Save
                           </button>
                         </div>
                         <textarea
                           value={notes}
-                          onChange={(e) => setNotes(e.target.value)}
-                          placeholder="Log your mission findings here..."
-                          className="w-full bg-white/[0.02] border border-white/10 rounded-3xl p-6 text-sm text-white focus:outline-none focus:border-[var(--st-color-primary)]/40 focus:bg-white/[0.04] min-h-[300px] transition-all placeholder:text-white/10 resize-none shadow-inner"
-                        ></textarea>
+                          onChange={e => setNotes(e.target.value)}
+                          placeholder="Write your notes here... (auto-saves)"
+                          className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-white focus:outline-none focus:border-[var(--st-color-primary)]/50 focus:bg-white/10 min-h-[200px] transition-all placeholder:text-white/20 resize-none"
+                        />
                       </div>
 
-                      <div className="space-y-4">
-                        <h4 className="text-[10px] font-black text-white/20 uppercase tracking-widest px-2">Recent Logs</h4>
+                      {recentNotes.length > 0 && (
                         <div className="space-y-3">
-                          {recentNotes.slice(0, 4).map(note => (
-                            <div key={note.id} className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-2 hover:border-[var(--st-color-primary)]/20 transition-colors cursor-pointer group">
-                              <p className="text-[10px] font-bold text-[var(--st-color-primary)]/60 uppercase tracking-wider group-hover:text-[var(--st-color-primary)] transition-colors">{note.lesson?.title}</p>
-                              <p className="text-xs text-white/50 line-clamp-3 leading-relaxed">{note.content}</p>
-                            </div>
-                          ))}
-                          {recentNotes.length === 0 && (
-                             <div className="text-center p-8 border border-dashed border-white/10 rounded-2xl">
-                                <p className="text-xs text-white/30 uppercase tracking-widest font-bold">No logs detected</p>
-                             </div>
-                          )}
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* COMMS / DISCUSSIONS TAB */}
-                  {activeTab === 'discussions' && (
-                    <motion.div key="discussions" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="h-full flex flex-col space-y-6">
-                       <div className="flex-1 flex flex-col items-center justify-center text-center space-y-4 p-8 bg-white/[0.02] rounded-3xl border border-white/5">
-                          <MessageSquare size={48} className="text-[var(--st-color-primary)] opacity-30" />
-                          <div className="space-y-2">
-                             <h4 className="text-sm font-bold text-white uppercase tracking-wider">Secure Comms Channel</h4>
-                             <p className="text-xs text-white/40 leading-relaxed">The communication link for this objective is currently being established. Standby for instructor broadcast.</p>
+                          <p className="text-[11px] font-bold text-white/30 uppercase tracking-wider">Recent Notes</p>
+                          <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                            {recentNotes.slice(0, 5).map(note => (
+                              <motion.div
+                                key={note.id}
+                                whileHover={{ scale: 1.01 }}
+                                className="p-3.5 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition-all cursor-pointer"
+                                onClick={() => setNotes(note.content)}
+                              >
+                                <p className="text-[10px] font-semibold text-[var(--st-color-primary)]/70 mb-1.5">
+                                  {note.lesson?.title}
+                                </p>
+                                <p className="text-xs text-white/50 line-clamp-2 leading-relaxed">
+                                  {note.content}
+                                </p>
+                              </motion.div>
+                            ))}
                           </div>
-                       </div>
-                       <div className="relative">
-                          <input type="text" placeholder="Transmit message..." disabled className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 pl-5 pr-14 text-sm text-white focus:outline-none opacity-50 cursor-not-allowed" />
-                          <button disabled className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-white/5 text-white/30">
-                             <Send size={16} />
-                          </button>
-                       </div>
+                        </div>
+                      )}
                     </motion.div>
                   )}
 
-                  {/* AI TUTOR TAB */}
-                  {activeTab === 'ai' && (
-                    <motion.div key="ai" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
-                      <div className="p-8 rounded-[40px] bg-gradient-to-br from-[var(--st-color-primary)]/10 to-transparent border border-[var(--st-color-primary)]/20 relative overflow-hidden group">
-                        <Sparkles className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform duration-700" size={100} />
-                        <h3 className="text-xl font-headline font-bold text-white mb-2 relative z-10">Neural Intelligence</h3>
-                        <p className="text-xs text-white/50 leading-relaxed mb-8 relative z-10 font-medium">Link with the central AI core for advanced tactical analysis of the current objective.</p>
-                        <button className="w-full py-4 rounded-2xl bg-[var(--st-color-primary)] text-black font-headline font-black text-[11px] uppercase tracking-[0.2em] shadow-[0_0_20px_var(--st-color-glow)] relative z-10">
-                           Initialize Link
+                  {activeTab === 'discussions' && (
+                    <motion.div
+                      key="discussions"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.2 }}
+                      className="p-5 flex flex-col gap-4 h-full"
+                    >
+                      <div className="flex-1 flex flex-col items-center justify-center text-center gap-3 p-8 bg-white/5 rounded-2xl border border-white/10">
+                        <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center">
+                          <MessageSquare size={32} className="text-white/30" />
+                        </div>
+                        <p className="text-sm font-semibold text-white/50">Discussions Coming Soon</p>
+                        <p className="text-xs text-white/30 leading-relaxed max-w-[220px]">
+                          Ask questions and discuss this lesson with fellow students.
+                        </p>
+                      </div>
+                      <div className="relative opacity-50">
+                        <input
+                          type="text"
+                          placeholder="Post a question..."
+                          disabled
+                          className="w-full bg-white/10 border border-white/10 rounded-xl py-3 pl-4 pr-12 text-sm text-white placeholder:text-white/20 focus:outline-none cursor-not-allowed"
+                        />
+                        <button disabled className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-white/10 text-white/30">
+                          <Send size={14} />
                         </button>
                       </div>
-                      <div className="space-y-3">
-                        <h4 className="text-[10px] font-black text-white/20 uppercase tracking-widest px-2 mt-8 mb-4">Suggested Queries</h4>
-                        {['Analyze this objective', 'Explain core concepts', 'Generate practice scenario'].map(q => (
-                          <button key={q} className="w-full p-5 rounded-2xl border border-white/5 bg-white/[0.02] text-left text-xs font-bold text-white/60 hover:text-white hover:bg-white/5 hover:border-white/10 transition-all flex items-center justify-between group">
-                            {q}
-                            <ChevronRight size={16} className="text-white/20 group-hover:text-[var(--st-color-primary)] transition-colors" />
-                          </button>
-                        ))}
+                    </motion.div>
+                  )}
+
+                  {activeTab === 'ai' && (
+                    <motion.div
+                      key="ai"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.2 }}
+                      className="p-5 space-y-4"
+                    >
+                      <div className="p-6 rounded-2xl bg-gradient-to-br from-[var(--st-color-primary)]/15 to-transparent border border-[var(--st-color-primary)]/30 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-[var(--st-color-primary)]/20 flex items-center justify-center">
+                            <Sparkles size={16} className="text-[var(--st-color-primary)]" />
+                          </div>
+                          <h3 className="text-sm font-bold text-white">AI Learning Assistant</h3>
+                        </div>
+                        <p className="text-xs text-white/50 leading-relaxed">
+                          Get instant help understanding concepts, summaries, and practice questions for this lesson.
+                        </p>
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          className="w-full py-2.5 rounded-xl bg-[var(--st-color-primary)] text-black text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all"
+                        >
+                          Start AI Session
+                        </motion.button>
+                      </div>
+
+                      <div>
+                        <p className="text-[11px] font-bold text-white/30 uppercase tracking-wider mb-3 px-1">Quick Prompts</p>
+                        <div className="space-y-2">
+                          {['Explain this lesson simply', 'Give me a practice quiz', 'Summarize key points', 'Suggest related topics'].map(q => (
+                            <motion.button
+                              key={q}
+                              whileHover={{ x: 4 }}
+                              className="w-full flex items-center justify-between p-3.5 rounded-xl border border-white/10 bg-white/5 text-left text-xs font-medium text-white/60 hover:text-white/80 hover:bg-white/10 transition-all group"
+                            >
+                              {q}
+                              <ChevronRight size={13} className="text-white/20 group-hover:text-[var(--st-color-primary)] transition-colors" />
+                            </motion.button>
+                          ))}
+                        </div>
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
 
-              {/* OVERALL PROGRESS FOOTER */}
-              <div className="p-8 bg-black/60 border-t border-white/5 mt-auto relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-t from-[var(--st-color-primary)]/5 to-transparent"></div>
-                <div className="relative z-10">
-                   <div className="flex items-center justify-between mb-4 px-1">
-                     <p className="text-[10px] font-headline font-black text-white/40 uppercase tracking-[0.2em]">Deployment Sync</p>
-                     <span className="text-[11px] font-headline font-black text-[var(--st-color-primary)] uppercase tracking-[0.2em] drop-shadow-[0_0_10px_var(--st-color-glow)]">{courseProgressPercentage}%</span>
-                   </div>
-                   <div className="h-2 bg-white/10 rounded-full overflow-hidden p-0.5">
-                     <div className="h-full bg-gradient-to-r from-[var(--st-color-primary)]/50 to-[var(--st-color-primary)] rounded-full shadow-[0_0_15px_var(--st-color-glow)] transition-all duration-1000" style={{ width: `${courseProgressPercentage}%`}}></div>
-                   </div>
+              <div className="p-4 border-t border-white/10 bg-black/30">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[11px] font-bold text-white/40 uppercase tracking-wider">Overall Progress</p>
+                  <span className="text-xs font-bold text-[var(--st-color-primary)]">{courseProgressPercentage}%</span>
+                </div>
+                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-[var(--st-color-primary)] to-[var(--st-color-primary)]/70 rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${courseProgressPercentage}%` }}
+                    transition={{ duration: 0.5 }}
+                  />
+                </div>
+                <div className="flex justify-between mt-2 text-[10px] text-white/30">
+                  <span>{completedCount} completed</span>
+                  <span>{totalItems - completedCount} remaining</span>
                 </div>
               </div>
             </motion.aside>
@@ -704,18 +1075,19 @@ const CoursePlayer = () => {
       </div>
 
       <style>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
+        .custom-scroll::-webkit-scrollbar {
+          width: 5px;
         }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: rgba(0,0,0,0.2);
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.1);
+        .custom-scroll::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.05);
           border-radius: 10px;
         }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        .custom-scroll::-webkit-scrollbar-thumb {
           background: rgba(255, 255, 255, 0.2);
+          border-radius: 10px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.3);
         }
       `}</style>
     </div>

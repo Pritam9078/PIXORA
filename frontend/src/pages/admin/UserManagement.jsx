@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../layouts/AdminLayout';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
+import { useSupabaseData } from '../../hooks/useSupabaseData';
 import { 
   Search, Filter, MoreHorizontal, UserPlus, 
   Download, Mail, Shield, UserX, ExternalLink,
@@ -22,59 +23,32 @@ const UserManagement = ({ initialTab = 'All Users' }) => {
   const [users, setUsers] = useState([]);
   const [activeTab, setActiveTab] = useState(initialTab);
 
+  const { data: rawUsers, refresh } = useSupabaseData('profiles', '*');
+  const { data: rawColleges } = useSupabaseData('colleges', '*');
+
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const { data: profiles, error } = await supabase
-          .from('profiles')
-          .select('*, colleges(name)');
-        
-        if (error) {
-          const { data: simpleProfiles, error: simpleError } = await supabase
-            .from('profiles')
-            .select('*');
-          if (simpleError) throw simpleError;
-          mapUsersToState(simpleProfiles);
-        } else {
-          mapUsersToState(profiles);
-        }
-      } catch (err) {
-        console.error("Error loading users from profiles:", err);
-      }
-    };
-
-    const mapUsersToState = (profilesList) => {
-      const idToEmail = {
-        '0838a6dc-9be1-4da7-8fe0-1b5ca0e30b95': 'msuchismita719@gmail.com',
-        'e9a1e4ae-96d3-4565-9544-43d14b6b4d1b': 'kurakesh199812@gmail.com',
-        '18d6f914-7eb3-41d3-98dc-fbea60dfe492': 'dpritam2708@gmail.com',
-        '165bbb31-0a15-43d2-af3a-645615cc6566': 'dpritam08@gmail.com'
-      };
-      const idToPhone = {
-        '0838a6dc-9be1-4da7-8fe0-1b5ca0e30b95': '+91 8899882211',
-        'e9a1e4ae-96d3-4565-9544-43d14b6b4d1b': '+91 9922114422',
-        '18d6f914-7eb3-41d3-98dc-fbea60dfe492': '+91 7008123456',
-        '165bbb31-0a15-43d2-af3a-645615cc6566': '+91 9439123456'
-      };
-
-      const dbUsers = profilesList.map((p, idx) => {
+    if (rawUsers && rawUsers.length > 0) {
+      const dbUsers = rawUsers.map((p, idx) => {
         const joinedDate = new Date(p.created_at || Date.now()).toLocaleDateString('en-US', {
           month: 'short',
           day: 'numeric',
           year: 'numeric'
         });
         
+        const collegeObj = rawColleges?.find(c => c.id === p.college_id);
+        const collegeName = collegeObj ? collegeObj.name : 'Pixora HQ';
+
         return {
           id: p.id,
           full_name: p.full_name || 'Anonymous User',
-          email: idToEmail[p.id] || p.email || `${p.role || 'user'}_${idx}@pixora.academy`,
-          phone: idToPhone[p.id] || p.phone || '+1 (555) 000-0000',
+          email: p.email || `${p.role || 'user'}_${idx}@pixora.academy`,
+          phone: p.phone || '+1 (555) 000-0000',
           avatar_url: p.avatar_url || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${p.id}`,
           role: p.role || 'student',
-          institution: p.colleges?.name || 'Pixora HQ',
+          institution: collegeName,
           cohort: 'Cohort Alpha 2026',
           track: p.specialization || 'Blockchain',
-          status: 'active',
+          status: p.status || 'active',
           verification_status: 'verified',
           payment_status: 'paid',
           mentor_assigned: 'Unassigned',
@@ -102,21 +76,10 @@ const UserManagement = ({ initialTab = 'All Users' }) => {
       });
 
       setUsers(dbUsers);
-    };
-
-    fetchUsers();
-
-    const subscription = supabase
-      .channel('public-profiles-channel')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
-        fetchUsers();
-      })
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+    } else {
+      setUsers([]);
+    }
+  }, [rawUsers, rawColleges]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUsers, setSelectedUsers] = useState([]);
   

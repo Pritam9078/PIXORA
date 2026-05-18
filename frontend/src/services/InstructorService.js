@@ -46,13 +46,14 @@ export const InstructorService = {
       let completedCount = 0;
       let pendingSubmissions = 0;
       let avgProgress = 0;
+      let calculatedRevenue = 0;
 
       if (courseIds.length > 0) {
         // Count enrolled students and get progress
         const { data: enrollments, count: enrolled } = await withTimeout(
           supabase
             .from('enrollments')
-            .select('progress', { count: 'exact' })
+            .select('progress, courses(price)', { count: 'exact' })
             .in('course_id', courseIds)
         );
         
@@ -61,6 +62,7 @@ export const InstructorService = {
         if (enrollments && enrollments.length > 0) {
           avgProgress = Math.round(enrollments.reduce((acc, curr) => acc + (curr.progress || 0), 0) / enrollments.length);
           completedCount = enrollments.filter(e => e.progress >= 100).length;
+          calculatedRevenue = enrollments.reduce((acc, curr) => acc + (curr.courses?.price || 0), 0);
         }
 
         // Count pending submissions
@@ -89,7 +91,7 @@ export const InstructorService = {
         completedStudents: completedCount,
         pendingGrading: pendingSubmissions,
         avgProgress,
-        totalRevenue: 0,
+        totalRevenue: calculatedRevenue,
         averageRating: 0,
       };
     } catch (error) {

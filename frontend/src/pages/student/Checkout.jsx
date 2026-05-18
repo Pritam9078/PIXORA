@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   CreditCard, ShieldCheck, Cpu, Award, 
   TrendingUp, Printer, Loader2, Sparkles, 
@@ -73,16 +73,46 @@ const QRCodeSVG = ({ value, color = 'currentColor' }) => {
 
 const Checkout = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const courseIdParam = queryParams.get('courseId');
+  const [courseToPurchase, setCourseToPurchase] = useState(location.state?.course || null);
+
+  // Fetch course details if we only have courseId in query parameter but not in state
+  useEffect(() => {
+    if (courseIdParam && !courseToPurchase) {
+      const fetchCourse = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('courses')
+            .select(`
+              *,
+              instructor:profiles!instructor_id (full_name, avatar_url)
+            `)
+            .eq('id', courseIdParam)
+            .maybeSingle();
+          if (error) throw error;
+          if (data) {
+            setCourseToPurchase(data);
+          }
+        } catch (err) {
+          console.error('Error fetching course for checkout:', err);
+        }
+      };
+      fetchCourse();
+    }
+  }, [courseIdParam, courseToPurchase]);
+
   const { user, profile, refreshProfile } = useAuth();
   const { currentTheme } = useStudentTheme();
 
-  // Redirect security checks: If cadet hasn't selected track, push to enroll-now
+  // Redirect security checks: If cadet hasn't selected track, push to enroll-now (bypass if purchasing a specific course)
   useEffect(() => {
-    if (profile && profile.learning_track === 'agnostic') {
+    if (!courseToPurchase && profile && profile.learning_track === 'agnostic') {
       toast.error('Initialization required. Calibrate your specialized track first!');
       navigate('/student/enroll-now');
     }
-  }, [profile, navigate]);
+  }, [profile, navigate, courseToPurchase]);
 
   // Page States: 'form' | 'processing' | 'success'
   const [stage, setStage] = useState('form');
@@ -168,16 +198,26 @@ const Checkout = () => {
     setLogs([]);
     setProgressCheck(0);
 
-    const price = selectedPlan === 'pro' ? 399.00 : 199.00;
-    const trackName = profile?.learning_track === 'blockchain' ? 'Blockchain & Web3' : 'Game Development';
+    const price = courseToPurchase ? (courseToPurchase.price || 0) : (selectedPlan === 'pro' ? 399.00 : 199.00);
+    const purchaseTitle = courseToPurchase ? courseToPurchase.title : (selectedPlan === 'pro' ? 'Pro CADET Access Plan' : 'Starter CADET Access Plan');
 
-    const terminalLogs = [
+    const terminalLogs = courseToPurchase ? [
+      { text: 'Establishing secure cryptographic pipeline with Stripe...', delay: 400 },
+      { text: `Preparing PaymentIntent: [${price}.00 USD] for Course: [${purchaseTitle}]...`, delay: 1000 },
+      { text: 'Validating zero-knowledge proof tokens...', delay: 1600 },
+      { text: 'Authorized successfully! Receipt token: ch_' + Math.random().toString(36).substring(2, 10).toUpperCase(), delay: 2200 },
+      { text: 'Writing payment ledger transaction to public.payments...', delay: 2800, databaseSync: true },
+      { text: `Calibrating course enrollment for Course: [${purchaseTitle}] in public.enrollments...`, delay: 4200, enrollmentSync: true },
+      { text: 'Allocating course mentor and resources...', delay: 4900 },
+      { text: 'Generating signed cryptographic Course Clearance Directive...', delay: 5500 },
+      { text: 'CALIBRATION HANDSHAKE SECURED. REDIRECTING PORTAL...', delay: 6200 }
+    ] : [
       { text: 'Establishing secure cryptographic pipeline with Stripe...', delay: 400 },
       { text: `Preparing PaymentIntent: [${price}.00 USD] with method card...`, delay: 1000 },
       { text: 'Validating zero-knowledge proof tokens...', delay: 1600 },
       { text: 'Authorized successfully! Receipt token: ch_' + Math.random().toString(36).substring(2, 10).toUpperCase(), delay: 2200 },
       { text: 'Writing payment ledger transaction to public.payments...', delay: 2800, databaseSync: true },
-      { text: `Querying all published courses for Learning Track: [${trackName}]...`, delay: 3500 },
+      { text: `Querying all published courses for Learning Track: [${profile?.learning_track || 'Specialized'}]...`, delay: 3500 },
       { text: 'Calibrating batch cadet enrollment sequence in public.enrollments...', delay: 4200, enrollmentSync: true },
       { text: 'Allocating elite senior industry track mentor...', delay: 4900 },
       { text: 'Generating signed cryptographic Cadet Offer Letter directive...', delay: 5500 },
@@ -202,7 +242,10 @@ const Checkout = () => {
               provider: 'stripe',
               provider_id: randomId,
               metadata: {
-                plan: selectedPlan,
+                purchase_type: courseToPurchase ? 'course' : 'plan',
+                course_id: courseToPurchase ? courseToPurchase.id : null,
+                course_title: courseToPurchase ? courseToPurchase.title : null,
+                plan: courseToPurchase ? null : selectedPlan,
                 track: profile?.learning_track,
                 cardholder: cardholder
               }
@@ -215,25 +258,30 @@ const Checkout = () => {
 
         if (item.enrollmentSync) {
           try {
-            // Retrieve available courses for track
-            const allCourses = await CourseService.getAvailableCourses(profile?.college_id);
-            const isBlockchain = profile?.learning_track === 'blockchain';
-            const matchedCourses = allCourses.filter(course => {
-              if (isBlockchain) {
-                return course.category === 'Blockchain' || course.category === 'Web3';
-              } else {
-                return course.category === 'Game Development';
-              }
-            });
+            if (courseToPurchase) {
+              await CourseService.enrollInCourse(user.id, courseToPurchase.id);
+              console.log('Course enrollment complete.');
+            } else {
+              // Retrieve available courses for track
+              const allCourses = await CourseService.getAvailableCourses(profile?.college_id);
+              const isBlockchain = profile?.learning_track === 'blockchain';
+              const matchedCourses = allCourses.filter(course => {
+                if (isBlockchain) {
+                  return course.category === 'Blockchain' || course.category === 'Web3';
+                } else {
+                  return course.category === 'Game Development';
+                }
+              });
 
-            if (matchedCourses.length > 0) {
-              await Promise.all(
-                matchedCourses.map(course => 
-                  CourseService.enrollInCourse(user.id, course.id)
-                    .catch(err => console.warn(`Already enrolled or failed for course ${course.id}:`, err.message))
-                )
-              );
-              console.log('Track course enrollments complete.');
+              if (matchedCourses.length > 0) {
+                await Promise.all(
+                  matchedCourses.map(course => 
+                    CourseService.enrollInCourse(user.id, course.id)
+                      .catch(err => console.warn(`Already enrolled or failed for course ${course.id}:`, err.message))
+                  )
+                );
+                console.log('Track course enrollments complete.');
+              }
             }
           } catch (err) {
             console.warn('Enrollment synchronization bypassed locally:', err.message);
@@ -244,21 +292,28 @@ const Checkout = () => {
         if (index === terminalLogs.length - 1) {
           setTimeout(() => {
             const randomHex = Math.random().toString(16).substring(2, 6).toUpperCase();
-            const trackCode = profile?.learning_track === 'blockchain' ? 'BCHN' : 'GDEV';
+            const trackCode = courseToPurchase ? 'CRSE' : (profile?.learning_track === 'blockchain' ? 'BCHN' : 'GDEV');
             setClearanceId(`PX-${trackCode}-${randomHex}`);
             
             // Refresh profile state globally
             refreshProfile().catch(err => console.error(err));
             
             setStage('success');
-            toast.success('LMS Cadet Clearance Directive generated!');
+            toast.success(courseToPurchase ? 'Course Clearance Directive generated!' : 'LMS Cadet Clearance Directive generated!');
           }, 800);
         }
       }, item.delay);
     });
   };
 
-  const matchedMentor = MENTORS[profile?.learning_track] || MENTORS.game_dev;
+  const matchedMentor = courseToPurchase
+    ? {
+        name: courseToPurchase.instructor?.full_name || 'Expert Educator',
+        title: 'Lead Instructor',
+        avatar: courseToPurchase.instructor?.avatar_url || "https://api.dicebear.com/7.x/pixel-art/svg?seed=instructor",
+        signature: 'Pixora Education'
+      }
+    : (MENTORS[profile?.learning_track] || MENTORS.game_dev);
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -332,87 +387,126 @@ const Checkout = () => {
               Calibrate <span className="text-[var(--st-color-primary)] drop-shadow-[0_0_8px_var(--st-color-glow)]">Billing Pipeline</span>
             </h1>
             <p className="text-on-surface-variant/60 max-w-lg mx-auto text-sm font-medium">
-              Choose your academic access package and unlock full course directory matrices. Secure Stripe protocol verified.
+              {courseToPurchase 
+                ? `Confirm purchase of "${courseToPurchase.title}" via secure Stripe gateway protocol.` 
+                : 'Choose your academic access package and unlock full course directory matrices. Secure Stripe protocol verified.'
+              }
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
-            {/* Left: Plan Tier Selection Grid */}
+            {/* Left: Plan Tier Selection Grid or Course Details */}
             <div className="lg:col-span-5 space-y-6">
-              <div className="glass-panel p-6 rounded-[32px] border-white/5 space-y-4">
-                <span className="text-[10px] font-headline font-black text-on-surface-variant/40 uppercase tracking-[0.15em] ml-1 block">1. Select Access Level</span>
-                
-                <div className="space-y-4">
-                  {/* Standard Starter Plan */}
-                  <div 
-                    onClick={() => setSelectedPlan('starter')}
-                    className={`p-5 rounded-2xl border transition-all cursor-pointer relative group flex flex-col justify-between min-h-[140px] ${
-                      selectedPlan === 'starter'
-                        ? 'border-[var(--st-color-primary)] bg-[var(--st-color-primary)]/[0.04] glow-border-interactive'
-                        : 'border-white/5 bg-white/[0.01] hover:border-white/10 hover:bg-white/[0.02]'
-                    }`}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-headline font-bold text-base text-white">Sprint Core Package</h4>
-                        <p className="text-[10px] text-on-surface-variant/60 font-medium mt-1">Full access to fundamental track modules</p>
+              {courseToPurchase ? (
+                <div className="glass-panel p-6 rounded-[32px] border-white/5 space-y-4">
+                  <span className="text-[10px] font-headline font-black text-on-surface-variant/40 uppercase tracking-[0.15em] ml-1 block">Course Selection</span>
+                  
+                  <div className="p-5 rounded-2xl border border-[var(--st-color-primary)] bg-[var(--st-color-primary)]/[0.04] glow-border-interactive flex flex-col justify-between min-h-[140px]">
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="space-y-1">
+                        <h4 className="font-headline font-bold text-base text-white line-clamp-2">{courseToPurchase.title}</h4>
+                        <p className="text-[10px] text-on-surface-variant/60 font-medium mt-1">Category: {courseToPurchase.category}</p>
                       </div>
-                      <div className="text-right">
-                        <span className="text-xl font-headline font-black text-white">$199</span>
-                        <span className="text-[9px] text-on-surface-variant/40 block">One-time billing</span>
+                      <div className="text-right shrink-0">
+                        <span className="text-xl font-headline font-black text-[var(--st-color-primary)]">${courseToPurchase.price || 0}</span>
+                        <span className="text-[9px] text-on-surface-variant/40 block">One-time purchase</span>
                       </div>
                     </div>
                     
                     <div className="flex items-center gap-2 pt-4 border-t border-white/5 mt-4 text-[10px] text-on-surface-variant/60">
                       <Check size={12} className="text-[var(--st-color-primary)]" />
-                      <span>Sprint timeline curriculum unlocked</span>
+                      <span>Full lifetime access to this course material</span>
                     </div>
                   </div>
 
-                  {/* Elite Pro Plan */}
-                  <div 
-                    onClick={() => setSelectedPlan('pro')}
-                    className={`p-5 rounded-2xl border transition-all cursor-pointer relative group flex flex-col justify-between min-h-[170px] overflow-hidden ${
-                      selectedPlan === 'pro'
-                        ? 'border-[var(--st-color-primary)] bg-[var(--st-color-primary)]/[0.04] glow-border-interactive'
-                        : 'border-white/5 bg-white/[0.01] hover:border-white/10 hover:bg-white/[0.02]'
-                    }`}
-                  >
-                    {/* Badge */}
-                    <div className="absolute top-0 right-0">
-                      <span className="text-[7px] font-headline font-black bg-[var(--st-color-primary)] text-black px-3 py-1 rounded-bl-xl uppercase tracking-widest">
-                        RECOMMENDED
-                      </span>
+                  <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 flex gap-3 items-center">
+                    <img 
+                      src={courseToPurchase.instructor?.avatar_url || "https://api.dicebear.com/7.x/pixel-art/svg?seed=instructor"} 
+                      alt="Instructor" 
+                      className="w-10 h-10 rounded-full border border-[var(--st-color-primary)]/20"
+                    />
+                    <div>
+                      <p className="text-[9px] text-on-surface-variant/40 uppercase font-black tracking-wider">Instructor</p>
+                      <p className="text-sm font-bold text-white">{courseToPurchase.instructor?.full_name || 'Expert Educator'}</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="glass-panel p-6 rounded-[32px] border-white/5 space-y-4">
+                  <span className="text-[10px] font-headline font-black text-on-surface-variant/40 uppercase tracking-[0.15em] ml-1 block">1. Select Access Level</span>
+                  
+                  <div className="space-y-4">
+                    {/* Standard Starter Plan */}
+                    <div 
+                      onClick={() => setSelectedPlan('starter')}
+                      className={`p-5 rounded-2xl border transition-all cursor-pointer relative group flex flex-col justify-between min-h-[140px] ${
+                        selectedPlan === 'starter'
+                          ? 'border-[var(--st-color-primary)] bg-[var(--st-color-primary)]/[0.04] glow-border-interactive'
+                          : 'border-white/5 bg-white/[0.01] hover:border-white/10 hover:bg-white/[0.02]'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-headline font-bold text-base text-white">Sprint Core Package</h4>
+                          <p className="text-[10px] text-on-surface-variant/60 font-medium mt-1">Full access to fundamental track modules</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xl font-headline font-black text-white">$199</span>
+                          <span className="text-[9px] text-on-surface-variant/40 block">One-time billing</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 pt-4 border-t border-white/5 mt-4 text-[10px] text-on-surface-variant/60">
+                        <Check size={12} className="text-[var(--st-color-primary)]" />
+                        <span>Sprint timeline curriculum unlocked</span>
+                      </div>
                     </div>
 
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-headline font-bold text-base text-white flex items-center gap-1.5">
-                          Immersive Master Tier
-                          <Sparkles size={14} className="text-[var(--st-color-primary)] animate-pulse" />
-                        </h4>
-                        <p className="text-[10px] text-on-surface-variant/60 font-medium mt-1">Direct mentor pipeline + verified certification</p>
+                    {/* Elite Pro Plan */}
+                    <div 
+                      onClick={() => setSelectedPlan('pro')}
+                      className={`p-5 rounded-2xl border transition-all cursor-pointer relative group flex flex-col justify-between min-h-[170px] overflow-hidden ${
+                        selectedPlan === 'pro'
+                          ? 'border-[var(--st-color-primary)] bg-[var(--st-color-primary)]/[0.04] glow-border-interactive'
+                          : 'border-white/5 bg-white/[0.01] hover:border-white/10 hover:bg-white/[0.02]'
+                      }`}
+                    >
+                      {/* Badge */}
+                      <div className="absolute top-0 right-0">
+                        <span className="text-[7px] font-headline font-black bg-[var(--st-color-primary)] text-black px-3 py-1 rounded-bl-xl uppercase tracking-widest">
+                          RECOMMENDED
+                        </span>
                       </div>
-                      <div className="text-right">
-                        <span className="text-xl font-headline font-black text-[var(--st-color-primary)]">$399</span>
-                        <span className="text-[9px] text-on-surface-variant/40 block">One-time billing</span>
-                      </div>
-                    </div>
 
-                    <div className="space-y-2 pt-4 border-t border-white/5 mt-4">
-                      <div className="flex items-center gap-2 text-[10px] text-on-surface-variant/80 font-bold">
-                        <Check size={12} className="text-[var(--st-color-primary)]" />
-                        <span>1-on-1 Assigned Mentor: {matchedMentor.name}</span>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-headline font-bold text-base text-white flex items-center gap-1.5">
+                            Immersive Master Tier
+                            <Sparkles size={14} className="text-[var(--st-color-primary)] animate-pulse" />
+                          </h4>
+                          <p className="text-[10px] text-on-surface-variant/60 font-medium mt-1">Direct mentor pipeline + verified certification</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xl font-headline font-black text-[var(--st-color-primary)]">$399</span>
+                          <span className="text-[9px] text-on-surface-variant/40 block">One-time billing</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 text-[10px] text-on-surface-variant/60">
-                        <Check size={12} className="text-[var(--st-color-primary)]" />
-                        <span>Downloadable Printable Offer Letter</span>
+
+                      <div className="space-y-2 pt-4 border-t border-white/5 mt-4">
+                        <div className="flex items-center gap-2 text-[10px] text-on-surface-variant/80 font-bold">
+                          <Check size={12} className="text-[var(--st-color-primary)]" />
+                          <span>1-on-1 Assigned Mentor: {matchedMentor.name}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[10px] text-on-surface-variant/60">
+                          <Check size={12} className="text-[var(--st-color-primary)]" />
+                          <span>Downloadable Printable Offer Letter</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Secure guarantee widget */}
               <div className="glass-panel p-5 rounded-2xl border-white/5 flex items-center gap-3.5 bg-white/[0.01]">
@@ -470,133 +564,124 @@ const Checkout = () => {
                     </span>
                   </div>
 
-                  <div className="flex gap-6">
-                    <div className="space-y-1 text-center">
+                  <div className="flex gap-4">
+                    <div className="space-y-1 text-right">
                       <span className="text-[7px] font-headline font-bold text-white/40 uppercase tracking-widest block">Expires</span>
-                      <span className="font-mono text-xs text-white block">
+                      <span className="font-mono text-xs text-white tracking-wider block">
                         {expiry || 'MM/YY'}
                       </span>
                     </div>
-
-                    <div className="space-y-1 text-center">
+                    <div className="space-y-1 text-right">
                       <span className="text-[7px] font-headline font-bold text-white/40 uppercase tracking-widest block">CVV</span>
-                      <span className="font-mono text-xs text-white block">
-                        {cvv ? '•'.repeat(cvv.length) : '•••'}
+                      <span className="font-mono text-xs text-white tracking-wider block">
+                        {cvv ? '•••' : '•••'}
                       </span>
                     </div>
-                  </div>
-
-                  {/* Brand logo container */}
-                  <div className="h-6 flex items-center">
-                    {cardBrand === 'visa' && (
-                      <span className="font-headline text-sm font-black italic text-blue-400 tracking-wider shadow-inner">VISA</span>
-                    )}
-                    {cardBrand === 'mastercard' && (
-                      <div className="flex items-center -space-x-2">
-                        <div className="w-4 h-4 rounded-full bg-red-500 opacity-90"></div>
-                        <div className="w-4 h-4 rounded-full bg-yellow-500 opacity-90"></div>
-                      </div>
-                    )}
-                    {cardBrand === 'amex' && (
-                      <span className="font-headline text-xs font-black bg-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded border border-cyan-500/30">AMEX</span>
-                    )}
-                    {cardBrand === 'default' && (
-                      <Sparkles size={16} className="text-[var(--st-color-primary)] animate-pulse" />
-                    )}
                   </div>
                 </div>
               </div>
 
-              {/* Form Input fields */}
-              <form onSubmit={handleCheckoutSubmit} className="glass-panel p-8 rounded-[40px] border-white/5 space-y-6">
-                <span className="text-[10px] font-headline font-black text-on-surface-variant/40 uppercase tracking-[0.15em] ml-1 block">2. Input Cryptographic Credentials</span>
+              {/* Secure Input Form Panel */}
+              <form onSubmit={handleCheckoutSubmit} className="glass-panel p-6 rounded-[32px] border-white/5 space-y-6">
+                <span className="text-[10px] font-headline font-black text-on-surface-variant/40 uppercase tracking-[0.15em] ml-1 block">2. Input Payment Credentials</span>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {/* Cardholder */}
-                  <div className="space-y-2 col-span-full">
-                    <label htmlFor="cardholder" className="text-xs font-headline font-bold text-white uppercase tracking-wider ml-1">Cardholder Verification Name</label>
-                    <input 
-                      type="text" 
-                      id="cardholder"
-                      placeholder="Jane Doe"
-                      value={cardholder}
-                      onChange={(e) => setCardholder(e.target.value)}
-                      onFocus={() => setFocusedField('cardholder')}
-                      onBlur={() => setFocusedField('')}
-                      className={`w-full bg-white/[0.02] border rounded-xl py-3 px-4 text-xs font-medium text-white focus:outline-none focus:border-[var(--st-color-primary)]/40 focus:bg-white/[0.04] transition-all placeholder:text-white/10 ${
-                        focusedField === 'cardholder' ? 'border-[var(--st-color-primary)]/40' : 'border-white/5'
-                      }`}
-                      required
-                    />
+                <div className="space-y-4">
+                  {/* Cardholder Name */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-headline font-black text-on-surface-variant/60 uppercase tracking-wider block ml-1">Cardholder Verification Name</label>
+                    <div className="relative group">
+                      <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-on-surface-variant/40 group-focus-within:text-[var(--st-color-primary)] transition-colors">
+                        <FileText size={16} />
+                      </span>
+                      <input 
+                        type="text" 
+                        placeholder="AS RECORDED ON IDENTIFICATION DIRECTIVE"
+                        value={cardholder}
+                        onChange={(e) => setCardholder(e.target.value.toUpperCase())}
+                        onFocus={() => setFocusedField('cardholder')}
+                        onBlur={() => setFocusedField('')}
+                        className="w-full bg-white/[0.02] border border-white/5 focus:border-[var(--st-color-primary)] rounded-2xl py-3.5 pl-11 pr-4 text-xs font-mono tracking-wider text-white placeholder-on-surface-variant/20 focus:outline-none transition-all focus:bg-white/[0.04]"
+                      />
+                    </div>
                   </div>
 
                   {/* Card Number */}
-                  <div className="space-y-2 col-span-full">
-                    <label htmlFor="cardNumber" className="text-xs font-headline font-bold text-white uppercase tracking-wider ml-1">Card Sequence (PAN)</label>
-                    <div className="relative">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-headline font-black text-on-surface-variant/60 uppercase tracking-wider block ml-1">Secure Authorization Card Sequence</label>
+                    <div className="relative group">
+                      <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-on-surface-variant/40 group-focus-within:text-[var(--st-color-primary)] transition-colors">
+                        <CreditCard size={16} />
+                      </span>
                       <input 
                         type="text" 
-                        id="cardNumber"
-                        placeholder="4000 1234 5678 9010"
+                        placeholder="0000 0000 0000 0000"
                         value={cardNumber}
                         onChange={handleCardNumberChange}
                         onFocus={() => setFocusedField('cardNumber')}
                         onBlur={() => setFocusedField('')}
-                        className={`w-full bg-white/[0.02] border rounded-xl py-3 pl-12 pr-4 text-xs font-mono text-white focus:outline-none focus:border-[var(--st-color-primary)]/40 focus:bg-white/[0.04] transition-all placeholder:text-white/10 ${
-                          focusedField === 'cardNumber' ? 'border-[var(--st-color-primary)]/40' : 'border-white/5'
-                        }`}
-                        required
+                        className="w-full bg-white/[0.02] border border-white/5 focus:border-[var(--st-color-primary)] rounded-2xl py-3.5 pl-11 pr-4 text-xs font-mono tracking-widest text-white placeholder-on-surface-variant/20 focus:outline-none transition-all focus:bg-white/[0.04]"
                       />
-                      <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={16} />
                     </div>
                   </div>
 
-                  {/* Expiration */}
-                  <div className="space-y-2">
-                    <label htmlFor="expiry" className="text-xs font-headline font-bold text-white uppercase tracking-wider ml-1">Expiration Timeline</label>
-                    <input 
-                      type="text" 
-                      id="expiry"
-                      placeholder="MM/YY"
-                      value={expiry}
-                      onChange={handleExpiryChange}
-                      onFocus={() => setFocusedField('expiry')}
-                      onBlur={() => setFocusedField('')}
-                      className={`w-full bg-white/[0.02] border rounded-xl py-3 px-4 text-xs font-mono text-white focus:outline-none focus:border-[var(--st-color-primary)]/40 focus:bg-white/[0.04] transition-all placeholder:text-white/10 ${
-                        focusedField === 'expiry' ? 'border-[var(--st-color-primary)]/40' : 'border-white/5'
-                      }`}
-                      required
-                    />
-                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Expiry */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-headline font-black text-on-surface-variant/60 uppercase tracking-wider block ml-1">Expiration Node</label>
+                      <div className="relative group">
+                        <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-on-surface-variant/40 group-focus-within:text-[var(--st-color-primary)] transition-colors">
+                          <Clock size={16} />
+                        </span>
+                        <input 
+                          type="text" 
+                          placeholder="MM/YY"
+                          value={expiry}
+                          onChange={handleExpiryChange}
+                          onFocus={() => setFocusedField('expiry')}
+                          onBlur={() => setFocusedField('')}
+                          className="w-full bg-white/[0.02] border border-white/5 focus:border-[var(--st-color-primary)] rounded-2xl py-3.5 pl-11 pr-4 text-xs font-mono tracking-widest text-white placeholder-on-surface-variant/20 focus:outline-none transition-all focus:bg-white/[0.04]"
+                        />
+                      </div>
+                    </div>
 
-                  {/* CVV */}
-                  <div className="space-y-2">
-                    <label htmlFor="cvv" className="text-xs font-headline font-bold text-white uppercase tracking-wider ml-1">Security Seal (CVV)</label>
-                    <input 
-                      type="password" 
-                      id="cvv"
-                      placeholder={cardBrand === 'amex' ? '••••' : '•••'}
-                      value={cvv}
-                      onChange={handleCvvChange}
-                      onFocus={() => setFocusedField('cvv')}
-                      onBlur={() => setFocusedField('')}
-                      className={`w-full bg-white/[0.02] border rounded-xl py-3 px-4 text-xs font-mono text-white focus:outline-none focus:border-[var(--st-color-primary)]/40 focus:bg-white/[0.04] transition-all placeholder:text-white/10 ${
-                        focusedField === 'cvv' ? 'border-[var(--st-color-primary)]/40' : 'border-white/5'
-                      }`}
-                      required
-                    />
+                    {/* CVV */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-headline font-black text-on-surface-variant/60 uppercase tracking-wider block ml-1">Secure CVV Check</label>
+                      <div className="relative group">
+                        <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-on-surface-variant/40 group-focus-within:text-[var(--st-color-primary)] transition-colors">
+                          <Lock size={16} />
+                        </span>
+                        <input 
+                          type="password" 
+                          placeholder="•••"
+                          value={cvv}
+                          onChange={handleCvvChange}
+                          onFocus={() => setFocusedField('cvv')}
+                          onBlur={() => setFocusedField('')}
+                          className="w-full bg-white/[0.02] border border-white/5 focus:border-[var(--st-color-primary)] rounded-2xl py-3.5 pl-11 pr-4 text-xs font-mono tracking-widest text-white placeholder-on-surface-variant/20 focus:outline-none transition-all focus:bg-white/[0.04]"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <button 
-                  type="submit"
-                  className="w-full btn-primary py-4 mt-4 flex items-center justify-center gap-2 shadow-[0_0_20px_var(--st-color-glow)] font-headline font-black text-xs uppercase tracking-widest"
-                >
-                  <Lock size={14} />
-                  <span>Authorize billing payload</span>
-                  <ChevronRight size={14} />
-                </button>
+                {/* Price telemetry and checkout submit button */}
+                <div className="pt-4 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
+                  <div className="text-center md:text-left">
+                    <span className="text-[9px] text-on-surface-variant/40 block font-headline font-bold tracking-widest uppercase">STATION CHARGE VALUE</span>
+                    <span className="text-2xl font-headline font-black text-white">${price}.00 USD</span>
+                  </div>
+
+                  <button 
+                    type="submit" 
+                    className="w-full md:w-auto btn-primary flex items-center justify-center gap-2 px-8 py-3.5 !rounded-2xl shadow-[0_0_20px_var(--st-color-glow)] text-xs font-headline font-bold uppercase tracking-widest cursor-pointer"
+                  >
+                    <Zap size={16} />
+                    <span>Authorize Cryptographic Node</span>
+                  </button>
+                </div>
               </form>
+
             </div>
 
           </div>
@@ -605,33 +690,27 @@ const Checkout = () => {
 
       {/* STAGE 2: PROCESSING CYBER LOGS */}
       {stage === 'processing' && (
-        <div className="max-w-xl mx-auto space-y-6">
-          <div className="glass-panel p-8 rounded-[40px] border-white/5 relative overflow-hidden shadow-2xl flex flex-col justify-between min-h-[360px]">
-            <div className="scanner-line"></div>
-            <div className="absolute inset-0 bg-[var(--st-color-primary)]/5 scanner-overlay"></div>
-            
-            <div className="z-10 relative flex-1 flex flex-col items-center justify-center space-y-8">
-              <div className="w-20 h-20 rounded-3xl bg-[var(--st-color-primary)]/10 flex items-center justify-center relative border border-[var(--st-color-primary)]/20 shadow-[0_0_30px_rgba(var(--st-color-primary-rgb),0.1)]">
-                <Loader2 className="animate-spin text-[var(--st-color-primary)]" size={36} />
-              </div>
-              <div className="text-center space-y-2">
-                <h3 className="text-lg font-headline font-bold text-white uppercase tracking-wider">Securing Financial Node</h3>
-                <div className="w-48 h-1.5 bg-white/5 rounded-full mx-auto overflow-hidden border border-white/5">
-                  <div 
-                    className="h-full bg-[var(--st-gradient-primary)] rounded-full transition-all duration-300"
-                    style={{ width: `${progressCheck}%` }}
-                  ></div>
-                </div>
-                <p className="text-[10px] text-on-surface-variant/40 font-bold uppercase tracking-widest">Encrypting telemetry matrices {progressCheck}%</p>
-              </div>
+        <div className="max-w-2xl mx-auto glass-panel p-8 md:p-12 rounded-[40px] border-white/5 space-y-8 bg-slate-950/40 relative overflow-hidden min-h-[450px] flex flex-col justify-between">
+          <div className="scanner-line"></div>
+          
+          <div className="text-center space-y-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--st-color-primary)]/10 border border-[var(--st-color-primary)]/20 text-[var(--st-color-primary)] relative">
+              <Loader2 size={32} className="animate-spin relative z-10" />
+              <div className="absolute inset-0 bg-[var(--st-color-primary)]/20 rounded-full blur-md animate-pulse"></div>
             </div>
+            
+            <div className="space-y-1">
+              <h2 className="text-2xl font-headline font-black text-white uppercase tracking-wider">Securing Directive Connection</h2>
+              <p className="text-[10px] text-[var(--st-color-primary)] font-mono tracking-widest uppercase animate-pulse">PIPELINE CALIBRATION: {progressCheck}% COMPLETE</p>
+            </div>
+          </div>
 
-            {/* Shell console terminal */}
-            <div className="relative z-10 w-full font-mono text-[9px] text-emerald-400 bg-slate-950/80 p-4 border border-white/5 rounded-2xl h-44 overflow-y-auto space-y-1.5 leading-normal">
+          {/* Terminal telemetry console logs */}
+          <div className="space-y-2 shrink-0">
+            <span className="text-[8px] font-headline font-bold text-on-surface-variant/30 uppercase tracking-[0.2em] ml-1 block font-mono">Telemetry Log Feed</span>
+            <div className="bg-black/80 border border-white/5 rounded-2xl p-5 h-48 overflow-y-auto font-mono text-[10px] text-emerald-400/80 space-y-1.5 scrollbar-thin scrollbar-thumb-white/10">
               {logs.length === 0 ? (
-                <div className="text-on-surface-variant/30 italic flex items-center justify-center h-full">
-                  Connecting stream tunnels...
-                </div>
+                <div className="text-on-surface-variant/20 italic animate-pulse">Waiting for billing node handshake logs...</div>
               ) : (
                 logs.map((log, index) => (
                   <div key={index} className="animate-in fade-in slide-in-from-left-2 duration-300">
@@ -655,10 +734,14 @@ const Checkout = () => {
               Sequence Complete
             </div>
             <h1 className="text-4xl md:text-5xl font-headline font-black text-white tracking-tight">
-              Cadet directive <span className="text-[var(--st-color-primary)] drop-shadow-[0_0_8px_var(--st-color-glow)]">Assigned</span>
+              {courseToPurchase ? 'Syllabus Pipeline ' : 'Cadet directive '}
+              <span className="text-[var(--st-color-primary)] drop-shadow-[0_0_8px_var(--st-color-glow)]">Assigned</span>
             </h1>
             <p className="text-on-surface-variant/60 max-w-lg mx-auto text-sm font-medium">
-              Congratulations. Print or save your certified offer letter before unlocking the student dashboard.
+              {courseToPurchase
+                ? 'Congratulations. Print or save your certified Course Clearance Directive before starting your learning journey.'
+                : 'Congratulations. Print or save your certified offer letter before unlocking the student dashboard.'
+              }
             </p>
             
             <div className="flex gap-4 justify-center pt-2">
@@ -717,15 +800,39 @@ const Checkout = () => {
               </p>
 
               <p>
-                We are pleased to inform you that your holographic credentials and biometric telemetry have cleared Pixora Academy’s validation sequence. Upon verification of billing payload pipelines, your clearance has been elevated to **Active Grade 1 Academy Cadet** specializing in the <strong className="text-white">{profile?.learning_track === 'blockchain' ? 'Blockchain & Web3 Protocol' : 'Game Development Engine'} Specialization Track</strong>.
+                {courseToPurchase ? (
+                  <>
+                    We are pleased to inform you that your registration payload for the specialized course <strong className="text-[var(--st-color-primary)] font-bold">{courseToPurchase.title}</strong> has cleared Pixora Academy’s validation sequence. Upon verification of billing payload pipelines, your student clearance has been elevated to <strong className="text-white">Active Enrolled Student</strong> for this individual syllabus pathway.
+                  </>
+                ) : (
+                  <>
+                    We are pleased to inform you that your holographic credentials and biometric telemetry have cleared Pixora Academy’s validation sequence. Upon verification of billing payload pipelines, your clearance has been elevated to <strong className="text-white">Active Grade 1 Academy Cadet</strong> specializing in the <strong className="text-white">{profile?.learning_track === 'blockchain' ? 'Blockchain & Web3 Protocol' : 'Game Development Engine'} Specialization Track</strong>.
+                  </>
+                )}
               </p>
 
               <p>
-                Under the directive of your senior specialized mentor <strong className="text-white">{matchedMentor.name}</strong>, you are scheduled to begin core interactive syllabus components starting with the upcoming cohort on <strong className="text-white">{cohortDate}</strong>.
+                {courseToPurchase ? (
+                  <>
+                    Under the directive of your specialized course instructor <strong className="text-white">{matchedMentor.name}</strong>, you are scheduled to begin core interactive syllabus components immediately.
+                  </>
+                ) : (
+                  <>
+                    Under the directive of your senior specialized mentor <strong className="text-white">{matchedMentor.name}</strong>, you are scheduled to begin core interactive syllabus components starting with the upcoming cohort on <strong className="text-white">{cohortDate}</strong>.
+                  </>
+                )}
               </p>
 
               <p>
-                As a cadet of Pixora Academy, your access locks are now disabled. Full course directories, quiz validation consoles, live sandbox compilers, and elite corporate career hubs have been fully mapped to your neural directory.
+                {courseToPurchase ? (
+                  <>
+                    As an active student of Pixora Academy, your course locks for <strong className="text-white">{courseToPurchase.title}</strong> are now disabled. Full course directories, quiz validation consoles, live sandbox compilers, and elite learning hubs have been fully mapped to your neural directory.
+                  </>
+                ) : (
+                  <>
+                    As a cadet of Pixora Academy, your access locks are now disabled. Full course directories, quiz validation consoles, live sandbox compilers, and elite corporate career hubs have been fully mapped to your neural directory.
+                  </>
+                )}
               </p>
             </div>
 

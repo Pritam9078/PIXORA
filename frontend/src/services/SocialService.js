@@ -12,6 +12,7 @@ export const SocialService = {
       let query = supabase
         .from('profiles')
         .select('id, full_name, avatar_url, xp_points, learning_track, current_streak')
+        .eq('role', 'student')
         .order('xp_points', { ascending: false })
         .limit(limit);
 
@@ -45,6 +46,7 @@ export const SocialService = {
     const { data, error } = await supabase
       .from('profiles')
       .select('id, full_name, avatar_url, xp_points, learning_track')
+      .eq('role', 'student')
       .order('xp_points', { ascending: false })
       .limit(limit);
 

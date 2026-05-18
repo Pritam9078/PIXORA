@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, BookOpen, Target, FileText, 
   Settings, LogOut, X, Trophy, Briefcase, 
-  Users, Monitor, Wallet, Gamepad2
+  Users, Monitor, Wallet, Gamepad2, Compass
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useStudentTheme } from '../../context/StudentThemeContext';
@@ -20,6 +20,7 @@ const GlobalSidebar = ({ isOpen, setIsOpen }) => {
 
   const navItems = [
     { name: 'Dashboard', path: '/student/dashboard', icon: LayoutDashboard },
+    { name: 'Browse Catalog', path: '/student/courses', icon: Compass },
     { name: 'My Courses', path: '/student/my-courses', icon: BookOpen },
     { name: 'Assignments', path: '/student/assignments', icon: FileText },
     { name: 'Quizzes', path: '/student/quizzes', icon: Target },
@@ -98,7 +99,7 @@ const GlobalSidebar = ({ isOpen, setIsOpen }) => {
 
         <nav className="space-y-1">
           {navItems.map((item) => {
-            const isLocked = isAgnostic && item.path !== '/student/dashboard';
+            const isLocked = isAgnostic && item.path !== '/student/dashboard' && item.path !== '/student/courses';
             return isLocked ? (
               <div
                 key={item.name}

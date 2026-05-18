@@ -22,6 +22,11 @@ import Checkout from './pages/student/Checkout';
 import { StudentThemeProvider } from './context/StudentThemeContext';
 import CollegeAdminDashboard from './pages/CollegeAdminDashboard';
 
+import DashboardRedirect from './pages/DashboardRedirect';
+import PublicCatalogPage from './pages/PublicCatalogPage';
+import PublicResourcesPage from './pages/PublicResourcesPage';
+import PublicCommunityPage from './pages/PublicCommunityPage';
+
 import PartnerDashboard from './pages/PartnerDashboard';
 import InstructorApplicationPage from './pages/InstructorApplicationPage';
 import PartnerApplicationPage from './pages/PartnerApplicationPage';
@@ -95,6 +100,10 @@ function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
+        <Route path="/catalog" element={<PublicCatalogPage />} />
+        <Route path="/dashboard" element={<DashboardRedirect />} />
+        <Route path="/resources" element={<PublicResourcesPage />} />
+        <Route path="/community" element={<PublicCommunityPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup/student" element={<StudentSignupPage />} />
         <Route path="/application/instructor" element={<InstructorApplicationPage />} />

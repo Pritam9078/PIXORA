@@ -52,7 +52,64 @@ const useTypewriter = (text, speed = 30, start = false) => {
   return [displayedText, isComplete];
 };
 
-const LandingPage = () => {
+// Specialized premium lazy-loading visual asset component with GPU-accelerated backdrop shimmer
+const PremiumImage = ({ src, alt, className = '' }) => {
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+
+  return (
+    <div className="relative w-full h-full bg-white/[0.02] overflow-hidden rounded-lg min-h-[120px] flex items-center justify-center">
+      {/* Premium Cyber Shimmer / Skeleton */}
+      {!loaded && !error && (
+        <div className="absolute inset-0 bg-gradient-to-r from-white/[0.01] via-white/[0.05] to-white/[0.01] bg-[length:200%_100%] animate-pulse"
+             style={{ animationDuration: '1.5s' }} />
+      )}
+
+      {error ? (
+        /* Elite Fallback Cyber Graphic if remote images fail */
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-gradient-to-br from-[#0D0E12] to-[#161820] text-center select-none border border-white/5">
+          <div className="relative mb-3 flex items-center justify-center">
+            <div className="absolute w-12 h-12 rounded-full border border-[#c3f400]/20 animate-ping" />
+            <div className="w-10 h-10 rounded-xl bg-[#c3f400]/10 flex items-center justify-center text-[#c3f400] border border-[#c3f400]/30 shadow-[0_0_10px_rgba(195,244,0,0.2)]">
+              {alt.toLowerCase().includes('blockchain') || alt.toLowerCase().includes('defi') ? (
+                <span className="material-symbols-outlined text-xl">hub</span>
+              ) : alt.toLowerCase().includes('art') || alt.toLowerCase().includes('surface') ? (
+                <span className="material-symbols-outlined text-xl">architecture</span>
+              ) : (
+                <span className="material-symbols-outlined text-xl">videogame_asset</span>
+              )}
+            </div>
+          </div>
+          <span className="text-[10px] font-headline font-bold text-white uppercase tracking-widest leading-none">
+            {alt || 'System Module'}
+          </span>
+          <span className="text-[8px] font-mono text-slate-500 mt-1 uppercase tracking-wider">
+            Telemetry Standby // Active
+          </span>
+          <div className="absolute inset-0 opacity-5 pointer-events-none" 
+               style={{ 
+                 backgroundImage: 'radial-gradient(#c3f400 1px, transparent 1px)', 
+                 backgroundSize: '16px 16px' 
+               }} />
+        </div>
+      ) : (
+        <img
+          src={src}
+          alt={alt}
+          loading="lazy"
+          onLoad={() => setLoaded(true)}
+          onError={() => setError(true)}
+          className={`w-full h-full object-cover transition-all duration-700 ease-out will-change-[transform,opacity] ${
+            loaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+          } ${className}`}
+        />
+      )}
+    </div>
+  );
+};
+
+// Isolated self-contained typing terminal component to prevent landing page full re-renders
+const AdmissionTerminal = () => {
   const [startTyping, setStartTyping] = useState(false);
 
   const [line1, line1Complete] = useTypewriter('init_admission_sequence --track="ENGINEERING"', 25, startTyping);
@@ -60,6 +117,73 @@ const LandingPage = () => {
   const [line3, line3Complete] = useTypewriter('Validating technical readiness...', 20, line2Complete);
   const [line4, line4Complete] = useTypewriter('[SUCCESS] Access granted to 2026 cohorts.', 20, line3Complete);
 
+  return (
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.95 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      onViewportEnter={() => setStartTyping(true)}
+      viewport={{ once: true }}
+      className="glass-panel border-secondary-container/20 p-1 rounded-xl will-change-transform"
+    >
+      <div className="bg-black rounded-lg p-8 font-mono border border-white/5 shadow-2xl relative overflow-hidden">
+        {/* Terminal Header */}
+        <div className="flex items-center space-x-2 mb-8">
+          <div className="w-3 h-3 rounded-full bg-red-500/50"></div>
+          <div className="w-3 h-3 rounded-full bg-yellow-500/50"></div>
+          <div className="w-3 h-3 rounded-full bg-green-500/50"></div>
+          <span className="text-white/30 text-xs ml-4">pixora_admission.sh</span>
+        </div>
+        
+        {/* Terminal Screen Body */}
+        <div className="space-y-4 text-sm sm:text-base min-h-[160px]">
+          <p className="text-secondary-container flex items-center">
+            <span className="mr-3 text-white/30">$</span>
+            <span className="text-white">{line1}</span>
+            {startTyping && !line1Complete && <TerminalCursor />}
+          </p>
+          
+          {line1Complete && (
+            <p className="text-slate-500">
+              {line2}
+              {!line2Complete && <TerminalCursor />}
+            </p>
+          )}
+          
+          {line2Complete && (
+            <p className="text-slate-500">
+              {line3}
+              {!line3Complete && <TerminalCursor />}
+            </p>
+          )}
+          
+          {line3Complete && (
+            <p className="text-on-tertiary-container font-semibold">
+              {line4}
+              {!line4Complete && <TerminalCursor />}
+            </p>
+          )}
+
+          {line4Complete && (
+            <motion.div 
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+              className="pt-8 animate-fade-in"
+            >
+              <h2 className="text-headline text-white mb-6">Ready to initiate your sequence?</h2>
+              <div className="flex flex-wrap gap-4">
+                <a href="/login" className="bg-secondary-container text-on-secondary px-6 py-3 rounded font-bold text-xs uppercase tracking-widest hover:scale-105 transition-all shadow-[0_0_15px_rgba(195,244,0,0.3)] inline-block">Begin Application</a>
+                <button className="text-white border border-white/20 px-6 py-3 rounded font-bold text-xs uppercase tracking-widest hover:bg-white/5 transition-all">Join Discord</button>
+              </div>
+            </motion.div>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+const LandingPage = () => {
   return (
     <div className="min-h-screen bg-surface">
       <Navbar />
@@ -137,8 +261,8 @@ const LandingPage = () => {
                   transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
                   className="space-y-4 pt-12"
                 >
-                  <div className="glass-panel rounded-xl p-1 overflow-hidden">
-                    <img alt="Game Dev" className="w-full h-48 object-cover rounded-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXUd_Wzz5IO3tFyJgZwAeEViC3g2wqMJP77ixq2yLTGN6ERqGPDg_j_Os4cl_WxSE8Kt4faCNfDSfxThcodxbBNKR8MtyI0ucXq1caq5LvLaSgNfWYdam-fLP7TedGmwOoXTGcNFX3AiXIYaIq3McAu_tg2DwyUetwlHQNoSY5AGVlIF9_V4HhjZu4FJiXICn1XOykuV83_hAkJp2KzPPbOL-3Fhc1XPVHXqP71z-7PV0HB5zNXDgKlacK1Ef7Do7FV2iWGJesV28B"/>
+                  <div className="glass-panel rounded-xl p-1 overflow-hidden h-48 aspect-[4/3] relative">
+                    <PremiumImage alt="AAA Game Development Pipeline" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXUd_Wzz5IO3tFyJgZwAeEViC3g2wqMJP77ixq2yLTGN6ERqGPDg_j_Os4cl_WxSE8Kt4faCNfDSfxThcodxbBNKR8MtyI0ucXq1caq5LvLaSgNfWYdam-fLP7TedGmwOoXTGcNFX3AiXIYaIq3McAu_tg2DwyUetwlHQNoSY5AGVlIF9_V4HhjZu4FJiXICn1XOykuV83_hAkJp2KzPPbOL-3Fhc1XPVHXqP71z-7PV0HB5zNXDgKlacK1Ef7Do7FV2iWGJesV28B" />
                   </div>
                   <div className="glass-panel rounded-xl p-6 border-on-secondary-container/30">
                     <span className="material-symbols-outlined text-secondary-container mb-4">videogame_asset</span>
@@ -157,8 +281,8 @@ const LandingPage = () => {
                     <h3 className="font-headline text-white text-lg">Smart Contracts</h3>
                     <p className="text-xs text-on-surface-variant mt-2">Security-first Solidity and Rust architectures.</p>
                   </div>
-                  <div className="glass-panel rounded-xl p-1 overflow-hidden">
-                    <img alt="Blockchain" className="w-full h-48 object-cover rounded-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB99J2100FTdbnMJc2JEbBEuOEpcZsMyeTbpc5YH9JLDdqbwRK5hGOYfWeZzjlCgamLhQ5ImQAfc1Z-bnsrZW7wZtcbpaHXg2ie3fvs7hVM5sxx2uy1D4fovcYOSSuVhnwi0ghjyi218Y6zPTsWHYbTIVb5MurF3j0nQvtqQMprbWVBnaVRFI7qZIXptGBcKj55LZM9UyStPd3iAYkH_b50xDnN8zU5E0b86vvY7fdb3_MPupnfvmbzjjGbDhtj6x1T1jj9VN1YyfrF"/>
+                  <div className="glass-panel rounded-xl p-1 overflow-hidden h-48 aspect-[4/3] relative">
+                    <PremiumImage alt="Smart Contract and Blockchain Architecture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB99J2100FTdbnMJc2JEbBEuOEpcZsMyeTbpc5YH9JLDdqbwRK5hGOYfWeZzjlCgamLhQ5ImQAfc1Z-bnsrZW7wZtcbpaHXg2ie3fvs7hVM5sxx2uy1D4fovcYOSSuVhnwi0ghjyi218Y6zPTsWHYbTIVb5MurF3j0nQvtqQMprbWVBnaVRFI7qZIXptGBcKj55LZM9UyStPd3iAYkH_b50xDnN8zU5E0b86vvY7fdb3_MPupnfvmbzjjGbDhtj6x1T1jj9VN1YyfrF" />
                   </div>
                 </motion.div>
               </div>
@@ -269,9 +393,9 @@ const LandingPage = () => {
                 viewport={{ once: true }}
                 className="md:col-span-8 relative group overflow-hidden rounded-xl border border-white/5 aspect-video md:aspect-auto md:h-[600px]"
               >
-                <img alt="UE5 Engineering" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRBLeKhY5ZHezdNYZQEkNnUXKiKs0HBWsgro74epVRyxV3iZ3YPeYnVcbrifhRJAN_0zd_zXqgBOieYnMiWdb3ipFILDQO714CMFhdWgbQErpOANnJSjffmd4BehY_pcFUFCQtTOl7VBfsk1aWJ_F6dbP1T0vuFVENXH80Vvc3pPo6Sie71Z1SaUNnDKasOrgzrsnkbdA_NMjLrw-UxZsAO_luoDPTJH4rO2URTfuoyBkzCjNd_kEYEj92J_9eZFnr2QZ6wDgYNxAd"/>
+                <PremiumImage alt="Unreal Engine 5 Core Systems Architectural Engineering" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRBLeKhY5ZHezdNYZQEkNnUXKiKs0HBWsgro74epVRyxV3iZ3YPeYnVcbrifhRJAN_0zd_zXqgBOieYnMiWdb3ipFILDQO714CMFhdWgbQErpOANnJSjffmd4BehY_pcFUFCQtTOl7VBfsk1aWJ_F6dbP1T0vuFVENXH80Vvc3pPo6Sie71Z1SaUNnDKasOrgzrsnkbdA_NMjLrw-UxZsAO_luoDPTJH4rO2URTfuoyBkzCjNd_kEYEj92J_9eZFnr2QZ6wDgYNxAd" className="transition-transform duration-700 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
-                <div className="absolute bottom-0 left-0 p-8 w-full">
+                <div className="absolute bottom-0 left-0 p-8 w-full z-10">
                   <div className="flex items-center space-x-4 mb-4">
                     <span className="bg-secondary-container text-on-secondary px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded">Game Dev</span>
                     <span className="text-white/60 text-[10px] font-headline">COHORT STARTS OCT 12</span>
@@ -281,7 +405,7 @@ const LandingPage = () => {
                   <button className="bg-white/10 backdrop-blur-md text-white border border-white/20 px-6 py-2 rounded text-xs font-bold hover:bg-white hover:text-black transition-colors uppercase tracking-widest">Enroll Now</button>
                 </div>
               </motion.div>
-
+ 
               {/* Side Cards Wrapper */}
               <div className="md:col-span-4 flex flex-col gap-6">
                 {/* Side Card 1 */}
@@ -291,15 +415,15 @@ const LandingPage = () => {
                   viewport={{ once: true }}
                   className="flex-1 relative group overflow-hidden rounded-xl border border-white/5 min-h-[288px]"
                 >
-                  <img alt="DeFi Engineering" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAGUFfyNLmi4qHg3QZUd-fc3xCMwHZPze1JwyGqUI4aslt8cs_tNg60ynKAwhF5u7FYyTsaMCJpwTeezMW9GNi9dggnkAFVu3SS6x3TREd6l7muR31QTYQq_G_oUn0O10AFFhN5nNUhOFqIb6n4BkljWZG2r0EmNajV4JAAbFbtTV8k4vsJMHcIhUjMQjfGM0_Q8fTpQ7E6kjjOAKRxudz4SPj2t1ySry6kBP3Y6AnQ5Vhc3q6UCnpu2XCAfiujomibp5r9t-xKAxle"/>
+                  <PremiumImage alt="Advanced Decentralized Finance Protocols" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAGUFfyNLmi4qHg3QZUd-fc3xCMwHZPze1JwyGqUI4aslt8cs_tNg60ynKAwhF5u7FYyTsaMCJpwTeezMW9GNi9dggnkAFVu3SS6x3TREd6l7muR31QTYQq_G_oUn0O10AFFhN5nNUhOFqIb6n4BkljWZG2r0EmNajV4JAAbFbtTV8k4vsJMHcIhUjMQjfGM0_Q8fTpQ7E6kjjOAKRxudz4SPj2t1ySry6kBP3Y6AnQ5Vhc3q6UCnpu2XCAfiujomibp5r9t-xKAxle" className="transition-transform duration-700 group-hover:scale-105" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
-                  <div className="absolute bottom-0 left-0 p-6">
+                  <div className="absolute bottom-0 left-0 p-6 z-10">
                     <span className="bg-on-tertiary-container text-white px-2 py-1 text-[9px] font-bold uppercase tracking-widest rounded mb-3 inline-block">Blockchain</span>
                     <h4 className="font-headline text-lg text-white">Advanced DeFi Protocols</h4>
                     <p className="text-white/60 text-xs mt-1">Mastering liquidity pools and AMM design.</p>
                   </div>
                 </motion.div>
-
+ 
                 {/* Side Card 2 */}
                 <motion.div 
                   initial={{ opacity: 0, x: 20 }}
@@ -308,9 +432,9 @@ const LandingPage = () => {
                   transition={{ delay: 0.1 }}
                   className="flex-1 relative group overflow-hidden rounded-xl border border-white/5 min-h-[288px]"
                 >
-                  <img alt="3D Character Art" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDET74agfUy9_ZBsx1Lx3zWCgNocp05Px5zGI37z-dy8ah3l2k1okNPeVCnpjHguVBBYduz5lj8H8Vzi0EEQmgXlyA4EdkK-fLfnD9A1f0lEoZRGj7kthvNrHZkt7X-A7JB9sCqzc5tVBDbneG6F4vWXu07ZebLMW9YHJX1h8tzLgE2-DN-DvQcx9jKW8Fu0RJ7qH6cakHuvUA_ETNvmDbuoU4nhOIygqQe_6lYgUJMi5Hv7ME17jISqwK-78-CZFP44sOlO4EQa-fI"/>
+                  <PremiumImage alt="Procedural Hard Surface Art" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDET74agfUy9_ZBsx1Lx3zWCgNocp05Px5zGI37z-dy8ah3l2k1okNPeVCnpjHguVBBYduz5lj8H8Vzi0EEQmgXlyA4EdkK-fLfnD9A1f0lEoZRGj7kthvNrHZkt7X-A7JB9sCqzc5tVBDbneG6F4vWXu07ZebLMW9YHJX1h8tzLgE2-DN-DvQcx9jKW8Fu0RJ7qH6cakHuvUA_ETNvmDbuoU4nhOIygqQe_6lYgUJMi5Hv7ME17jISqwK-78-CZFP44sOlO4EQa-fI" className="transition-transform duration-700 group-hover:scale-105" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
-                  <div className="absolute bottom-0 left-0 p-6">
+                  <div className="absolute bottom-0 left-0 p-6 z-10">
                     <span className="bg-secondary-container text-on-secondary px-2 py-1 text-[9px] font-bold uppercase tracking-widest rounded mb-3 inline-block">Game Dev</span>
                     <h4 className="font-headline text-lg text-white">Procedural Hard Surface Art</h4>
                     <p className="text-white/60 text-xs mt-1">Houdini and Substance Designer pipelines.</p>
@@ -325,65 +449,7 @@ const LandingPage = () => {
         <section className="py-stack-lg relative overflow-hidden">
           <div className="absolute inset-0 bg-secondary-container/5 mix-blend-overlay"></div>
           <div className="max-w-4xl mx-auto px-margin-x relative z-10">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              onViewportEnter={() => setStartTyping(true)}
-              viewport={{ once: true }}
-              className="glass-panel border-secondary-container/20 p-1 rounded-xl"
-            >
-              <div className="bg-black rounded-lg p-8 font-mono border border-white/5">
-                <div className="flex items-center space-x-2 mb-8">
-                  <div className="w-3 h-3 rounded-full bg-red-500/50"></div>
-                  <div className="w-3 h-3 rounded-full bg-yellow-500/50"></div>
-                  <div className="w-3 h-3 rounded-full bg-green-500/50"></div>
-                  <span className="text-white/30 text-xs ml-4">pixora_admission.sh</span>
-                </div>
-                <div className="space-y-4 text-sm sm:text-base">
-                  <p className="text-secondary-container flex items-center">
-                    <span className="mr-3 text-white/30">$</span>
-                    <span className="text-white">{line1}</span>
-                    {startTyping && !line1Complete && <TerminalCursor />}
-                  </p>
-                  
-                  {line1Complete && (
-                    <p className="text-slate-500">
-                      {line2}
-                      {!line2Complete && <TerminalCursor />}
-                    </p>
-                  )}
-                  
-                  {line2Complete && (
-                    <p className="text-slate-500">
-                      {line3}
-                      {!line3Complete && <TerminalCursor />}
-                    </p>
-                  )}
-                  
-                  {line3Complete && (
-                    <p className="text-on-tertiary-container font-semibold">
-                      {line4}
-                      {!line4Complete && <TerminalCursor />}
-                    </p>
-                  )}
-
-                  {line4Complete && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: 15 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.6, ease: "easeOut" }}
-                      className="pt-8"
-                    >
-                      <h2 className="text-headline text-white mb-6">Ready to initiate your sequence?</h2>
-                      <div className="flex flex-wrap gap-4">
-                        <a href="/login" className="bg-secondary-container text-on-secondary px-6 py-3 rounded font-bold text-xs uppercase tracking-widest hover:scale-105 transition-transform inline-block">Begin Application</a>
-                        <button className="text-white border border-white/20 px-6 py-3 rounded font-bold text-xs uppercase tracking-widest hover:bg-white/5 transition-colors">Join Discord</button>
-                      </div>
-                    </motion.div>
-                  )}
-                </div>
-              </div>
-            </motion.div>
+            <AdmissionTerminal />
           </div>
         </section>
       </main>

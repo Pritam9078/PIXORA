@@ -1,8 +1,43 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/common/Footer';
 
+// Sequential Typewriter Custom Hook
+const useTypewriter = (text, speed = 30, start = false) => {
+  const [displayedText, setDisplayedText] = useState('');
+  const [isComplete, setIsComplete] = useState(false);
+
+  useEffect(() => {
+    if (!start) return;
+    
+    let i = 0;
+    setDisplayedText('');
+    setIsComplete(false);
+    
+    const interval = setInterval(() => {
+      setDisplayedText((prev) => prev + text.charAt(i));
+      i++;
+      if (i >= text.length) {
+        clearInterval(interval);
+        setIsComplete(true);
+      }
+    }, speed);
+    
+    return () => clearInterval(interval);
+  }, [text, speed, start]);
+
+  return [displayedText, isComplete];
+};
+
 const LandingPage = () => {
+  const [startTyping, setStartTyping] = useState(false);
+
+  const [line1, line1Complete] = useTypewriter('init_admission_sequence --track="ENGINEERING"', 25, startTyping);
+  const [line2, line2Complete] = useTypewriter('Scanning credentials...', 20, line1Complete);
+  const [line3, line3Complete] = useTypewriter('Validating technical readiness...', 20, line2Complete);
+  const [line4, line4Complete] = useTypewriter('[SUCCESS] Access granted to 2024 cohorts.', 20, line3Complete);
+
   return (
     <div className="min-h-screen bg-surface">
       <Navbar />
@@ -216,6 +251,7 @@ const LandingPage = () => {
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
+              onViewportEnter={() => setStartTyping(true)}
               viewport={{ once: true }}
               className="glass-panel border-secondary-container/20 p-1 rounded-xl"
             >
@@ -228,19 +264,36 @@ const LandingPage = () => {
                 </div>
                 <div className="space-y-4 text-sm sm:text-base">
                   <p className="text-secondary-container flex items-center">
-                    <span className="mr-3">$</span>
-                    <span className="text-white">init_admission_sequence --track="ENGINEERING"</span>
+                    <span className="mr-3 text-white/30">$</span>
+                    <span className="text-white">{line1}</span>
                   </p>
-                  <p className="text-slate-500">Scanning credentials...</p>
-                  <p className="text-slate-500">Validating technical readiness...</p>
-                  <p className="text-on-tertiary-container">[SUCCESS] Access granted to 2024 cohorts.</p>
-                  <div className="pt-8">
-                    <h2 className="text-headline text-white mb-6">Ready to initiate your sequence?</h2>
-                    <div className="flex flex-wrap gap-4">
-                      <a href="/login" className="bg-secondary-container text-on-secondary px-6 py-3 rounded font-bold text-xs uppercase tracking-widest hover:scale-105 transition-transform inline-block">Begin Application</a>
-                      <button className="text-white border border-white/20 px-6 py-3 rounded font-bold text-xs uppercase tracking-widest hover:bg-white/5 transition-colors">Join Discord</button>
-                    </div>
-                  </div>
+                  
+                  {line1Complete && (
+                    <p className="text-slate-500">{line2}</p>
+                  )}
+                  
+                  {line2Complete && (
+                    <p className="text-slate-500">{line3}</p>
+                  )}
+                  
+                  {line3Complete && (
+                    <p className="text-on-tertiary-container font-semibold">{line4}</p>
+                  )}
+
+                  {line4Complete && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.6, ease: "easeOut" }}
+                      className="pt-8"
+                    >
+                      <h2 className="text-headline text-white mb-6">Ready to initiate your sequence?</h2>
+                      <div className="flex flex-wrap gap-4">
+                        <a href="/login" className="bg-secondary-container text-on-secondary px-6 py-3 rounded font-bold text-xs uppercase tracking-widest hover:scale-105 transition-transform inline-block">Begin Application</a>
+                        <button className="text-white border border-white/20 px-6 py-3 rounded font-bold text-xs uppercase tracking-widest hover:bg-white/5 transition-colors">Join Discord</button>
+                      </div>
+                    </motion.div>
+                  )}
                 </div>
               </div>
             </motion.div>

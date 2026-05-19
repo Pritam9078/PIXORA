@@ -11,7 +11,7 @@ const ApplicationSuccessPage = () => {
     instructor: 'Faculty Recruitment',
     partner: 'Global Alliance',
     college_admin: 'Institutional Nexus',
-    student: 'Cadet Enrollment'
+    student: 'Student Enrollment'
   };
 
   return (
@@ -112,11 +112,8 @@ const ApplicationSuccessPage = () => {
             transition={{ delay: 0.6 }}
             className="mt-12 flex flex-wrap justify-center gap-4"
           >
-            <Link to="/dashboard/student" className="bg-on-tertiary-container/20 text-on-tertiary-container border border-on-tertiary-container/30 px-8 py-3 font-headline text-[10px] uppercase tracking-[0.2em] font-bold hover:bg-on-tertiary-container hover:text-white transition-all duration-300">
+            <Link to="/student/dashboard" className="bg-on-tertiary-container/20 text-on-tertiary-container border border-on-tertiary-container/30 px-8 py-3 font-headline text-[10px] uppercase tracking-[0.2em] font-bold hover:bg-on-tertiary-container hover:text-white transition-all duration-300">
               Student Hub
-            </Link>
-            <Link to="/dashboard/instructor" className="bg-secondary-container text-black px-8 py-3 font-headline text-[10px] uppercase tracking-[0.2em] font-bold hover:shadow-[0_0_20px_rgba(195,244,0,0.4)] transition-all duration-300">
-              Instructor Hub
             </Link>
             <Link to="/" className="border border-white/10 text-white px-8 py-3 font-headline text-[10px] uppercase tracking-[0.2em] font-bold hover:bg-white/5 transition-all duration-300">
               Return Home

@@ -37,7 +37,7 @@ const EnrollNow = () => {
   
   const [formData, setFormData] = useState({
     learning_track: 'game_dev', // default
-    duration: 'immersive', // standard vs immersive (Sprint Cadet 4 weeks vs Immersive Core 8 weeks)
+    duration: 'immersive', // standard vs immersive (Sprint Student 4 weeks vs Immersive Core 8 weeks)
     cohort: 'June 1, 2026',
     bio: profile?.bio || '',
     github: '',
@@ -99,13 +99,13 @@ const EnrollNow = () => {
       <div className="text-center space-y-3">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--st-color-primary)]/10 text-[var(--st-color-primary)] border border-[var(--st-color-primary)]/20 text-[9px] font-headline font-black uppercase tracking-[0.2em] shadow-[0_0_15px_rgba(var(--st-color-primary-rgb),0.1)]">
           <Terminal size={12} />
-          Cadet Initialization Protocol
+          Student Initialization Protocol
         </div>
         <h1 className="text-4xl md:text-5xl font-headline font-black text-white tracking-tight">
           Calibrate Your <span className="text-[var(--st-color-primary)] drop-shadow-[0_0_8px_var(--st-color-glow)]">Specialization</span>
         </h1>
         <p className="text-on-surface-variant/60 max-w-lg mx-auto text-sm font-medium">
-          Select your track, customize program dynamics, and authenticate cadet handles to begin your LMS journey.
+          Select your track, customize program dynamics, and authenticate student handles to begin your LMS journey.
         </p>
       </div>
 
@@ -134,7 +134,7 @@ const EnrollNow = () => {
               <span className={`text-[8px] font-headline font-black uppercase tracking-widest ${
                 s === step ? 'text-[var(--st-color-primary)]' : 'text-on-surface-variant/30'
               }`}>
-                {s === 1 ? 'Select Track' : s === 2 ? 'Set Cohort' : 'Cadet Details'}
+                {s === 1 ? 'Select Track' : s === 2 ? 'Set Cohort' : 'Student Details'}
               </span>
             </div>
           ))}
@@ -264,7 +264,7 @@ const EnrollNow = () => {
                         }`}
                       >
                         <div className="space-y-1">
-                          <h4 className="font-headline font-black text-xs text-white uppercase tracking-wider">Sprint Cadet (4 Weeks)</h4>
+                          <h4 className="font-headline font-black text-xs text-white uppercase tracking-wider">Sprint Student (4 Weeks)</h4>
                           <p className="text-[10px] text-on-surface-variant/50 font-medium">Core outcomes, accelerated development sprint.</p>
                         </div>
                         <CheckCircle2 size={18} className={formData.duration === 'sprint' ? 'text-[var(--st-color-primary)]' : 'text-white/10'} />
@@ -297,7 +297,7 @@ const EnrollNow = () => {
                         onChange={(e) => setFormData(prev => ({ ...prev, cohort: e.target.value }))}
                         className="w-full glass-card border-white/5 rounded-2xl p-4 text-sm font-semibold text-white focus:outline-none focus:border-[var(--st-color-primary)]/30 appearance-none cursor-pointer"
                       >
-                        <option value="June 1, 2026" className="bg-slate-950 text-white">June 1, 2026 (Space Cadet Cohort)</option>
+                        <option value="June 1, 2026" className="bg-slate-950 text-white">June 1, 2026 (Space Student Cohort)</option>
                         <option value="July 1, 2026" className="bg-slate-950 text-white">July 1, 2026 (Orbit Core Cohort)</option>
                         <option value="August 1, 2026" className="bg-slate-950 text-white">August 1, 2026 (Nebula Prime Cohort)</option>
                       </select>
@@ -347,11 +347,11 @@ const EnrollNow = () => {
             </div>
           )}
 
-          {/* STEP 3: CADET PROFILE HANDLES */}
+          {/* STEP 3: STUDENT PROFILE HANDLES */}
           {step === 3 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
               <div className="text-center space-y-1">
-                <h2 className="text-xl font-headline font-bold text-white uppercase tracking-wider">Cadet Credentials</h2>
+                <h2 className="text-xl font-headline font-bold text-white uppercase tracking-wider">Student Credentials</h2>
                 <p className="text-xs text-on-surface-variant/40 font-semibold uppercase tracking-wider">Secure handles and tell us about your background context.</p>
               </div>
 
@@ -365,7 +365,7 @@ const EnrollNow = () => {
                     <div className="relative">
                       <input 
                         type="text" 
-                        placeholder="e.g. github.com/cadet"
+                        placeholder="e.g. github.com/student"
                         value={formData.github}
                         onChange={(e) => setFormData(prev => ({ ...prev, github: e.target.value }))}
                         className="w-full glass-card border-white/5 rounded-2xl p-4 pl-12 text-sm font-medium text-white focus:outline-none focus:border-[var(--st-color-primary)]/40 transition-all"
@@ -381,7 +381,7 @@ const EnrollNow = () => {
                     <div className="relative">
                       <input 
                         type="text" 
-                        placeholder="e.g. cadet#1337"
+                        placeholder="e.g. student#1337"
                         value={formData.discord}
                         onChange={(e) => setFormData(prev => ({ ...prev, discord: e.target.value }))}
                         className="w-full glass-card border-white/5 rounded-2xl p-4 pl-12 text-sm font-medium text-white focus:outline-none focus:border-[var(--st-color-primary)]/40 transition-all"
@@ -396,7 +396,7 @@ const EnrollNow = () => {
 
                 {/* Identity Biography */}
                 <div className="space-y-3">
-                  <label className="text-[10px] font-headline font-black text-on-surface-variant/30 uppercase tracking-[0.2em] ml-2">Cadet Identity Biography</label>
+                  <label className="text-[10px] font-headline font-black text-on-surface-variant/30 uppercase tracking-[0.2em] ml-2">Student Identity Biography</label>
                   <textarea 
                     rows="4"
                     required

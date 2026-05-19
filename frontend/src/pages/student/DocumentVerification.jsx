@@ -36,7 +36,7 @@ const DocumentVerification = () => {
     { text: 'Extracting landmark nodes (nose-to-eye ratio, jawline alignment)...', delay: 3000, updateChecklist: null },
     { text: 'Biometric verification match confirmed: 99.78% rate', delay: 3500, updateChecklist: { faceMatching: 'success' } },
     { text: 'Querying national academic & clearance registry...', delay: 4000, updateChecklist: null },
-    { text: 'Generating cadet level 1 authorization signature...', delay: 4500, updateChecklist: { databaseCheck: 'success' } },
+    { text: 'Generating student level 1 authorization signature...', delay: 4500, updateChecklist: { databaseCheck: 'success' } },
     { text: 'SECURITY HANDSHAKE COMPLETED. ACCESS GRANTED.', delay: 5000, updateChecklist: null }
   ];
 
@@ -301,7 +301,7 @@ const DocumentVerification = () => {
                 <div className="text-center space-y-2 max-w-sm">
                   <h3 className="text-xl font-headline font-bold text-white uppercase tracking-wider">Verification Complete</h3>
                   <p className="text-xs text-on-surface-variant/50 leading-relaxed font-medium">
-                    Holographic signature matching confirmed. Your clearance level has been updated to **Grade 1 LMS Cadet**.
+                    Holographic signature matching confirmed. Your clearance level has been updated to **Grade 1 LMS Student**.
                   </p>
                 </div>
 

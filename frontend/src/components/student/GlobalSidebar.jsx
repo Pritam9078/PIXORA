@@ -57,11 +57,11 @@ const GlobalSidebar = ({ isOpen, setIsOpen }) => {
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 space-y-6 py-4 custom-scrollbar">
-        {/* Onboarding Cadet Pipeline Steps Card */}
+        {/* Onboarding Student Pipeline Steps Card */}
         {isAgnostic && isOpen && (
           <div className="mx-1 p-3.5 rounded-2xl bg-gradient-to-br from-orange-500/10 to-yellow-500/5 border border-orange-500/20 shadow-lg shadow-orange-500/5 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-headline font-black text-orange-400 uppercase tracking-wider">Cadet Onboarding</span>
+              <span className="text-[10px] font-headline font-black text-orange-400 uppercase tracking-wider">Student Onboarding</span>
               <span className="text-[9px] bg-orange-500/20 text-orange-300 px-1.5 py-0.5 rounded font-black">INITIALIZING</span>
             </div>
             

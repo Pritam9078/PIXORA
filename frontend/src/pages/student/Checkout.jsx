@@ -106,7 +106,7 @@ const Checkout = () => {
   const { user, profile, refreshProfile } = useAuth();
   const { currentTheme } = useStudentTheme();
 
-  // Redirect security checks: If cadet hasn't selected track, push to enroll-now (bypass if purchasing a specific course)
+  // Redirect security checks: If student hasn't selected track, push to enroll-now (bypass if purchasing a specific course)
   useEffect(() => {
     if (!courseToPurchase && profile && profile.learning_track === 'agnostic') {
       toast.error('Initialization required. Calibrate your specialized track first!');
@@ -199,7 +199,7 @@ const Checkout = () => {
     setProgressCheck(0);
 
     const price = courseToPurchase ? (courseToPurchase.price || 0) : (selectedPlan === 'pro' ? 399.00 : 199.00);
-    const purchaseTitle = courseToPurchase ? courseToPurchase.title : (selectedPlan === 'pro' ? 'Pro CADET Access Plan' : 'Starter CADET Access Plan');
+    const purchaseTitle = courseToPurchase ? courseToPurchase.title : (selectedPlan === 'pro' ? 'Pro STUDENT Access Plan' : 'Starter STUDENT Access Plan');
 
     const terminalLogs = courseToPurchase ? [
       { text: 'Establishing secure cryptographic pipeline with Stripe...', delay: 400 },
@@ -218,9 +218,9 @@ const Checkout = () => {
       { text: 'Authorized successfully! Receipt token: ch_' + Math.random().toString(36).substring(2, 10).toUpperCase(), delay: 2200 },
       { text: 'Writing payment ledger transaction to public.payments...', delay: 2800, databaseSync: true },
       { text: `Querying all published courses for Learning Track: [${profile?.learning_track || 'Specialized'}]...`, delay: 3500 },
-      { text: 'Calibrating batch cadet enrollment sequence in public.enrollments...', delay: 4200, enrollmentSync: true },
+      { text: 'Calibrating batch student enrollment sequence in public.enrollments...', delay: 4200, enrollmentSync: true },
       { text: 'Allocating elite senior industry track mentor...', delay: 4900 },
-      { text: 'Generating signed cryptographic Cadet Offer Letter directive...', delay: 5500 },
+      { text: 'Generating signed cryptographic Student Offer Letter directive...', delay: 5500 },
       { text: 'CALIBRATION HANDSHAKE SECURED. REDIRECTING PORTAL...', delay: 6200 }
     ];
 
@@ -263,17 +263,10 @@ const Checkout = () => {
               console.log('Course enrollment complete.');
             } else {
               // Retrieve available courses for track
-              const allCourses = await CourseService.getAvailableCourses(profile?.college_id);
-              const isBlockchain = profile?.learning_track === 'blockchain';
-              const matchedCourses = allCourses.filter(course => {
-                if (isBlockchain) {
-                  return course.category === 'Blockchain' || course.category === 'Web3';
-                } else {
-                  return course.category === 'Game Development';
-                }
-              });
+              const userTrack = profile?.track || (profile?.learning_track ? profile.learning_track.toUpperCase() : null);
+              const matchedCourses = await CourseService.getAvailableCourses(profile?.college_id, userTrack);
 
-              if (matchedCourses.length > 0) {
+              if (matchedCourses && matchedCourses.length > 0) {
                 await Promise.all(
                   matchedCourses.map(course => 
                     CourseService.enrollInCourse(user.id, course.id)
@@ -299,7 +292,7 @@ const Checkout = () => {
             refreshProfile().catch(err => console.error(err));
             
             setStage('success');
-            toast.success(courseToPurchase ? 'Course Clearance Directive generated!' : 'LMS Cadet Clearance Directive generated!');
+            toast.success(courseToPurchase ? 'Course Clearance Directive generated!' : 'LMS Student Clearance Directive generated!');
           }, 800);
         }
       }, item.delay);
@@ -533,7 +526,7 @@ const Checkout = () => {
                 <div className="flex justify-between items-start">
                   <div>
                     <span className="text-[9px] font-headline font-bold text-[var(--st-color-primary)] uppercase tracking-[0.25em]">PIXORA DIRECTIVE GATEWAY</span>
-                    <h3 className="text-sm font-headline font-semibold text-white/50 tracking-wider mt-0.5">CADET PAY SYSTEM</h3>
+                    <h3 className="text-sm font-headline font-semibold text-white/50 tracking-wider mt-0.5">STUDENT PAY SYSTEM</h3>
                   </div>
                   
                   {/* NFC/Wireless symbol & Chip */}
@@ -558,9 +551,9 @@ const Checkout = () => {
 
                 <div className="flex justify-between items-end">
                   <div className="space-y-1">
-                    <span className="text-[7px] font-headline font-bold text-white/40 uppercase tracking-widest block">Cadet Cardholder</span>
+                    <span className="text-[7px] font-headline font-bold text-white/40 uppercase tracking-widest block">Student Cardholder</span>
                     <span className="font-mono text-xs text-white uppercase tracking-wider block truncate max-w-[180px]">
-                      {cardholder || 'CADET NAME'}
+                      {cardholder || 'STUDENT NAME'}
                     </span>
                   </div>
 
@@ -723,7 +716,7 @@ const Checkout = () => {
         </div>
       )}
 
-      {/* STAGE 3: PRINTABLE CADET OFFER LETTER */}
+      {/* STAGE 3: PRINTABLE STUDENT OFFER LETTER */}
       {stage === 'success' && (
         <div className="space-y-8">
           
@@ -734,7 +727,7 @@ const Checkout = () => {
               Sequence Complete
             </div>
             <h1 className="text-4xl md:text-5xl font-headline font-black text-white tracking-tight">
-              {courseToPurchase ? 'Syllabus Pipeline ' : 'Cadet directive '}
+              {courseToPurchase ? 'Syllabus Pipeline ' : 'Student directive '}
               <span className="text-[var(--st-color-primary)] drop-shadow-[0_0_8px_var(--st-color-glow)]">Assigned</span>
             </h1>
             <p className="text-on-surface-variant/60 max-w-lg mx-auto text-sm font-medium">
@@ -796,7 +789,7 @@ const Checkout = () => {
               </div>
 
               <p className="text-white text-base">
-                Dear <strong className="text-[var(--st-color-primary)] font-bold">{profile?.full_name || 'Cadet'}</strong>,
+                Dear <strong className="text-[var(--st-color-primary)] font-bold">{profile?.full_name || 'Student'}</strong>,
               </p>
 
               <p>
@@ -806,7 +799,7 @@ const Checkout = () => {
                   </>
                 ) : (
                   <>
-                    We are pleased to inform you that your holographic credentials and biometric telemetry have cleared Pixora Academy’s validation sequence. Upon verification of billing payload pipelines, your clearance has been elevated to <strong className="text-white">Active Grade 1 Academy Cadet</strong> specializing in the <strong className="text-white">{profile?.learning_track === 'blockchain' ? 'Blockchain & Web3 Protocol' : 'Game Development Engine'} Specialization Track</strong>.
+                    We are pleased to inform you that your holographic credentials and biometric telemetry have cleared Pixora Academy’s validation sequence. Upon verification of billing payload pipelines, your clearance has been elevated to <strong className="text-white">Active Grade 1 Academy Student</strong> specializing in the <strong className="text-white">{profile?.learning_track === 'blockchain' ? 'Blockchain & Web3 Protocol' : 'Game Development Engine'} Specialization Track</strong>.
                   </>
                 )}
               </p>
@@ -830,7 +823,7 @@ const Checkout = () => {
                   </>
                 ) : (
                   <>
-                    As a cadet of Pixora Academy, your access locks are now disabled. Full course directories, quiz validation consoles, live sandbox compilers, and elite corporate career hubs have been fully mapped to your neural directory.
+                    As a student of Pixora Academy, your access locks are now disabled. Full course directories, quiz validation consoles, live sandbox compilers, and elite corporate career hubs have been fully mapped to your neural directory.
                   </>
                 )}
               </p>

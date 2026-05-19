@@ -391,10 +391,10 @@ export const InstructorService = {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Authenticated user not found");
 
-      // Fetch instructor's college_id
+      // Fetch instructor's college_id and track
       const { data: profile } = await supabase
         .from('profiles')
-        .select('college_id')
+        .select('college_id, track')
         .eq('id', user.id)
         .single();
 
@@ -405,6 +405,7 @@ export const InstructorService = {
             ...courseData,
             instructor_id: user.id,
             college_id: profile?.college_id || null,
+            track: profile?.track || null,
             created_at: new Date().toISOString()
           }])
           .select()
@@ -489,11 +490,20 @@ export const InstructorService = {
     const userId = session.user.id;
     console.log("InstructorService: Seeding data for:", userId);
 
+    // Fetch instructor's profile track & college
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('college_id, track')
+      .eq('id', userId)
+      .single();
+
     // 1. Create a sample course
     const { data: course, error: courseError } = await supabase
       .from('courses')
       .insert({
         instructor_id: userId,
+        college_id: profile?.college_id || null,
+        track: profile?.track || null,
         title: 'Mastering the Meta-Game: Advanced Theory',
         description: 'A deep dive into cross-platform game mechanics and blockchain integration.',
         price: 49.99,

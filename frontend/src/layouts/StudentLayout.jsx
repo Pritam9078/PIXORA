@@ -20,7 +20,7 @@ const StudentLayout = () => {
     '/student/settings'
   ];
 
-  // Gatekeeper: if agnostic cadet tries to access locked tabs, redirect to dashboard
+  // Gatekeeper: if agnostic student tries to access locked tabs, redirect to dashboard
   if (isAgnostic && !allowedAgnosticPaths.some(path => location.pathname === path || location.pathname.startsWith(path))) {
     return <Navigate to="/student/dashboard" replace />;
   }

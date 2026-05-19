@@ -5,7 +5,7 @@ import {
   SkipForward, ArrowLeft, Award,
   Loader2, Layout, Send, Sparkles, Trophy,
   List, BookOpen, Clock, Info, Lock,
-  Maximize2, Minimize2, Volume2, VolumeX, Settings
+  Maximize2, Minimize2, Volume2, VolumeX, Settings, Code, Terminal
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -46,12 +46,30 @@ const CoursePlayer = () => {
   const [savingNote, setSavingNote] = useState(false);
   const [autoSaveTimeout, setAutoSaveTimeout] = useState(null);
 
+  // AI Tutor Conversational State
+  const [aiMessages, setAiMessages] = useState([
+    {
+      id: 'welcome',
+      sender: 'ai',
+      text: "👋 Welcome to your Pixora AI Learning Tutor! I'm synced with this lesson module and ready to help you master these concepts. Click a quick prompt below or type your questions.",
+      timestamp: new Date()
+    }
+  ]);
+  const [isAiTyping, setIsAiTyping] = useState(false);
+  const [aiInput, setAiInput] = useState('');
+
+  // Code Lab Interactive Editor & Compiler Simulator State
+  const [codeText, setCodeText] = useState('');
+  const [terminalOutput, setTerminalOutput] = useState([]);
+  const [isRunningCode, setIsRunningCode] = useState(false);
+
   // Watch progress
   const [watchProgress, setWatchProgress] = useState(0);
   const [watchTimeSpent, setWatchTimeSpent] = useState(0);
   const watchTimerRef = useRef(null);
   const videoRef = useRef(null);
   const mainContentRef = useRef(null);
+  const aiChatEndRef = useRef(null);
 
   const fetchCourseData = useCallback(async () => {
     if (!user || !courseId) return;
@@ -120,6 +138,29 @@ const CoursePlayer = () => {
       if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
     };
   }, [courseId, user, fetchCourseData]);
+
+  // Determine active track/theme context
+  const isBlockchainTrack = course?.track === 'BLOCKCHAIN' || currentTheme?.id === 'blockchain' || (course?.title || '').toLowerCase().includes('solidity') || (course?.title || '').toLowerCase().includes('blockchain') || (course?.title || '').toLowerCase().includes('web3');
+  const isGameDevTrack = course?.track === 'GAME_DEV' || currentTheme?.id === 'game_dev' || (course?.title || '').toLowerCase().includes('unity') || (course?.title || '').toLowerCase().includes('unreal') || (course?.title || '').toLowerCase().includes('game');
+
+  // Initialize Sandbox Code text based on track
+  useEffect(() => {
+    if (isBlockchainTrack) {
+      setCodeText(`// SPDX-License-Identifier: MIT\npragma solidity ^0.8.20;\n\ncontract PixoraToken {\n    string public name = "Pixora XP Token";\n    string public symbol = "PXP";\n    uint256 public totalSupply = 1000000;\n    \n    mapping(address => uint256) public balances;\n    \n    event Mint(address indexed to, uint256 value);\n    \n    // TODO: Mint rewards to student address\n    function mintReward(address student, uint256 amount) public {\n        balances[student] += amount;\n        totalSupply += amount;\n        emit Mint(student, amount);\n    }\n}`);
+      setTerminalOutput([`$ solc contracts/PixoraToken.sol --bin --abi`]);
+    } else if (isGameDevTrack) {
+      setCodeText(`using UnityEngine;\nusing System.Collections;\n\npublic class HoverCraftController : MonoBehaviour {\n    public float thrust = 20.0f;\n    public float turnSpeed = 2.5f;\n    private Rigidbody rb;\n\n    void Start() {\n        rb = GetComponent<Rigidbody>();\n    }\n\n    // TODO: Complete craft stabilizer physics\n    void FixedUpdate() {\n        float roll = Input.GetAxis("Horizontal");\n        float pitch = Input.GetAxis("Vertical");\n        rb.AddRelativeForce(Vector3.forward * pitch * thrust);\n        rb.AddRelativeTorque(Vector3.up * roll * turnSpeed);\n    }\n}`);
+      setTerminalOutput([`$ msbuild HoverCraftController.cs --target:library`]);
+    } else {
+      setCodeText(`// Pixora Interactive Scripting Playground\nconst lessonTitle = "${activeLesson?.title || 'Sandbox'}";\nconst xpAwarded = 25;\n\nfunction completeLesson() {\n    console.log("Welcome to Pixora Sandbox!");\n    console.log("Successfully compiled lesson: " + lessonTitle);\n    return xpAwarded;\n}\n\ncompleteLesson();`);
+      setTerminalOutput([`$ node sandbox.js`]);
+    }
+  }, [activeLesson, isBlockchainTrack, isGameDevTrack]);
+
+  // Auto-scroll AI chat viewport
+  useEffect(() => {
+    aiChatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [aiMessages, isAiTyping]);
 
   // Enhanced watch tracker with time-based progress
   useEffect(() => {
@@ -260,7 +301,6 @@ const CoursePlayer = () => {
     const currentIndex = lessons.findIndex(l => l.id === activeLesson.id && l.type === activeLesson.type);
     if (currentIndex < lessons.length - 1) {
       handleLessonSelect(lessons[currentIndex + 1], currentIndex + 1);
-      // Scroll to top
       if (mainContentRef.current) {
         mainContentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
       }
@@ -336,15 +376,138 @@ const CoursePlayer = () => {
     }
   };
 
+  // Conversational AI Simulated response engine
+  const handleAiMessageSubmit = (userText = null) => {
+    const text = userText || aiInput;
+    if (!text.trim()) return;
+
+    // Append User Message
+    const userMessage = {
+      id: `user-${Date.now()}`,
+      sender: 'user',
+      text: text,
+      timestamp: new Date()
+    };
+    setAiMessages(prev => [...prev, userMessage]);
+    if (!userText) setAiInput('');
+
+    setIsAiTyping(true);
+
+    // Simulate AI Thinking and dynamic response assembly
+    setTimeout(() => {
+      setIsAiTyping(false);
+      let responseText = '';
+
+      // Determine smart response context based on user prompts
+      const lower = text.toLowerCase();
+      if (lower.includes('explain') || lower.includes('simply')) {
+        responseText = `Let's break down **${activeLesson?.title || 'this lesson'}** simply! 🚀\n\n1. **Core Concept**: ${activeLesson?.description ? activeLesson.description.substring(0, 160) + '...' : 'This is the main pillar of this lesson structure.'}\n2. **Why it matters**: In a full stack ecosystem, this component handles safe execution decoupling, allowing components to run independently without blocking.\n3. **Simple Analogy**: Think of it as placing an order at a digital cafe. You order (send command), get a ticket, and go sit down. The barista finishes the coffee asynchronously and calls your number when it's ready. You don't stand at the register waiting!\n\nWould you like me to quiz you on this, or suggest related sandbox exercises?`;
+      } else if (lower.includes('quiz') || lower.includes('practice')) {
+        responseText = `Here is a cohort practice quiz for **${activeLesson?.title || 'this lesson'}**! 📝\n\n**Question 1**: Which aspect is optimized primary by implementing the architecture patterns described in this module?\n- A) Initial load times & static caching\n- B) Performance throughput and isolated component resilience\n- C) Relational schema normalization & transaction rollbacks\n\n*Type A, B, or C below to submit your cohort score!*`;
+      } else if (lower.includes('summarize') || lower.includes('key points')) {
+        responseText = `Here is your learning summary for **${activeLesson?.title || 'this lesson'}** 📋:\n\n*   **Decoupled Workflows**: Isolation of logic is key to scaling.\n*   **State Telemetry**: Monitor execution delays to avoid performance leaks.\n*   **Defensive Design**: Validate parameters before state changes to guarantee absolute reliability.\n\nType 'Explain simply' if you want me to expand on these!`;
+      } else if (lower.includes('suggest') || lower.includes('related')) {
+        responseText = `To expand your knowledge beyond **${activeLesson?.title || 'this lesson'}**, I suggest these advanced topics 🌐:\n\n1. **Zero-Knowledge Decoupling**: Proof validations on private networks.\n2. **Multiplayer Telemetry**: Pushing state changes securely at 60 FPS.\n3. **Optimized Garbage Collection**: Preventing memory creep in runtime loops.\n\nWhich of these would you like to study first?`;
+      } else if (lower === 'a' || lower === 'b' || lower === 'c') {
+        if (lower === 'b') {
+          responseText = `🎯 **Perfect! Option B is absolutely correct!**\n\nIsolating execution pipelines protects components from cascaded logic errors and spikes memory efficiency. You've earned +25 XP toward your track milestone! Let me know if you are ready to start coding in the sandbox terminal!`;
+        } else {
+          responseText = `❌ **Not quite!** But close.\n\nOption B was the correct choice because isolating components guarantees resilience. Don't worry, cohort learning is about iteration! Try summarizing the lesson to reinforce your understanding.`;
+        }
+      } else {
+        responseText = `That is an excellent inquiry about **${activeLesson?.title || 'this lesson'}**! Synthesizing this module is crucial to finishing this track cohort. \n\nI highly recommend opening our **Code Lab** tab next to this chat viewport and running the simulation to see how compiling this logic operates in real-time. Do you have any specific error telemetry you'd like me to debug?`;
+      }
+
+      // Append new AI message with word-by-word streaming effect
+      const responseMessageId = `ai-${Date.now()}`;
+      setAiMessages(prev => [...prev, {
+        id: responseMessageId,
+        sender: 'ai',
+        text: '',
+        timestamp: new Date()
+      }]);
+
+      let words = responseText.split(' ');
+      let currentText = '';
+      let wordIdx = 0;
+
+      const streamTimer = setInterval(() => {
+        if (wordIdx < words.length) {
+          currentText += (wordIdx === 0 ? '' : ' ') + words[wordIdx];
+          setAiMessages(prev => prev.map(m => m.id === responseMessageId ? { ...m, text: currentText } : m));
+          wordIdx++;
+        } else {
+          clearInterval(streamTimer);
+        }
+      }, 60);
+
+    }, 1000);
+  };
+
+  // Sandbox Compiler Terminal execution simulation
+  const handleCompileSandboxCode = () => {
+    if (isRunningCode) return;
+    setIsRunningCode(true);
+
+    const logSteps = isBlockchainTrack
+      ? [
+          `$ solc contracts/PixoraToken.sol --bin --abi --optimize`,
+          `[INFO] Initializing Solidity Compiler v0.8.20...`,
+          `[INFO] Optimizing assembly instructions (200 compiler runs)`,
+          `[INFO] Gas profiling: mintReward() cost estimated at 42,912 gas units.`,
+          `[SUCCESS] Solidity source code compiled cleanly with no warnings.`,
+          `[DEPLOY] Initializing deployment to local EVM testnet (Ganache RPC)...`,
+          `[SUCCESS] Smart contract successfully deployed.`,
+          `[CONTRACT] Address: 0x9D5f8C24FFdD1c9B231f822a101B2C690Efe663d`
+        ]
+      : isGameDevTrack
+      ? [
+          `$ msbuild HoverCraftController.cs --target:library --optimize`,
+          `[INFO] Invoking Roslyn Mono C# Compiler v6.12.0...`,
+          `[INFO] Resolving UnityEngine.CoreModule.dll references...`,
+          `[INFO] Bundling assembly components (12 scripts, 3 dynamic mesh filters)`,
+          `[SUCCESS] Assemblies generated successfully in 1.12s.`,
+          `[RUN] Loading active Unity simulation scene...`,
+          `[SUCCESS] Simulation engine active. Mesh stabilizers operating at 60 FPS.`
+        ]
+      : [
+          `$ node sandbox.js`,
+          `[INFO] Initializing Pixora JavaScript Playground runtime...`,
+          `[INFO] Evaluating scope variables...`,
+          `[SUCCESS] Runtime execution complete.`,
+          `[OUTPUT] Welcome to Pixora Sandbox!`,
+          `[OUTPUT] Successfully compiled lesson: ${activeLesson?.title || 'Sandbox'}`,
+          `[OUTPUT] XP Reward: 25 XP`
+        ];
+
+    setTerminalOutput([logSteps[0]]);
+    let stepIdx = 1;
+
+    const timer = setInterval(() => {
+      if (stepIdx < logSteps.length) {
+        setTerminalOutput(prev => [...prev, logSteps[stepIdx]]);
+        stepIdx++;
+      } else {
+        clearInterval(timer);
+        setIsRunningCode(false);
+        toast.success('Sandbox build complete! 🚀', {
+          style: { background: '#1a1a1a', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' }
+        });
+      }
+    }, 400);
+  };
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyPress = (e) => {
       // Space: play/pause (if video)
       if (e.code === 'Space' && activeLesson?.type === 'lesson') {
+        const activeTag = document.activeElement?.tagName;
+        if (activeTag === 'TEXTAREA' || activeTag === 'INPUT') return; // Ignore inside input fields
+        
         e.preventDefault();
         const iframe = document.querySelector('iframe');
         if (iframe) {
-          // Post message to YouTube iframe
           iframe.contentWindow?.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
         }
       }
@@ -377,7 +540,6 @@ const CoursePlayer = () => {
   const courseProgressPercentage = Math.round((completedCount / totalItems) * 100);
   const currentLessonIndex = lessons.findIndex(l => l.id === activeLesson?.id && l.type === activeLesson?.type);
 
-  // Loading state
   if (loading) {
     return (
       <div className="h-full flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-[#030B14] to-[#0a1620]">
@@ -419,63 +581,84 @@ const CoursePlayer = () => {
   }
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-br from-[#030B14] to-[#0a1620] overflow-hidden">
-      {/* Header */}
-      <header className="h-14 flex-shrink-0 border-b border-white/10 bg-black/40 backdrop-blur-xl flex items-center justify-between px-4 gap-4 z-30">
+    <div className="h-full flex flex-col bg-gradient-to-br from-[#02070f] via-[#05111f] to-[#01050a] overflow-hidden">
+      
+      {/* Dynamic Immersive Header */}
+      <header className="h-16 flex-shrink-0 border-b border-white/10 bg-black/40 backdrop-blur-xl flex items-center justify-between px-6 gap-4 z-30 shadow-[0_4px_30px_rgba(0,0,0,0.4)]">
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => navigate('/student/my-courses')}
-            className="flex-shrink-0 p-2 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-all duration-200 group"
+            className="flex-shrink-0 p-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white/60 hover:text-white transition-all duration-200 group"
             title="Back to courses"
           >
             <ArrowLeft size={18} className="group-hover:-translate-x-0.5 transition-transform" />
           </button>
-          <div className="h-6 w-px bg-white/20" />
+          <div className="h-6 w-px bg-white/10" />
           <div className="min-w-0">
-            <p className="text-xs font-semibold text-white/80 truncate max-w-[180px] sm:max-w-[400px]">
-              {course?.title}
-            </p>
-            <p className="text-[10px] text-white/40 truncate flex items-center gap-1">
-              <span className="inline-block w-1 h-1 rounded-full bg-[var(--st-color-primary)]" />
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-bold text-white truncate max-w-[180px] sm:max-w-[320px]">
+                {course?.title}
+              </p>
+              {isBlockchainTrack && (
+                <span className="hidden sm:inline-block text-[9px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full uppercase tracking-widest shadow-[0_0_10px_rgba(16,185,129,0.1)]">
+                  Web3 Track
+                </span>
+              )}
+              {isGameDevTrack && (
+                <span className="hidden sm:inline-block text-[9px] font-bold text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded-full uppercase tracking-widest shadow-[0_0_10px_rgba(168,85,247,0.1)]">
+                  Game Dev
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-white/40 truncate flex items-center gap-1.5 mt-0.5">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-[var(--st-color-primary)] animate-pulse" />
               {activeLesson?.title}
             </p>
           </div>
         </div>
 
-        <div className="hidden md:flex items-center gap-3 px-4 py-1.5 rounded-full bg-white/5 border border-white/10">
-          <Trophy size={14} className="text-yellow-400" />
-          <div className="w-32 h-1.5 bg-white/10 rounded-full overflow-hidden">
-            <motion.div
-              className="h-full bg-gradient-to-r from-[var(--st-color-primary)] to-[var(--st-color-primary)]/60 rounded-full"
-              initial={{ width: 0 }}
-              animate={{ width: `${courseProgressPercentage}%` }}
-              transition={{ duration: 0.5 }}
-            />
+        {/* Cinematic Trophy Progress Widget */}
+        <div className="hidden lg:flex items-center gap-3.5 px-5 py-2 rounded-2xl bg-white/5 border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center shadow-[0_0_15px_rgba(234,179,8,0.2)]">
+            <Trophy size={16} className="text-black" />
           </div>
-          <span className="text-xs font-bold text-white/80 tabular-nums">{courseProgressPercentage}% Complete</span>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-white/80 tabular-nums">{courseProgressPercentage}% Complete</span>
+              <span className="text-[10px] text-white/40">({completedCount}/{totalItems} Lessons)</span>
+            </div>
+            <div className="w-40 h-1.5 bg-white/10 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full bg-gradient-to-r from-[var(--st-color-primary)] to-[var(--st-color-secondary)] rounded-full shadow-[0_0_10px_rgba(var(--st-color-primary-rgb),0.5)]"
+                initial={{ width: 0 }}
+                animate={{ width: `${courseProgressPercentage}%` }}
+                transition={{ duration: 0.8, ease: 'easeOut' }}
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {activeLesson?.type === 'lesson' && (
             <>
               {isLessonCompleted ? (
                 <motion.span
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="hidden sm:flex items-center gap-2 px-4 py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-semibold"
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold shadow-[0_0_15px_rgba(16,185,129,0.05)]"
                 >
-                  <CheckCircle2 size={14} /> Completed
+                  <CheckCircle2 size={15} /> Completed
                 </motion.span>
               ) : (
                 <motion.button
-                  whileHover={canMarkComplete ? { scale: 1.02 } : {}}
+                  whileHover={canMarkComplete ? { scale: 1.02, y: -1 } : {}}
                   whileTap={canMarkComplete ? { scale: 0.98 } : {}}
                   onClick={handleMarkComplete}
                   disabled={!canMarkComplete || completing}
-                  className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200
+                  className={`flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300
                     ${canMarkComplete
                       ? 'bg-[var(--st-color-primary)] text-black hover:opacity-90 shadow-lg shadow-[var(--st-color-primary)]/20'
-                      : 'bg-white/10 border border-white/20 text-white/40 cursor-not-allowed'
+                      : 'bg-white/5 border border-white/10 text-white/30 cursor-not-allowed'
                     }`}
                 >
                   {completing ? (
@@ -483,79 +666,83 @@ const CoursePlayer = () => {
                   ) : (
                     <CheckCircle2 size={14} />
                   )}
-                  <span className="hidden sm:inline">
-                    {completing ? 'Completing...' : watchProgress < 90 ? `${Math.floor(watchProgress)}% Watched` : 'Complete'}
+                  <span>
+                    {completing ? 'Securing...' : watchProgress < 90 ? `${Math.floor(watchProgress)}% Watched` : 'Complete'}
                   </span>
                 </motion.button>
               )}
             </>
           )}
 
-          <div className="flex gap-1">
+          <div className="flex gap-1 bg-white/5 p-1 rounded-xl border border-white/10">
             <button
               onClick={handlePreviousObjective}
               disabled={currentLessonIndex <= 0}
-              className="p-2 rounded-lg bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-              title="Previous (Ctrl+←)"
+              className="p-1.5 rounded-lg text-white/50 hover:text-white hover:bg-white/10 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
+              title="Previous Module (Ctrl+←)"
             >
               <ArrowLeft size={16} />
             </button>
             <button
               onClick={handleNextObjective}
               disabled={currentLessonIndex >= lessons.length - 1}
-              className="p-2 rounded-lg bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-              title="Next (Ctrl+→)"
+              className="p-1.5 rounded-lg text-white/50 hover:text-white hover:bg-white/10 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
+              title="Next Module (Ctrl+→)"
             >
               <SkipForward size={16} />
             </button>
           </div>
 
-          <div className="w-px h-6 bg-white/20" />
+          <div className="w-px h-6 bg-white/10" />
 
           <button
             onClick={toggleFullscreen}
-            className="p-2 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-all"
-            title="Fullscreen"
+            className="p-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white/60 hover:text-white transition-all"
+            title="Cinematic Fullscreen"
           >
             {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
           </button>
 
           <button
             onClick={() => setIsCurriculumOpen(v => !v)}
-            className={`p-2 rounded-lg transition-all duration-200 ${isCurriculumOpen ? 'text-[var(--st-color-primary)] bg-[var(--st-color-primary)]/10' : 'text-white/40 hover:text-white hover:bg-white/10'}`}
-            title={isCurriculumOpen ? 'Hide curriculum' : 'Show curriculum'}
+            className={`p-2 rounded-xl border transition-all duration-200 ${isCurriculumOpen ? 'text-[var(--st-color-primary)] bg-[var(--st-color-primary)]/10 border-[var(--st-color-primary)]/20' : 'text-white/40 hover:text-white hover:bg-white/10 border-transparent'}`}
+            title={isCurriculumOpen ? 'Close Curriculum' : 'Open Curriculum'}
           >
             <List size={18} />
           </button>
           <button
             onClick={() => setIsUtilityOpen(v => !v)}
-            className={`p-2 rounded-lg transition-all duration-200 ${isUtilityOpen ? 'text-[var(--st-color-primary)] bg-[var(--st-color-primary)]/10' : 'text-white/40 hover:text-white hover:bg-white/10'}`}
-            title={isUtilityOpen ? 'Hide utilities' : 'Show utilities'}
+            className={`p-2 rounded-xl border transition-all duration-200 ${isUtilityOpen ? 'text-[var(--st-color-primary)] bg-[var(--st-color-primary)]/10 border-[var(--st-color-primary)]/20' : 'text-white/40 hover:text-white hover:bg-white/10 border-transparent'}`}
+            title={isUtilityOpen ? 'Close Utilities' : 'Open Utilities'}
           >
             <Layout size={18} />
           </button>
         </div>
       </header>
 
-      {/* Main Content */}
+      {/* Main Double-Sidebar Sandbox Layout */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Curriculum Sidebar */}
+        
+        {/* Left Frosted Curriculum Sidebar */}
         <AnimatePresence mode="wait">
           {isCurriculumOpen && (
             <motion.aside
               initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 320, opacity: 1 }}
+              animate={{ width: 330, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ duration: 0.25, ease: 'easeInOut' }}
-              className="flex-shrink-0 border-r border-white/10 bg-black/20 backdrop-blur-sm flex flex-col overflow-hidden"
+              className="flex-shrink-0 border-r border-white/10 bg-[#02070f]/40 backdrop-blur-md flex flex-col overflow-hidden z-20"
             >
-              <div className="px-5 py-4 border-b border-white/10 bg-black/30">
-                <h3 className="text-[11px] font-bold text-white/40 uppercase tracking-wider flex items-center gap-2">
-                  <BookOpen size={14} /> Course Curriculum
+              <div className="px-5 py-4 border-b border-white/10 bg-black/20 flex items-center justify-between">
+                <h3 className="text-xs font-bold text-white/50 uppercase tracking-widest flex items-center gap-2">
+                  <BookOpen size={14} className="text-[var(--st-color-primary)]" /> Curriculum Index
                 </h3>
+                <span className="text-[10px] font-bold text-white/30 bg-white/5 px-2.5 py-0.5 rounded-full">
+                  {lessons.length} Modules
+                </span>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scroll">
+              <div className="flex-1 overflow-y-auto p-4 space-y-5 custom-scroll">
                 {(course?.modules || []).map((module, mIdx) => {
                   const moduleItems = [
                     ...(module.lessons || []).map(l => ({ ...l, type: 'lesson' })),
@@ -572,21 +759,31 @@ const CoursePlayer = () => {
                   const moduleProgress = (completedInModule / moduleItems.length) * 100;
 
                   return (
-                    <div key={module.id} className="space-y-2">
-                      <div className="flex items-center justify-between px-2 mb-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold text-[var(--st-color-primary)]/70 bg-[var(--st-color-primary)]/10 px-2 py-0.5 rounded">
-                            Module {mIdx + 1}
-                          </span>
-                          <h4 className="text-xs font-semibold text-white/70">{module.title}</h4>
+                    <div key={module.id} className="p-3 rounded-2xl bg-white/[0.02] border border-white/5 space-y-3">
+                      <div className="flex items-center justify-between px-1">
+                        <div className="space-y-0.5">
+                          <p className="text-[10px] font-bold text-[var(--st-color-primary)] uppercase tracking-wider">
+                            MODULE 0{mIdx + 1}
+                          </p>
+                          <h4 className="text-xs font-bold text-white/80 leading-relaxed truncate max-w-[220px]">
+                            {module.title}
+                          </h4>
                         </div>
-                        <span className="text-[10px] text-white/30">{Math.round(moduleProgress)}%</span>
+                        <span className="text-xs font-bold text-white/40 tabular-nums bg-white/5 px-2 py-0.5 rounded-lg">
+                          {Math.round(moduleProgress)}%
+                        </span>
                       </div>
-                      <div className="h-0.5 bg-white/5 rounded-full overflow-hidden">
-                        <div className="h-full bg-[var(--st-color-primary)]/50 rounded-full" style={{ width: `${moduleProgress}%` }} />
+                      
+                      <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                        <motion.div
+                          className="h-full bg-gradient-to-r from-[var(--st-color-primary)] to-[var(--st-color-primary)]/40 rounded-full"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${moduleProgress}%` }}
+                          transition={{ duration: 0.5 }}
+                        />
                       </div>
 
-                      <div className="space-y-1 mt-3">
+                      <div className="space-y-1.5 pt-2">
                         {moduleItems.map((item) => {
                           const isCompleted = item.type === 'lesson'
                             ? progressMap[item.id]?.status === 'completed'
@@ -602,33 +799,41 @@ const CoursePlayer = () => {
                               key={`${item.type}-${item.id}`}
                               onClick={() => handleLessonSelect(item, globalIndex)}
                               disabled={locked}
-                              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-left group
+                              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all duration-300 text-left group
                                 ${isActive
-                                  ? 'bg-[var(--st-color-primary)]/15 border border-[var(--st-color-primary)]/30 shadow-lg'
+                                  ? 'bg-[var(--st-color-primary)]/10 border-[var(--st-color-primary)]/30 shadow-[0_0_15px_rgba(var(--st-color-primary-rgb),0.05)]'
                                   : locked
-                                    ? 'opacity-40 cursor-not-allowed'
-                                    : 'hover:bg-white/5 border border-transparent hover:border-white/10'
+                                    ? 'opacity-30 cursor-not-allowed border-transparent'
+                                    : 'hover:bg-white/[0.04] border-transparent hover:border-white/10'
                                 }`}
                             >
-                              <div className={`w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center transition-all duration-200
+                              <div className={`w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center transition-all duration-300
                                 ${isCompleted
-                                  ? 'bg-emerald-500/20 text-emerald-400'
+                                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                                   : isActive
-                                    ? 'bg-[var(--st-color-primary)]/20 text-[var(--st-color-primary)]'
-                                    : 'bg-white/5 text-white/30'
+                                    ? 'bg-[var(--st-color-primary)]/20 text-[var(--st-color-primary)] border border-[var(--st-color-primary)]/30'
+                                    : 'bg-white/5 text-white/30 border border-white/5 group-hover:text-white/60'
                                 }`}
                               >
                                 {locked ? <Lock size={12} /> : isCompleted ? <CheckCircle2 size={13} /> : <Play size={12} />}
                               </div>
                               <div className="min-w-0 flex-1">
-                                <p className={`text-xs font-medium truncate ${isActive ? 'text-white' : locked ? 'text-white/30' : 'text-white/60'}`}>
+                                <p className={`text-xs font-semibold truncate ${isActive ? 'text-white' : locked ? 'text-white/30' : 'text-white/60 group-hover:text-white/80'}`}>
                                   {item.title}
                                 </p>
-                                <span className={`text-[9px] uppercase tracking-wider font-semibold
-                                  ${item.type === 'lesson' ? 'text-blue-400/60' : item.type === 'quiz' ? 'text-purple-400/60' : 'text-orange-400/60'}`}
-                                >
-                                  {item.type}
-                                </span>
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                  <span className={`text-[8px] uppercase tracking-wider font-extrabold px-1.5 py-0.5 rounded
+                                    ${item.type === 'lesson'
+                                      ? 'text-sky-400 bg-sky-400/5'
+                                      : item.type === 'quiz'
+                                        ? 'text-purple-400 bg-purple-400/5'
+                                        : 'text-orange-400 bg-orange-400/5'}`}
+                                  >
+                                    {item.type}
+                                  </span>
+                                  {locked && <span className="text-[9px] text-white/20">Locked</span>}
+                                  {isCompleted && <span className="text-[9px] text-emerald-400/60 font-medium">Done</span>}
+                                </div>
                               </div>
                               {isActive && (
                                 <ChevronRight size={14} className="text-[var(--st-color-primary)] flex-shrink-0" />
@@ -645,20 +850,27 @@ const CoursePlayer = () => {
           )}
         </AnimatePresence>
 
-        {/* Main Content Area */}
-        <main ref={mainContentRef} className="flex-1 flex flex-col min-w-0 overflow-y-auto custom-scroll">
-          {/* Video/Content Area */}
-          <div className="w-full bg-black/50 flex-shrink-0 relative">
-            <div className="w-full aspect-video max-h-[70vh] relative overflow-hidden bg-gradient-to-br from-black to-gray-900">
+        {/* Center Main HUD Content Panel */}
+        <main ref={mainContentRef} className="flex-1 flex flex-col min-w-0 overflow-y-auto custom-scroll bg-[#02050a]/20">
+          
+          {/* Main Video Viewport Cards */}
+          <div className="p-6 flex-shrink-0">
+            <div className="relative w-full aspect-video rounded-3xl overflow-hidden bg-black/60 border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] group/video">
+              
+              {/* Cinematic Backlit Ambient Glow */}
+              <div className={`absolute -inset-20 opacity-20 pointer-events-none blur-[100px] transition-all duration-500
+                ${isBlockchainTrack ? 'bg-gradient-to-tr from-emerald-500 via-cyan-500 to-transparent' : isGameDevTrack ? 'bg-gradient-to-tr from-purple-500 via-pink-500 to-transparent' : 'bg-gradient-to-tr from-lime-500 via-teal-500 to-transparent'}`}
+              />
+
               {activeLesson ? (
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={`${activeLesson.type}-${activeLesson.id}`}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.3 }}
-                    className="w-full h-full"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="w-full h-full relative z-10"
                   >
                     {activeLesson.type === 'lesson' && activeLesson.content_url ? (
                       <>
@@ -671,41 +883,44 @@ const CoursePlayer = () => {
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                           allowFullScreen
                         />
+                        
+                        {/* Custom HUD Overlays */}
                         {!isLessonCompleted && watchProgress < 100 && (
-                          <div className="absolute bottom-0 left-0 right-0">
-                            <div className="h-1.5 bg-white/10">
+                          <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent flex flex-col gap-2 opacity-0 group-hover/video:opacity-100 transition-opacity duration-300">
+                            <div className="h-1 bg-white/10 rounded-full overflow-hidden">
                               <motion.div
-                                className="h-full bg-gradient-to-r from-[var(--st-color-primary)] to-[var(--st-color-primary)]/70"
+                                className="h-full bg-gradient-to-r from-[var(--st-color-primary)] to-[var(--st-color-secondary)]"
                                 initial={{ width: 0 }}
                                 animate={{ width: `${watchProgress}%` }}
                                 transition={{ duration: 0.3 }}
                               />
                             </div>
-                            <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-sm rounded-lg px-2 py-1 text-xs text-white/80">
-                              {Math.floor(watchProgress)}% watched
+                            <div className="flex items-center justify-between text-[11px] text-white/60">
+                              <span>Telemetry tracking synced</span>
+                              <span className="font-bold text-white bg-black/50 px-2 py-0.5 rounded">{Math.floor(watchProgress)}% Watched</span>
                             </div>
                           </div>
                         )}
                       </>
                     ) : activeLesson.type === 'lesson' ? (
-                      <div className="w-full h-full flex flex-col items-center justify-center gap-6 bg-gradient-to-br from-white/5 to-transparent p-12 text-center">
-                        <div className="p-8 rounded-full bg-[var(--st-color-primary)]/10 border border-[var(--st-color-primary)]/20 animate-pulse">
-                          <FileText size={64} className="text-[var(--st-color-primary)]" />
+                      <div className="w-full h-full flex flex-col items-center justify-center gap-6 bg-gradient-to-b from-white/[0.01] to-black/40 p-12 text-center">
+                        <div className="p-8 rounded-full bg-[var(--st-color-primary)]/10 border border-[var(--st-color-primary)]/20 shadow-[0_0_30px_rgba(var(--st-color-primary-rgb),0.15)] animate-pulse">
+                          <FileText size={56} className="text-[var(--st-color-primary)]" />
                         </div>
                         <div>
-                          <h2 className="text-3xl font-bold text-white mb-2">{activeLesson.title}</h2>
+                          <h2 className="text-2xl font-bold text-white mb-2">{activeLesson.title}</h2>
                           {activeLesson.description && (
-                            <p className="text-white/50 max-w-lg mx-auto">{activeLesson.description}</p>
+                            <p className="text-white/40 text-sm max-w-lg mx-auto leading-relaxed">{activeLesson.description}</p>
                           )}
                         </div>
                         <div className="w-64 space-y-2">
-                          <div className="flex justify-between text-[10px] text-white/40 font-semibold">
+                          <div className="flex justify-between text-[10px] text-white/40 font-bold uppercase tracking-wider">
                             <span>Reading Progress</span>
-                            <span>{Math.floor(watchProgress)}%</span>
+                            <span className="text-[var(--st-color-primary)]">{Math.floor(watchProgress)}%</span>
                           </div>
-                          <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                          <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
                             <motion.div
-                              className="h-full bg-[var(--st-color-primary)] rounded-full"
+                              className="h-full bg-gradient-to-r from-[var(--st-color-primary)] to-[var(--st-color-secondary)] rounded-full"
                               initial={{ width: 0 }}
                               animate={{ width: `${watchProgress}%` }}
                               transition={{ duration: 0.5 }}
@@ -714,11 +929,11 @@ const CoursePlayer = () => {
                         </div>
                       </div>
                     ) : activeLesson.type === 'assignment' ? (
-                      <div className="h-full overflow-y-auto p-6">
+                      <div className="h-full overflow-y-auto p-6 bg-[#030912]">
                         <AssignmentViewer assignment={activeLesson} studentId={user.id} onComplete={fetchCourseData} />
                       </div>
                     ) : activeLesson.type === 'quiz' ? (
-                      <div className="h-full overflow-y-auto p-6">
+                      <div className="h-full overflow-y-auto p-6 bg-[#030912]">
                         <QuizViewer quiz={activeLesson} studentId={user.id} onComplete={fetchCourseData} />
                       </div>
                     ) : null}
@@ -732,90 +947,90 @@ const CoursePlayer = () => {
             </div>
           </div>
 
-          {/* Lesson Details */}
-          <div className="max-w-4xl mx-auto w-full px-6 py-8 space-y-6">
-            <div className="flex flex-col lg:flex-row lg:items-start gap-6">
-              <div className="flex-1 space-y-4">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <span className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border
+          {/* Lesson Metadata details and dropdown assets */}
+          <div className="max-w-4xl mx-auto w-full px-8 pb-12 space-y-8">
+            <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6 pb-6 border-b border-white/10">
+              <div className="space-y-3.5">
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <span className={`px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-widest border
                     ${activeLesson?.type === 'lesson'
-                      ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                      ? 'bg-sky-500/10 text-sky-400 border-sky-500/20'
                       : activeLesson?.type === 'quiz'
                         ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
                         : 'bg-orange-500/10 text-orange-400 border-orange-500/20'
                     }`}
                   >
-                    {activeLesson?.type}
+                    {activeLesson?.type} MODULE
                   </span>
-                  <div className="flex items-center gap-2 text-white/40 text-xs">
+                  <div className="flex items-center gap-2 text-white/40 text-xs font-semibold">
                     <Clock size={12} />
-                    <span>~15 min</span>
-                    <span className="w-1 h-1 rounded-full bg-white/20" />
+                    <span>~15 min duration</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-white/10" />
                     <span>Lesson {currentLessonIndex + 1} of {lessons.length}</span>
                   </div>
                 </div>
 
-                <h1 className="text-2xl lg:text-3xl font-bold text-white leading-tight">
+                <h1 className="text-2xl lg:text-3xl font-extrabold text-white leading-tight tracking-tight">
                   {activeLesson?.title}
                 </h1>
 
                 {course?.instructor && (
-                  <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 w-fit">
+                  <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/[0.02] border border-white/5 w-fit">
                     <img
                       src={course.instructor.avatar_url}
-                      className="w-8 h-8 rounded-full border border-white/20"
+                      className="w-9 h-9 rounded-full border border-white/10 shadow-[0_0_15px_rgba(255,255,255,0.05)]"
                       alt={course.instructor.full_name}
                     />
                     <div>
-                      <p className="text-xs text-white/50">Instructor</p>
-                      <p className="text-sm font-semibold text-white">{course.instructor.full_name}</p>
+                      <p className="text-[10px] font-bold text-white/40 uppercase">Assigned Instructor</p>
+                      <p className="text-sm font-semibold text-white/80">{course.instructor.full_name}</p>
                     </div>
                   </div>
                 )}
               </div>
 
-              <div className="flex items-center gap-3 flex-shrink-0">
+              <div className="flex items-center gap-3.5 flex-shrink-0">
                 {activeLesson?.type === 'lesson' && (
                   isLessonCompleted ? (
                     <motion.div
-                      initial={{ scale: 0 }}
+                      initial={{ scale: 0.95 }}
                       animate={{ scale: 1 }}
-                      className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm font-semibold"
+                      className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-bold shadow-[0_0_20px_rgba(16,185,129,0.05)]"
                     >
-                      <CheckCircle2 size={18} /> Completed
+                      <CheckCircle2 size={16} /> Mark Completed
                     </motion.div>
                   ) : (
                     <motion.button
-                      whileHover={canMarkComplete ? { scale: 1.02 } : {}}
+                      whileHover={canMarkComplete ? { scale: 1.02, y: -1 } : {}}
                       whileTap={canMarkComplete ? { scale: 0.98 } : {}}
                       onClick={handleMarkComplete}
                       disabled={!canMarkComplete || completing}
-                      className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200
+                      className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all duration-300
                         ${canMarkComplete
-                          ? 'bg-[var(--st-color-primary)] text-black hover:opacity-90 shadow-lg'
-                          : 'bg-white/10 border border-white/20 text-white/40 cursor-not-allowed'
+                          ? 'bg-[var(--st-color-primary)] text-black hover:opacity-90 shadow-lg shadow-[var(--st-color-primary)]/20'
+                          : 'bg-white/5 border border-white/10 text-white/30 cursor-not-allowed'
                         }`}
                     >
                       {completing ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
-                      {completing ? 'Completing...' : !canMarkComplete ? `${Math.floor(watchProgress)}% Watched` : 'Mark Complete'}
+                      <span>{completing ? 'Securing...' : !canMarkComplete ? `${Math.floor(watchProgress)}% Watched` : 'Mark Complete'}</span>
                     </motion.button>
                   )
                 )}
               </div>
             </div>
 
-            {/* Description */}
+            {/* Description Dropcap Box */}
             {activeLesson?.description && (
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="p-6 rounded-2xl bg-white/5 border border-white/10"
+                transition={{ duration: 0.3 }}
+                className="p-6 rounded-3xl bg-white/[0.02] border border-white/5 space-y-3 shadow-inner"
               >
-                <h3 className="text-[11px] font-bold text-white/40 uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <Info size={12} /> Lesson Description
+                <h3 className="text-xs font-bold text-white/40 uppercase tracking-widest flex items-center gap-2">
+                  <Info size={13} className="text-[var(--st-color-primary)]" /> Lesson Blueprint
                 </h3>
-                <div className="text-sm text-white/60 leading-relaxed space-y-3">
+                <div className="text-sm text-white/60 leading-relaxed space-y-3 font-medium">
                   {activeLesson.description.split('\n').map((para, i) => (
                     <p key={i}>{para}</p>
                   ))}
@@ -823,35 +1038,35 @@ const CoursePlayer = () => {
               </motion.div>
             )}
 
-            {/* Resources */}
+            {/* High-end Resource Cards with Glows */}
             {activeLesson?.resources?.length > 0 && (
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="space-y-3"
+                transition={{ delay: 0.1 }}
+                className="space-y-4"
               >
-                <h4 className="text-[11px] font-bold text-white/40 uppercase tracking-wider flex items-center gap-2">
-                  <Download size={12} /> Resources & Materials
+                <h4 className="text-xs font-bold text-white/40 uppercase tracking-widest flex items-center gap-2">
+                  <Download size={14} className="text-[var(--st-color-primary)]" /> Resources & Materials
                 </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {activeLesson.resources.map((res, i) => (
                     <motion.a
                       key={i}
                       href={res.url}
                       target="_blank"
                       rel="noreferrer"
-                      whileHover={{ scale: 1.02, x: 4 }}
-                      className="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-[var(--st-color-primary)]/10 hover:border-[var(--st-color-primary)]/30 transition-all duration-200 group cursor-pointer"
+                      whileHover={{ scale: 1.01, y: -2 }}
+                      className="flex items-center gap-3.5 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-[var(--st-color-primary)]/10 hover:border-[var(--st-color-primary)]/20 transition-all duration-300 group cursor-pointer"
                     >
-                      <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center group-hover:bg-[var(--st-color-primary)]/20 transition-colors">
-                        <Download size={16} className="text-white/50 group-hover:text-[var(--st-color-primary)] transition-colors" />
+                      <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center group-hover:bg-[var(--st-color-primary)]/20 transition-colors border border-white/5">
+                        <Download size={16} className="text-white/40 group-hover:text-[var(--st-color-primary)] transition-colors animate-pulse" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-white/70 group-hover:text-white truncate">
+                        <p className="text-xs font-bold text-white/80 group-hover:text-white truncate">
                           {res.title || 'Resource File'}
                         </p>
-                        <p className="text-[10px] text-white/30">Click to download</p>
+                        <p className="text-[10px] text-white/30 uppercase mt-0.5 tracking-wider">CLICK TO DOWNLOAD</p>
                       </div>
                     </motion.a>
                   ))}
@@ -859,105 +1074,109 @@ const CoursePlayer = () => {
               </motion.div>
             )}
 
-            {/* Navigation buttons at bottom */}
-            <div className="flex justify-between items-center pt-6 border-t border-white/10">
+            {/* Bottom Lesson Level Navigation */}
+            <div className="flex justify-between items-center pt-8 border-t border-white/10">
               <button
                 onClick={handlePreviousObjective}
                 disabled={currentLessonIndex <= 0}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 disabled:opacity-20 disabled:cursor-not-allowed transition-all text-xs font-bold uppercase tracking-wider"
               >
-                <ArrowLeft size={16} /> Previous
+                <ArrowLeft size={14} /> Back
               </button>
               <button
                 onClick={handleNextObjective}
                 disabled={currentLessonIndex >= lessons.length - 1}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white/10 border border-white/20 text-white hover:bg-white/20 disabled:opacity-20 disabled:cursor-not-allowed transition-all text-xs font-bold uppercase tracking-wider"
               >
-                Next Lesson <SkipForward size={16} />
+                Advance <SkipForward size={14} />
               </button>
             </div>
           </div>
         </main>
 
-        {/* Utility Panel */}
+        {/* Right Collapsible Interactive Utilities & AI Assistant Sidebar */}
         <AnimatePresence mode="wait">
           {isUtilityOpen && (
             <motion.aside
               initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 360, opacity: 1 }}
+              animate={{ width: 370, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ duration: 0.25, ease: 'easeInOut' }}
-              className="flex-shrink-0 border-l border-white/10 bg-black/20 backdrop-blur-sm flex flex-col overflow-hidden"
+              className="flex-shrink-0 border-l border-white/10 bg-[#02070f]/40 backdrop-blur-md flex flex-col overflow-hidden z-20"
             >
-              <div className="flex border-b border-white/10">
+              
+              {/* High-end utilities tab buttons */}
+              <div className="flex border-b border-white/10 bg-black/20">
                 {[
-                  { id: 'notes', icon: <FileText size={15} />, label: 'Notes' },
-                  { id: 'discussions', icon: <MessageSquare size={15} />, label: 'Discuss' },
-                  { id: 'ai', icon: <Sparkles size={15} />, label: 'AI Tutor' },
+                  { id: 'notes', icon: <FileText size={14} />, label: 'Notes' },
+                  { id: 'ai', icon: <Sparkles size={14} />, label: 'AI Tutor' },
+                  { id: 'sandbox', icon: <Code size={14} />, label: 'Code Lab' },
                 ].map(tab => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex-1 flex flex-col items-center gap-1.5 py-3.5 text-[11px] font-bold uppercase tracking-wider transition-all duration-200 relative
+                    className={`flex-1 flex flex-col items-center gap-1 py-3 text-[10px] font-bold uppercase tracking-widest transition-all duration-300 relative
                       ${activeTab === tab.id ? 'text-[var(--st-color-primary)]' : 'text-white/40 hover:text-white/70'}`}
                   >
                     {tab.icon}
-                    {tab.label}
+                    <span className="mt-1">{tab.label}</span>
                     {activeTab === tab.id && (
                       <motion.span
-                        layoutId="activeTab"
-                        className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-[var(--st-color-primary)]"
+                        layoutId="activeUtilityTab"
+                        className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full bg-[var(--st-color-primary)] shadow-[0_0_10px_rgba(var(--st-color-primary-rgb),0.8)]"
                       />
                     )}
                   </button>
                 ))}
               </div>
 
-              <div className="flex-1 overflow-y-auto custom-scroll">
+              <div className="flex-1 overflow-y-auto custom-scroll flex flex-col">
                 <AnimatePresence mode="wait">
+                  
+                  {/* Notes Workspace */}
                   {activeTab === 'notes' && (
                     <motion.div
                       key="notes"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.2 }}
-                      className="p-5 space-y-5"
+                      className="p-5 space-y-5 flex-1 flex flex-col"
                     >
-                      <div className="space-y-3">
+                      <div className="space-y-3 flex-1 flex flex-col">
                         <div className="flex items-center justify-between">
-                          <p className="text-[11px] font-bold text-white/40 uppercase tracking-wider">
-                            Lesson Notes
+                          <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">
+                            Lecture Notes Pad
                           </p>
                           <button
                             onClick={() => handleSaveNote(false)}
                             disabled={savingNote || !notes.trim()}
-                            className="flex items-center gap-1.5 text-[11px] font-bold text-[var(--st-color-primary)] uppercase tracking-wider hover:bg-[var(--st-color-primary)]/10 px-3 py-1.5 rounded-lg transition-all disabled:opacity-40"
+                            className="flex items-center gap-1.5 text-[10px] font-bold text-[var(--st-color-primary)] uppercase tracking-wider bg-[var(--st-color-primary)]/10 hover:bg-[var(--st-color-primary)]/20 px-3 py-1.5 rounded-xl transition-all disabled:opacity-30 border border-[var(--st-color-primary)]/20"
                           >
                             {savingNote ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
-                            Save
+                            Save notes
                           </button>
                         </div>
                         <textarea
                           value={notes}
                           onChange={e => setNotes(e.target.value)}
-                          placeholder="Write your notes here... (auto-saves)"
-                          className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-white focus:outline-none focus:border-[var(--st-color-primary)]/50 focus:bg-white/10 min-h-[200px] transition-all placeholder:text-white/20 resize-none"
+                          placeholder="Jot down notes here... The system auto-saves as you study."
+                          className="w-full flex-1 bg-white/[0.01] border border-white/10 rounded-2xl p-4 text-sm text-white/80 focus:outline-none focus:border-[var(--st-color-primary)]/40 focus:bg-white/[0.04] min-h-[220px] transition-all placeholder:text-white/20 resize-none font-medium leading-relaxed"
                         />
                       </div>
 
                       {recentNotes.length > 0 && (
-                        <div className="space-y-3">
-                          <p className="text-[11px] font-bold text-white/30 uppercase tracking-wider">Recent Notes</p>
-                          <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                            {recentNotes.slice(0, 5).map(note => (
+                        <div className="space-y-3 flex-shrink-0">
+                          <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Saved Notes Repository</p>
+                          <div className="space-y-2 max-h-[200px] overflow-y-auto custom-scroll pr-1">
+                            {recentNotes.slice(0, 4).map(note => (
                               <motion.div
                                 key={note.id}
                                 whileHover={{ scale: 1.01 }}
-                                className="p-3.5 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition-all cursor-pointer"
+                                className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-white/10 hover:bg-white/[0.04] transition-all cursor-pointer"
                                 onClick={() => setNotes(note.content)}
                               >
-                                <p className="text-[10px] font-semibold text-[var(--st-color-primary)]/70 mb-1.5">
+                                <p className="text-[9px] font-bold text-[var(--st-color-primary)] mb-1 uppercase tracking-wider truncate">
                                   {note.lesson?.title}
                                 </p>
                                 <p className="text-xs text-white/50 line-clamp-2 leading-relaxed">
@@ -971,102 +1190,230 @@ const CoursePlayer = () => {
                     </motion.div>
                   )}
 
-                  {activeTab === 'discussions' && (
+                  {/* Simulated Conversational AI Assistant */}
+                  {activeTab === 'ai' && (
                     <motion.div
-                      key="discussions"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
+                      key="ai"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.2 }}
-                      className="p-5 flex flex-col gap-4 h-full"
+                      className="p-4 flex flex-col flex-1 h-full overflow-hidden"
                     >
-                      <div className="flex-1 flex flex-col items-center justify-center text-center gap-3 p-8 bg-white/5 rounded-2xl border border-white/10">
-                        <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center">
-                          <MessageSquare size={32} className="text-white/30" />
-                        </div>
-                        <p className="text-sm font-semibold text-white/50">Discussions Coming Soon</p>
-                        <p className="text-xs text-white/30 leading-relaxed max-w-[220px]">
-                          Ask questions and discuss this lesson with fellow students.
-                        </p>
+                      {/* Chat Messages Log */}
+                      <div className="flex-1 overflow-y-auto custom-scroll space-y-4 mb-4 pr-1">
+                        {aiMessages.map(msg => (
+                          <div key={msg.id} className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}>
+                            <div className="flex items-center gap-1.5 mb-1 px-1.5">
+                              {msg.sender === 'ai' ? (
+                                <>
+                                  <Sparkles size={11} className="text-[var(--st-color-primary)]" />
+                                  <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Pixora Tutor AI</span>
+                                </>
+                              ) : (
+                                <span className="text-[9px] font-bold text-[var(--st-color-primary)]/70 uppercase tracking-widest">You</span>
+                              )}
+                            </div>
+                            <div className={`p-3.5 rounded-2xl text-xs max-w-[90%] leading-relaxed whitespace-pre-wrap border
+                              ${msg.sender === 'user'
+                                ? 'bg-[var(--st-color-primary)]/10 text-white border-[var(--st-color-primary)]/20 rounded-tr-none'
+                                : 'bg-white/[0.02] text-white/80 border-white/5 rounded-tl-none'}`}
+                            >
+                              {msg.text || (
+                                <span className="flex items-center gap-2 text-white/30">
+                                  <Loader2 size={12} className="animate-spin" /> Stream compiling...
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                        {isAiTyping && (
+                          <div className="flex flex-col items-start">
+                            <div className="flex items-center gap-1.5 mb-1 px-1.5">
+                              <Sparkles size={11} className="text-[var(--st-color-primary)] animate-pulse" />
+                              <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Pixora Tutor AI is thinking...</span>
+                            </div>
+                            <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/5 rounded-tl-none">
+                              <div className="flex gap-1.5 items-center">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[var(--st-color-primary)]/60 animate-bounce" style={{ animationDelay: '0ms' }} />
+                                <span className="w-1.5 h-1.5 rounded-full bg-[var(--st-color-primary)]/60 animate-bounce" style={{ animationDelay: '150ms' }} />
+                                <span className="w-1.5 h-1.5 rounded-full bg-[var(--st-color-primary)]/60 animate-bounce" style={{ animationDelay: '300ms' }} />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        <div ref={aiChatEndRef} />
                       </div>
-                      <div className="relative opacity-50">
+
+                      {/* Quick Prompts Drawer */}
+                      {aiMessages.length === 1 && (
+                        <div className="space-y-2 mb-4 bg-white/[0.01] p-3 rounded-2xl border border-white/5 flex-shrink-0">
+                          <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest px-1">Synaptic Quick Prompts</p>
+                          <div className="space-y-1.5">
+                            {[
+                              { label: 'Explain this lesson simply', val: 'Explain this lesson simply' },
+                              { label: 'Summarize key points', val: 'Summarize key points' },
+                              { label: 'Give me a practice quiz', val: 'Give me a practice quiz' },
+                              { label: 'Suggest related topics', val: 'Suggest related topics' }
+                            ].map(q => (
+                              <button
+                                key={q.val}
+                                onClick={() => handleAiMessageSubmit(q.val)}
+                                className="w-full flex items-center justify-between p-2.5 rounded-xl border border-white/5 bg-white/5 hover:bg-[var(--st-color-primary)]/10 hover:border-[var(--st-color-primary)]/20 transition-all text-left text-xs font-semibold text-white/60 hover:text-white group"
+                              >
+                                {q.label}
+                                <ChevronRight size={13} className="text-white/20 group-hover:text-[var(--st-color-primary)] transition-colors" />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Input Dialog Panel */}
+                      <div className="relative flex-shrink-0">
                         <input
                           type="text"
-                          placeholder="Post a question..."
-                          disabled
-                          className="w-full bg-white/10 border border-white/10 rounded-xl py-3 pl-4 pr-12 text-sm text-white placeholder:text-white/20 focus:outline-none cursor-not-allowed"
+                          value={aiInput}
+                          onChange={e => setAiInput(e.target.value)}
+                          onKeyDown={e => e.key === 'Enter' && handleAiMessageSubmit()}
+                          placeholder="Ask the AI Tutor anything about this lesson..."
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 pl-4 pr-12 text-xs font-medium text-white placeholder:text-white/20 focus:outline-none focus:border-[var(--st-color-primary)]/45 focus:bg-white/[0.08] transition-all"
                         />
-                        <button disabled className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-white/10 text-white/30">
-                          <Send size={14} />
+                        <button
+                          onClick={() => handleAiMessageSubmit()}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-[var(--st-color-primary)]/10 text-[var(--st-color-primary)] hover:bg-[var(--st-color-primary)] hover:text-black transition-all"
+                        >
+                          <Send size={13} />
                         </button>
                       </div>
                     </motion.div>
                   )}
 
-                  {activeTab === 'ai' && (
+                  {/* Sandboxed Compiler Terminal (Code Lab) */}
+                  {activeTab === 'sandbox' && (
                     <motion.div
-                      key="ai"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
+                      key="sandbox"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.2 }}
-                      className="p-5 space-y-4"
+                      className="p-4 flex flex-col flex-1 h-full overflow-hidden"
                     >
-                      <div className="p-6 rounded-2xl bg-gradient-to-br from-[var(--st-color-primary)]/15 to-transparent border border-[var(--st-color-primary)]/30 space-y-3">
+                      {/* Editor Panel Header */}
+                      <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/5">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-[var(--st-color-primary)]/20 flex items-center justify-center">
-                            <Sparkles size={16} className="text-[var(--st-color-primary)]" />
-                          </div>
-                          <h3 className="text-sm font-bold text-white">AI Learning Assistant</h3>
+                          <Code size={14} className="text-[var(--st-color-primary)]" />
+                          <span className="text-[10px] font-extrabold uppercase tracking-widest text-white/50">
+                            {isBlockchainTrack ? 'Solidity Compiler IDE' : isGameDevTrack ? 'C# Mono assembly IDE' : 'JavaScript Workspace'}
+                          </span>
                         </div>
-                        <p className="text-xs text-white/50 leading-relaxed">
-                          Get instant help understanding concepts, summaries, and practice questions for this lesson.
-                        </p>
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          className="w-full py-2.5 rounded-xl bg-[var(--st-color-primary)] text-black text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all"
-                        >
-                          Start AI Session
-                        </motion.button>
+                        <span className="text-[8px] font-bold text-white/30 uppercase bg-white/5 px-2 py-0.5 rounded">
+                          v0.8.20
+                        </span>
                       </div>
 
-                      <div>
-                        <p className="text-[11px] font-bold text-white/30 uppercase tracking-wider mb-3 px-1">Quick Prompts</p>
-                        <div className="space-y-2">
-                          {['Explain this lesson simply', 'Give me a practice quiz', 'Summarize key points', 'Suggest related topics'].map(q => (
-                            <motion.button
-                              key={q}
-                              whileHover={{ x: 4 }}
-                              className="w-full flex items-center justify-between p-3.5 rounded-xl border border-white/10 bg-white/5 text-left text-xs font-medium text-white/60 hover:text-white/80 hover:bg-white/10 transition-all group"
-                            >
-                              {q}
-                              <ChevronRight size={13} className="text-white/20 group-hover:text-[var(--st-color-primary)] transition-colors" />
-                            </motion.button>
-                          ))}
+                      {/* Code Block textarea */}
+                      <div className="relative flex-1 min-h-[180px] bg-black/40 border border-white/5 rounded-2xl overflow-hidden font-mono p-3">
+                        <textarea
+                          value={codeText}
+                          onChange={e => setCodeText(e.target.value)}
+                          spellCheck="false"
+                          className="w-full h-full bg-transparent text-xs text-white/80 focus:outline-none resize-none font-mono leading-relaxed"
+                          style={{ tabSize: 4 }}
+                        />
+                        <div className="absolute bottom-2 right-2 flex items-center gap-1.5 pointer-events-none opacity-40">
+                          <span className="inline-block w-2 h-2 rounded-full bg-[var(--st-color-primary)] animate-pulse" />
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-white">Live Editor</span>
                         </div>
                       </div>
+
+                      {/* Terminal Viewport */}
+                      <div className="h-44 bg-black border border-white/10 rounded-2xl mt-3 flex flex-col overflow-hidden font-mono shadow-inner relative">
+                        <div className="px-3.5 py-1.5 bg-white/5 flex items-center justify-between border-b border-white/5 flex-shrink-0">
+                          <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest flex items-center gap-1.5">
+                            <Terminal size={11} className="text-white/40" /> SYSTEM OUTPUT CONSOLE
+                          </span>
+                          <div className="flex gap-1.5">
+                            <span className="w-2.5 h-2.5 rounded-full bg-red-500/20" />
+                            <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/20" />
+                            <span className="w-2.5 h-2.5 rounded-full bg-green-500/20" />
+                          </div>
+                        </div>
+
+                        <div className="p-3.5 flex-1 overflow-y-auto custom-scroll text-[10px] space-y-1.5 select-all">
+                          {terminalOutput.map((line, index) => {
+                            const lineStr = line ? String(line) : '';
+                            return (
+                              <div
+                                key={index}
+                                className={`leading-relaxed whitespace-pre-wrap
+                                  ${lineStr.startsWith('$')
+                                    ? 'text-white/40 font-bold'
+                                    : lineStr.startsWith('[SUCCESS]')
+                                      ? 'text-emerald-400 font-extrabold'
+                                      : lineStr.startsWith('[ERROR]')
+                                        ? 'text-red-400 font-extrabold animate-pulse'
+                                        : lineStr.startsWith('[CONTRACT]') || lineStr.startsWith('[DEPLOY]')
+                                          ? 'text-cyan-400 font-bold'
+                                          : 'text-white/60'
+                                  }`}
+                              >
+                                {lineStr}
+                              </div>
+                            );
+                          })}
+                          {isRunningCode && (
+                            <div className="text-[10px] text-white/30 italic flex items-center gap-2 animate-pulse">
+                              <Loader2 size={11} className="animate-spin" /> Fetching compilation tokens...
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Compiler Button */}
+                      <motion.button
+                        whileHover={!isRunningCode ? { scale: 1.01 } : {}}
+                        whileTap={!isRunningCode ? { scale: 0.99 } : {}}
+                        onClick={handleCompileSandboxCode}
+                        disabled={isRunningCode}
+                        className={`w-full py-3.5 rounded-2xl font-bold uppercase tracking-wider text-xs flex items-center justify-center gap-2 border mt-3 transition-all duration-300
+                          ${isRunningCode
+                            ? 'bg-white/5 border-white/10 text-white/30 cursor-not-allowed'
+                            : 'bg-[var(--st-color-primary)] text-black border-transparent hover:opacity-90 shadow-md shadow-[var(--st-color-primary)]/10'}`}
+                      >
+                        {isRunningCode ? (
+                          <>
+                            <Loader2 size={13} className="animate-spin" /> COMPILING SOURCE...
+                          </>
+                        ) : (
+                          <>
+                            <Code size={13} /> COMPILE & RUN CODE
+                          </>
+                        )}
+                      </motion.button>
                     </motion.div>
                   )}
+
                 </AnimatePresence>
               </div>
 
-              <div className="p-4 border-t border-white/10 bg-black/30">
+              {/* Collapsed bottom stats widget */}
+              <div className="p-4 border-t border-white/10 bg-black/20 flex-shrink-0">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-[11px] font-bold text-white/40 uppercase tracking-wider">Overall Progress</p>
+                  <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">COHORT PROGRESS RATE</p>
                   <span className="text-xs font-bold text-[var(--st-color-primary)]">{courseProgressPercentage}%</span>
                 </div>
-                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
                   <motion.div
-                    className="h-full bg-gradient-to-r from-[var(--st-color-primary)] to-[var(--st-color-primary)]/70 rounded-full"
+                    className="h-full bg-gradient-to-r from-[var(--st-color-primary)] to-[var(--st-color-secondary)] rounded-full"
                     initial={{ width: 0 }}
                     animate={{ width: `${courseProgressPercentage}%` }}
                     transition={{ duration: 0.5 }}
                   />
                 </div>
-                <div className="flex justify-between mt-2 text-[10px] text-white/30">
-                  <span>{completedCount} completed</span>
-                  <span>{totalItems - completedCount} remaining</span>
+                <div className="flex justify-between mt-2 text-[9px] font-semibold text-white/20 uppercase tracking-widest">
+                  <span>{completedCount} Completed</span>
+                  <span>{totalItems - completedCount} Left</span>
                 </div>
               </div>
             </motion.aside>
@@ -1074,20 +1421,22 @@ const CoursePlayer = () => {
         </AnimatePresence>
       </div>
 
+      {/* Embedded styles for beautiful, custom scrollbar tracks */}
       <style>{`
         .custom-scroll::-webkit-scrollbar {
           width: 5px;
+          height: 5px;
         }
         .custom-scroll::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.05);
+          background: rgba(255, 255, 255, 0.01);
           border-radius: 10px;
         }
         .custom-scroll::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.1);
           border-radius: 10px;
         }
         .custom-scroll::-webkit-scrollbar-thumb:hover {
-          background: rgba(255, 255, 255, 0.3);
+          background: rgba(255, 255, 255, 0.2);
         }
       `}</style>
     </div>

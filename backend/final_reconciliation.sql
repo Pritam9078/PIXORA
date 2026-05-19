@@ -6,7 +6,8 @@
 -- 1. Fix Enrollments Table
 ALTER TABLE public.enrollments 
 ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}'::jsonb,
-ADD COLUMN IF NOT EXISTS student_id UUID REFERENCES auth.users(id); 
+ADD COLUMN IF NOT EXISTS student_id UUID REFERENCES auth.users(id),
+ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW(); 
 -- Note: If student_id already exists and references profiles, that's fine.
 
 -- 2. Fix Quiz Attempts Relationship

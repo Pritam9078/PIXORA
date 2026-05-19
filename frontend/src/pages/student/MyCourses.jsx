@@ -17,7 +17,7 @@ import { formatDistanceToNow } from 'date-fns';
 
 const MyCourses = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { currentTheme } = useStudentTheme();
   const [activeFilter, setActiveFilter] = useState('all');
   const [courses, setCourses] = useState([]);
@@ -35,14 +35,15 @@ const MyCourses = () => {
   const [lastLesson, setLastLesson] = useState(null);
 
   const fetchData = async () => {
-    if (!user) return;
+    if (!user || !profile) return;
     try {
       setLoading(true);
+      const userTrack = profile?.track || (profile?.learning_track ? profile.learning_track.toUpperCase() : null);
       const [enrolledData, statsData, resumeData, availableData] = await Promise.all([
         CourseService.getEnrolledCourses(user.id),
         CourseService.getStudentLearningStats(user.id),
         CourseService.getContinueLearning(user.id),
-        CourseService.getAvailableCourses() // Fetch all available
+        CourseService.getAvailableCourses(profile?.college_id, userTrack)
       ]);
       
       setCourses(enrolledData);
@@ -70,7 +71,7 @@ const MyCourses = () => {
     return () => {
       RealtimeService.unsubscribe(progressChannel);
     };
-  }, [user]);
+  }, [user, profile]);
 
   const filteredCourses = courses.filter(item => {
     const matchesSearch = item.course?.title?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -83,7 +84,7 @@ const MyCourses = () => {
     return matchesSearch && matchesFilter;
   });
 
-  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Cadet';
+  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Student';
 
   if (loading) {
     return (

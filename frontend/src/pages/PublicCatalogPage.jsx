@@ -187,20 +187,20 @@ const PublicCatalogPage = () => {
                     <img 
                       src={course.thumbnail_url || 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=1000&auto=format&fit=crop'} 
                       alt={course.title} 
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                      className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${!user ? 'filter blur-md scale-105' : ''}`} 
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0D0E12] via-[#0D0E12]/20 to-transparent"></div>
                     
                     {/* Category Label */}
                     <div className="absolute top-4 left-4">
-                      <span className="text-[9px] font-headline font-bold uppercase tracking-[0.15em] px-3.5 py-1.5 rounded-lg backdrop-blur-xl border border-white/10 bg-[#0D0E12]/80 text-[#c3f400]/95">
+                      <span className={`text-[9px] font-headline font-bold uppercase tracking-[0.15em] px-3.5 py-1.5 rounded-lg backdrop-blur-xl border border-white/10 bg-[#0D0E12]/80 text-[#c3f400]/95 ${!user ? 'filter blur-sm select-none opacity-40' : ''}`}>
                         {course.category}
                       </span>
                     </div>
 
                     {/* Level Label */}
                     <div className="absolute top-4 right-4">
-                      <span className="text-[9px] font-headline font-bold uppercase tracking-[0.15em] px-3 py-1 rounded-md backdrop-blur-xl border border-white/10 bg-white/5 text-white/50">
+                      <span className={`text-[9px] font-headline font-bold uppercase tracking-[0.15em] px-3 py-1 rounded-md backdrop-blur-xl border border-white/10 bg-white/5 text-white/50 ${!user ? 'filter blur-sm select-none opacity-40' : ''}`}>
                         {course.level || 'Expert'}
                       </span>
                     </div>
@@ -208,69 +208,66 @@ const PublicCatalogPage = () => {
 
                   {/* Body Content */}
                   <div className="p-6 flex-1 flex flex-col space-y-5 justify-between relative">
-                    <div className="space-y-3">
-                      <h3 className="font-headline font-bold text-lg text-white leading-snug tracking-wide group-hover:text-[#c3f400] transition-colors line-clamp-2">
-                        {course.title}
-                      </h3>
-                      
-                      <div className={`flex items-center justify-between text-xs text-slate-400 font-medium transition-all duration-300 ${!user ? 'filter blur-[1.5px] select-none opacity-40' : ''}`}>
-                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-                          By {course.instructor?.full_name || 'Academy Staff'}
-                        </span>
-                        <div className="flex items-center gap-1 text-yellow-500">
-                          <Star size={12} fill="currentColor" />
-                          <span className="text-[10px] font-bold">4.9</span>
+                    {/* Blurred Content Inner Container (when !user) */}
+                    <div className={`space-y-5 flex-1 flex flex-col justify-between ${!user ? 'filter blur-lg select-none opacity-20 pointer-events-none' : ''}`}>
+                      <div className="space-y-3">
+                        <h3 className="font-headline font-bold text-lg text-white leading-snug tracking-wide group-hover:text-[#c3f400] transition-colors line-clamp-2">
+                          {course.title}
+                        </h3>
+                        
+                        <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
+                          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                            By {course.instructor?.full_name || 'Academy Staff'}
+                          </span>
+                          <div className="flex items-center gap-1 text-yellow-500">
+                            <Star size={12} fill="currentColor" />
+                            <span className="text-[10px] font-bold">4.9</span>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="relative">
-                        <p className={`text-xs text-slate-400 leading-relaxed line-clamp-3 transition-all duration-300 ${!user ? 'filter blur-[4.5px] select-none opacity-25' : ''}`}>
+                        <p className="text-xs text-slate-400 leading-relaxed line-clamp-3">
                           {course.description}
                         </p>
-                        
-                        {/* Immersive Cyber lock overlay */}
-                        {!user && (
-                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#c3f400]/30 bg-[#0D0E12]/95 shadow-[0_0_15px_rgba(195,244,0,0.15)] text-[9px] font-headline font-bold text-[#c3f400] uppercase tracking-[0.15em] animate-pulse">
-                              <Lock size={10} className="shrink-0" />
-                              <span>Cadet Auth Required</span>
-                            </div>
-                          </div>
-                        )}
+                      </div>
+
+                      <div className="border-t border-white/5 pt-4 flex items-center justify-between mt-auto">
+                        <div className="flex flex-col">
+                          <span className="text-[9px] text-slate-500 uppercase tracking-widest font-bold">Mission Track</span>
+                          <span className="text-xs font-bold text-[#c3f400] mt-0.5">
+                            {course.price === 0 ? 'FREE ADMISSION' : `$${course.price}.00 USD`}
+                          </span>
+                        </div>
+
+                        <button 
+                          disabled
+                          className="bg-[#c3f400]/10 border border-[#c3f400]/25 text-[#c3f400] py-2.5 px-4 rounded-xl text-[10px] font-headline font-bold uppercase tracking-widest flex items-center gap-1.5"
+                        >
+                          <PlusCircle size={13} />
+                          <span>Initialize</span>
+                        </button>
                       </div>
                     </div>
 
-                    <div className="border-t border-white/5 pt-4 flex items-center justify-between mt-auto">
-                      <div className={`flex flex-col transition-all duration-300 ${!user ? 'filter blur-[2px] select-none opacity-45' : ''}`}>
-                        <span className="text-[9px] text-slate-500 uppercase tracking-widest font-bold">Mission Track</span>
-                        <span className="text-xs font-bold text-[#c3f400] mt-0.5">
-                          {course.price === 0 ? 'FREE ADMISSION' : `$${course.price}.00 USD`}
-                        </span>
+                    {/* Cyber Lock Overlay Centered on the Card Body */}
+                    {!user && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0D0E12]/40 backdrop-blur-[4px] rounded-b-[28px] p-6 text-center space-y-4 z-10">
+                        <div className="w-12 h-12 rounded-full bg-[#c3f400]/10 border border-[#c3f400]/20 flex items-center justify-center text-[#c3f400] shadow-[0_0_20px_rgba(195,244,0,0.15)] animate-pulse">
+                          <Lock size={18} />
+                        </div>
+                        <div className="space-y-1">
+                          <h4 className="text-xs font-headline font-bold text-white uppercase tracking-[0.15em]">Mission Sector Encrypted</h4>
+                          <p className="text-[10px] text-slate-400 font-medium max-w-[200px] leading-relaxed mx-auto">
+                            Decryption and enrollment signatures require standard Pixora authentication handshake.
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => setSelectedCourseForModal(course)}
+                          className="px-5 py-3 bg-[#c3f400] hover:bg-[#b0dc00] text-black text-[10px] font-mono font-bold tracking-widest rounded-xl transition-all shadow-[0_0_15px_rgba(195,244,0,0.3)] hover:scale-102 transform active:scale-98"
+                        >
+                          DECRYPT_ACCESS
+                        </button>
                       </div>
-
-                      <button 
-                        onClick={() => {
-                          if (!user) {
-                            setSelectedCourseForModal(course);
-                          } else {
-                            navigate('/student/courses');
-                          }
-                        }}
-                        className="bg-[#c3f400]/10 border border-[#c3f400]/25 text-[#c3f400] hover:bg-[#c3f400] hover:text-black py-2.5 px-4 rounded-xl text-[10px] font-headline font-bold uppercase tracking-widest flex items-center gap-1.5 transition-all"
-                      >
-                        {user ? (
-                          <>
-                            <Play size={11} fill="currentColor" />
-                            <span>Enter Sector</span>
-                          </>
-                        ) : (
-                          <>
-                            <PlusCircle size={13} />
-                            <span>Initialize</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
+                    )}
                   </div>
                 </div>
               ))
@@ -335,7 +332,7 @@ const PublicCatalogPage = () => {
                   className="bg-white/5 hover:bg-white/10 border border-white/10 py-4 rounded-xl text-xs font-headline font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
                 >
                   <ExternalLink size={14} />
-                  <span>Apply for Cadet Account</span>
+                  <span>Apply for Student Account</span>
                 </button>
 
                 <button

@@ -2,10 +2,11 @@ import { supabase } from '../lib/supabase';
 
 export const CourseService = {
   /**
-   * Fetch all courses available for the student's college
+   * Fetch all courses available for the student's college filtered by track
    * @param {string} collegeId 
+   * @param {string} track 
    */
-  getAvailableCourses: async (collegeId) => {
+  getAvailableCourses: async (collegeId, track) => {
     let query = supabase
       .from('courses')
       .select(`
@@ -18,6 +19,10 @@ export const CourseService = {
       query = query.or(`college_id.eq.${collegeId},college_id.is.null`);
     } else {
       query = query.is('college_id', null);
+    }
+
+    if (track && ['BLOCKCHAIN', 'GAME_DEV'].includes(track)) {
+      query = query.eq('track', track);
     }
 
     const { data, error } = await query;

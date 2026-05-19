@@ -186,7 +186,7 @@ const PublicCommunityPage = () => {
                       <div className="flex gap-5 items-start">
                         <div className="relative shrink-0">
                           <img 
-                            src={activity.actor?.avatar_url || `https://ui-avatars.com/api/?name=${activity.actor?.full_name || 'Cadet'}&background=random`} 
+                            src={activity.actor?.avatar_url || `https://ui-avatars.com/api/?name=${activity.actor?.full_name || 'Student'}&background=random`} 
                             className="w-12 h-12 rounded-xl border border-white/15 relative z-10" 
                             alt="" 
                           />
@@ -345,7 +345,7 @@ const PublicCommunityPage = () => {
                   }}
                   className="bg-white/5 hover:bg-white/10 border border-white/10 py-4 rounded-xl text-xs font-headline font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
                 >
-                  <span>Apply for Cadet Account</span>
+                  <span>Apply for Student Account</span>
                 </button>
 
                 <button

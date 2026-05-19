@@ -23,11 +23,13 @@ const CourseDiscovery = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!user) return;
+      if (!user || !profile) return;
       try {
         setLoading(true);
-        // Fetch all available courses
-        const availableData = await CourseService.getAvailableCourses(profile?.college_id);
+        // Resolve student track for filtering
+        const userTrack = profile?.track || (profile?.learning_track ? profile.learning_track.toUpperCase() : null);
+        // Fetch available courses for track
+        const availableData = await CourseService.getAvailableCourses(profile?.college_id, userTrack);
         
         // Fetch enrolled courses to mark them
         const enrolledData = await CourseService.getEnrolledCourses(user.id);

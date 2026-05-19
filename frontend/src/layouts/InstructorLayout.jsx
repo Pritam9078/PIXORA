@@ -10,6 +10,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { Toaster } from 'react-hot-toast';
 import { LogoMark } from '../components/common/Logo';
+import NotificationsPopover from '../components/common/NotificationsPopover';
 
 const InstructorLayout = () => {
   const { profile, signOut } = useAuth();
@@ -275,10 +276,7 @@ const InstructorLayout = () => {
               <span style={{ fontFamily: "'Space Grotesk', monospace", fontSize: 10, color: '#c3f400', letterSpacing: '0.15em', textTransform: 'uppercase', fontWeight: 600 }}>Verified Instructor</span>
             </div>
 
-            <button style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', padding: '8px', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', position: 'relative' }}>
-              <Bell size={18} />
-              <span style={{ position: 'absolute', top: 8, right: 8, width: 6, height: 6, borderRadius: '50%', background: '#c3f400', boxShadow: '0 0 6px #c3f400' }} />
-            </button>
+            <NotificationsPopover />
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ textAlign: 'right' }}>

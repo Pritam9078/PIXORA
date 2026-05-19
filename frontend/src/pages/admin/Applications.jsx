@@ -21,14 +21,18 @@ const Applications = () => {
   // Map DB schema to component schema
   const applications = dbApplications.map(app => ({
     id: app.id,
+    student_id: app.student_id,
     name: app.profiles?.full_name || 'Unknown',
     email: app.profiles?.email || 'No email',
     track: app.role_requested || 'Unknown',
     date: new Date(app.created_at).toLocaleDateString(),
     status: app.status || 'Draft',
-    github: app.details?.github || 'N/A',
-    education: app.details?.education || 'N/A',
-    statement: app.details?.statement || 'No statement provided.'
+    github: app.details?.github || app.details?.portfolio || 'N/A',
+    education: app.details?.education || (app.details?.specializations ? app.details.specializations.join(', ') : 'N/A'),
+    statement: app.details?.statement || app.details?.motivation || 'No statement provided.',
+    resume_url: app.details?.resume_url || null,
+    portfolio_url: app.details?.portfolio_pdf_url || null,
+    profile_image_url: app.details?.profile_image_url || null
   }));
 
   const filteredApps = applications.filter(app => {
@@ -39,12 +43,19 @@ const Applications = () => {
 
   const handleUpdateStatus = async (appId, newStatus) => {
     try {
+      const app = applications.find(a => a.id === appId);
       const { error } = await supabase
         .from('applications')
         .update({ status: newStatus })
         .eq('id', appId);
         
       if (error) throw error;
+      
+      // Note: Promotion to instructor is handled automatically by the PostgreSQL trigger
+      // 'trg_application_status_update' on the 'applications' table when status is set to 'Approved'.
+      if (app && app.track === 'instructor' && newStatus === 'Approved') {
+        toast.success(`${app.name} has been promoted to Instructor (via trigger)!`);
+      }
       
       toast.success(`Application status updated to ${newStatus}`);
       refresh();
@@ -86,6 +97,7 @@ const Applications = () => {
               <option value="All">All Tracks</option>
               <option value="Blockchain & Web3 Development">Web3 Development</option>
               <option value="Game Development & Metaverse">Game Development</option>
+              <option value="instructor">Instructor Applications</option>
             </select>
           </div>
         </div>
@@ -126,7 +138,7 @@ const Applications = () => {
                         <div className="flex items-center justify-between">
                           <span className="text-[10px] text-slate-500 font-mono">{app.id}</span>
                           <span className={`w-2 h-2 rounded-full ${
-                            app.track.includes('Blockchain') ? 'bg-indigo-400' : 'bg-amber-400'
+                            app.track === 'instructor' ? 'bg-rose-500 animate-pulse' : app.track.includes('Blockchain') ? 'bg-indigo-400' : 'bg-amber-400'
                           }`} title={app.track} />
                         </div>
                         <h4 className="font-bold text-sm text-white mt-1">{app.name}</h4>
@@ -169,9 +181,13 @@ const Applications = () => {
                 </button>
 
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-full bg-lime-400/10 border border-lime-400/20 flex items-center justify-center text-lime-400 font-bold text-lg">
-                    {selectedApp.name.split(' ').map(n=>n[0]).join('')}
-                  </div>
+                  {selectedApp.profile_image_url ? (
+                    <img src={selectedApp.profile_image_url} alt="Profile" className="w-12 h-12 rounded-full border border-lime-400/20 object-cover" />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-lime-400/10 border border-lime-400/20 flex items-center justify-center text-lime-400 font-bold text-lg">
+                      {selectedApp.name.split(' ').map(n=>n[0]).join('')}
+                    </div>
+                  )}
                   <div>
                     <h2 className="text-xl font-bold text-white flex items-center gap-3">
                       {selectedApp.name}
@@ -200,6 +216,22 @@ const Applications = () => {
                     <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold block">Application Date</span>
                     <span className="text-slate-300 text-sm">{selectedApp.date}</span>
                   </div>
+                  {selectedApp.resume_url && (
+                    <div>
+                      <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold block">Resume/CV</span>
+                      <a href={selectedApp.resume_url} target="_blank" rel="noreferrer" className="text-lime-400 hover:underline text-sm flex items-center gap-1">
+                        <FileText size={14} /> Download PDF
+                      </a>
+                    </div>
+                  )}
+                  {selectedApp.portfolio_url && (
+                    <div>
+                      <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold block">Portfolio</span>
+                      <a href={selectedApp.portfolio_url} target="_blank" rel="noreferrer" className="text-lime-400 hover:underline text-sm flex items-center gap-1">
+                        <FileText size={14} /> View Document
+                      </a>
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-4">
@@ -247,12 +279,12 @@ const Applications = () => {
                         onClick={() => handleUpdateStatus(selectedApp.id, 'Enrolled')}
                         className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3.5 py-2 rounded-md font-semibold flex items-center gap-1.5 transition-all"
                       >
-                        <CheckCircle2 size={14} /> Finalize Enrollment
+                        <CheckCircle2 size={14} /> {selectedApp.track === 'instructor' ? 'Finalize Onboarding' : 'Finalize Enrollment'}
                       </button>
                     )}
                     {selectedApp.status === 'Enrolled' && (
                       <span className="text-emerald-400 text-xs font-bold flex items-center gap-1 bg-emerald-950/30 border border-emerald-900/30 px-3 py-1.5 rounded-md">
-                        <CheckCircle2 size={14} /> Complete & Active Student
+                        <CheckCircle2 size={14} /> {selectedApp.track === 'instructor' ? 'Complete & Active Instructor' : 'Complete & Active Student'}
                       </span>
                     )}
                   </div>

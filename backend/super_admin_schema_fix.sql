@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS public.enrollments (
 
 CREATE TABLE IF NOT EXISTS public.applications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+    student_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     role_requested TEXT NOT NULL,
     status TEXT DEFAULT 'pending',
     details JSONB DEFAULT '{}'::jsonb,

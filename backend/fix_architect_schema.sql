@@ -28,7 +28,8 @@ ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'student';
 -- 4. FIX ENROLLMENTS TABLE (Ensure analytics columns exist)
 ALTER TABLE public.enrollments 
 ADD COLUMN IF NOT EXISTS progress INTEGER DEFAULT 0,
-ADD COLUMN IF NOT EXISTS last_accessed_at TIMESTAMPTZ DEFAULT NOW();
+ADD COLUMN IF NOT EXISTS last_accessed_at TIMESTAMPTZ DEFAULT NOW(),
+ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 
 -- 5. STORAGE BUCKET INITIALIZATION
 -- Create course-assets bucket if it doesn't exist

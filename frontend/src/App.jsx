@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
-import StudentSignupPage from './pages/StudentSignupPage';
+import SignupPage from './pages/SignupPage';
 import StudentLayout from './layouts/StudentLayout';
 import StudentDashboard from './pages/student/Dashboard';
 import MyCourses from './pages/student/MyCourses';
@@ -28,9 +28,10 @@ import PublicResourcesPage from './pages/PublicResourcesPage';
 import PublicCommunityPage from './pages/PublicCommunityPage';
 
 import PartnerDashboard from './pages/PartnerDashboard';
-import InstructorApplicationPage from './pages/InstructorApplicationPage';
+
 import PartnerApplicationPage from './pages/PartnerApplicationPage';
 import CollegeAdminApplicationPage from './pages/CollegeAdminApplicationPage';
+import InstructorApplicationPage from './pages/InstructorApplicationPage';
 import ApplicationSuccessPage from './pages/ApplicationSuccessPage';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import UserManagement from './pages/admin/UserManagement';
@@ -105,7 +106,8 @@ function App() {
         <Route path="/resources" element={<PublicResourcesPage />} />
         <Route path="/community" element={<PublicCommunityPage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup/student" element={<StudentSignupPage />} />
+        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/signup/student" element={<Navigate to="/signup" replace />} />
         <Route path="/application/instructor" element={<InstructorApplicationPage />} />
         <Route path="/application/partner" element={<PartnerApplicationPage />} />
         <Route path="/application/college" element={<CollegeAdminApplicationPage />} />

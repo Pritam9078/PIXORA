@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS public.enrollments (
     student_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     course_id UUID REFERENCES public.courses(id) ON DELETE CASCADE,
     enrolled_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
     progress INTEGER DEFAULT 0,
     status TEXT DEFAULT 'active' CHECK (status IN ('active', 'completed', 'dropped')),
     UNIQUE(student_id, course_id)

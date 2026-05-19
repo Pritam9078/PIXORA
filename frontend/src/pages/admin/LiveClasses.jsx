@@ -9,7 +9,7 @@ import {
 import toast from 'react-hot-toast';
 
 const LiveClasses = () => {
-  const { data: liveSessions, loading: sessionsLoading, refresh: refreshSessions } = useSupabaseData('live_sessions', '*');
+  const { data: liveSessions, loading: sessionsLoading, refresh: refreshSessions } = useSupabaseData('live_classes', '*');
   const { data: profiles, loading: profilesLoading } = useSupabaseData('profiles', 'id, full_name, role');
   const { data: courses, loading: coursesLoading } = useSupabaseData('courses', 'id, title');
 
@@ -21,8 +21,8 @@ const LiveClasses = () => {
     instructor_id: '',
     course_id: '',
     scheduled_at: '',
-    duration_mins: 60,
-    meeting_link: '',
+    duration_minutes: 60,
+    meeting_url: '',
     status: 'scheduled'
   });
 
@@ -30,13 +30,18 @@ const LiveClasses = () => {
 
   const handleCreateSession = async (e) => {
     e.preventDefault();
-    if (!formData.title || !formData.instructor_id || !formData.scheduled_at || !formData.meeting_link) {
+    if (!formData.title || !formData.instructor_id || !formData.scheduled_at || !formData.meeting_url) {
       toast.error('Required fields are missing.');
       return;
     }
 
     setIsSubmitting(true);
-    const { error } = await supabase.from('live_sessions').insert(formData);
+    const insertPayload = {
+      ...formData,
+      course_id: formData.course_id || null,
+      duration_minutes: parseInt(formData.duration_minutes) || 60
+    };
+    const { error } = await supabase.from('live_classes').insert(insertPayload);
     setIsSubmitting(false);
 
     if (error) {
@@ -51,8 +56,8 @@ const LiveClasses = () => {
         instructor_id: '',
         course_id: '',
         scheduled_at: '',
-        duration_mins: 60,
-        meeting_link: '',
+        duration_minutes: 60,
+        meeting_url: '',
         status: 'scheduled'
       });
     }
@@ -60,7 +65,7 @@ const LiveClasses = () => {
 
   const handleDeleteSession = async (id) => {
     if (!window.confirm('Are you sure you want to cancel this scheduled live session?')) return;
-    const { error } = await supabase.from('live_sessions').delete().eq('id', id);
+    const { error } = await supabase.from('live_classes').delete().eq('id', id);
     if (error) {
       toast.error(`Failed to cancel live session: ${error.message}`);
     } else {
@@ -168,7 +173,7 @@ const LiveClasses = () => {
                       <td className="p-6 text-slate-300 font-mono text-[11px]">{getCourseTitle(session.course_id)}</td>
                       <td className="p-6 font-semibold text-slate-300">{getInstructorName(session.instructor_id)}</td>
                       <td className="p-6 text-slate-400 font-mono text-[11px]">{new Date(session.scheduled_at).toLocaleString()}</td>
-                      <td className="p-6 text-slate-400 font-mono text-[11px]">{session.duration_mins} mins</td>
+                      <td className="p-6 text-slate-400 font-mono text-[11px]">{session.duration_minutes || session.duration_mins} mins</td>
                       <td className="p-6">
                         <span className={`px-2.5 py-1 text-[9px] font-bold rounded-full font-mono uppercase tracking-wider ${
                           session.status === 'live'
@@ -183,7 +188,7 @@ const LiveClasses = () => {
                       <td className="p-6 text-right">
                         <div className="flex justify-end gap-2">
                           <a
-                            href={session.meeting_link}
+                            href={session.meeting_url || session.meeting_link}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-2 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white rounded-lg transition-all"
@@ -282,8 +287,8 @@ const LiveClasses = () => {
                     <input
                       type="number"
                       required
-                      value={formData.duration_mins}
-                      onChange={(e) => setFormData({...formData, duration_mins: parseInt(e.target.value)})}
+                      value={formData.duration_minutes}
+                      onChange={(e) => setFormData({...formData, duration_minutes: parseInt(e.target.value)})}
                       className="w-full bg-[#09090B] border border-white/5 focus:border-white/15 outline-none rounded-xl p-3 text-xs text-white transition-all font-mono"
                     />
                   </div>
@@ -295,8 +300,8 @@ const LiveClasses = () => {
                     type="url"
                     required
                     placeholder="https://zoom.us/j/... or google meet link"
-                    value={formData.meeting_link}
-                    onChange={(e) => setFormData({...formData, meeting_link: e.target.value})}
+                    value={formData.meeting_url}
+                    onChange={(e) => setFormData({...formData, meeting_url: e.target.value})}
                     className="w-full bg-[#09090B] border border-white/5 focus:border-white/15 outline-none rounded-xl p-3 text-xs text-white transition-all font-mono"
                   />
                 </div>

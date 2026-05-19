@@ -2,6 +2,7 @@ import React from 'react';
 import { Menu, Search, Bell, Flame, Zap } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useStudentTheme } from '../../context/StudentThemeContext';
+import NotificationsPopover from '../common/NotificationsPopover';
 
 const StudentTopNavbar = ({ isSidebarOpen, setSidebarOpen }) => {
   const { profile } = useAuth();
@@ -44,10 +45,7 @@ const StudentTopNavbar = ({ isSidebarOpen, setSidebarOpen }) => {
           </div>
         </div>
 
-        <button className="p-2 text-on-surface-variant hover:text-white relative transition-colors group">
-          <Bell size={20} />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-[var(--st-color-primary)] rounded-full border border-[var(--st-color-surface)] shadow-[0_0_10px_var(--st-color-glow)] group-hover:scale-125 transition-transform"></span>
-        </button>
+        <NotificationsPopover />
 
         <div className="flex items-center gap-3 pl-4 border-l border-white/5">
           <div className="text-right hidden md:block">

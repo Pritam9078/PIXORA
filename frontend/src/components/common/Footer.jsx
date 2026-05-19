@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import Logo from './Logo';
 
 const Footer = () => {
@@ -11,6 +12,7 @@ const Footer = () => {
           </p>
         </div>
         <div className="flex flex-wrap justify-center gap-8">
+          <Link className="font-headline text-xs font-light text-slate-600 hover:text-accent-lime transition-colors uppercase tracking-widest" to="/signup">Become an Instructor</Link>
           <a className="font-headline text-xs font-light text-slate-600 hover:text-accent-lime transition-colors uppercase tracking-widest" href="#">Privacy Policy</a>
           <a className="font-headline text-xs font-light text-slate-600 hover:text-accent-lime transition-colors uppercase tracking-widest" href="#">Terms of Service</a>
           <a className="font-headline text-xs font-light text-slate-600 hover:text-accent-lime transition-colors uppercase tracking-widest" href="#">Github</a>

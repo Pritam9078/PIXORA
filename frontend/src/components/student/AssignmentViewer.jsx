@@ -184,7 +184,7 @@ const AssignmentViewer = ({ assignment, studentId, onComplete }) => {
                     <div className="space-y-1">
                       <span className="text-[10px] font-headline font-black text-on-surface-variant/40 uppercase">Instructor Feedback</span>
                       <p className="text-xs text-on-surface-variant/80 italic leading-relaxed">
-                        "{submission.grade.feedback || 'Excellent execution, Cadet.'}"
+                        "{submission.grade.feedback || 'Excellent execution, Student.'}"
                       </p>
                     </div>
                   </div>
@@ -195,7 +195,7 @@ const AssignmentViewer = ({ assignment, studentId, onComplete }) => {
                 <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 flex gap-3">
                   <AlertCircle className="text-primary shrink-0" size={18} />
                   <p className="text-xs text-on-surface-variant/60 leading-relaxed">
-                    Cadet, this objective is critical for your training. Complete the parameters and synchronize your work.
+                    Student, this objective is critical for your training. Complete the parameters and synchronize your work.
                   </p>
                 </div>
               )}

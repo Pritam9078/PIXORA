@@ -49,9 +49,13 @@ const ApplicationSuccessPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <h1 className="font-headline text-5xl text-white mb-6 uppercase tracking-tighter">Application Logged</h1>
+            <h1 className="font-headline text-5xl text-white mb-6 uppercase tracking-tighter">
+              {role === 'student' ? 'Identity Logged' : 'Application Logged'}
+            </h1>
             <p className="text-slate-400 font-body text-base max-w-xl mb-12 leading-relaxed">
-              Your application to join the high-performance tier of Pixora is now entering phase two of security verification.
+              {role === 'student'
+                ? "Your neural identity has been logged. Please check your inbox and verify your Neural Link (email) to initialize your access."
+                : "Your application to join the high-performance tier of Pixora is now entering phase two of security verification."}
             </p>
           </motion.div>
 
@@ -64,11 +68,17 @@ const ApplicationSuccessPage = () => {
               className="glass-panel p-8 rounded-xl border-l-4 border-on-tertiary-container relative group hover:border-on-tertiary-container transition-all duration-300"
             >
               <div className="flex items-center gap-3 mb-4">
-                <span className="material-symbols-outlined text-on-tertiary-container">psychology</span>
-                <span className="font-headline text-[10px] text-on-tertiary-container uppercase tracking-[0.2em]">Neural Council Review</span>
+                <span className="material-symbols-outlined text-on-tertiary-container">
+                  {role === 'student' ? 'mark_email_unread' : 'psychology'}
+                </span>
+                <span className="font-headline text-[10px] text-on-tertiary-container uppercase tracking-[0.2em]">
+                  {role === 'student' ? 'Verification Link Sent' : 'Neural Council Review'}
+                </span>
               </div>
               <p className="text-xs text-slate-500 leading-relaxed font-body">
-                Credentials are being vetted by the Pixora Neural Council for authorization clearance.
+                {role === 'student'
+                  ? 'A secure confirmation link has been dispatched to your email address.'
+                  : 'Credentials are being vetted by the Pixora Neural Council for authorization clearance.'}
               </p>
             </motion.div>
 
@@ -79,11 +89,17 @@ const ApplicationSuccessPage = () => {
               className="glass-panel p-8 rounded-xl border-l-4 border-secondary-container relative group hover:border-secondary-container transition-all duration-300"
             >
               <div className="flex items-center gap-3 mb-4">
-                <span className="material-symbols-outlined text-secondary-container">schedule</span>
-                <span className="font-headline text-[10px] text-secondary-container uppercase tracking-[0.2em]">Transmission Window</span>
+                <span className="material-symbols-outlined text-secondary-container">
+                  {role === 'student' ? 'touch_app' : 'schedule'}
+                </span>
+                <span className="font-headline text-[10px] text-secondary-container uppercase tracking-[0.2em]">
+                  {role === 'student' ? 'Action Required' : 'Transmission Window'}
+                </span>
               </div>
               <p className="text-xs text-slate-500 leading-relaxed font-body">
-                Expect a secure transmission within <span className="text-secondary-container font-bold">72 hours</span> to your registered terminal.
+                {role === 'student'
+                  ? <><span className="text-secondary-container font-bold">Click the link</span> in the email to authorize your device and access the terminal.</>
+                  : <>Expect a secure transmission within <span className="text-secondary-container font-bold">72 hours</span> to your registered terminal.</>}
               </p>
             </motion.div>
           </div>

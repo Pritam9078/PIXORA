@@ -67,6 +67,20 @@ const SignupPage = () => {
     }
   };
 
+  const handleSocialLogin = async (provider) => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/login`
+        }
+      });
+      if (error) throw error;
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   return (
     <main className="min-h-screen flex flex-col xl:flex-row bg-[#051424]">
       {/* Left Section - Hero */}
@@ -270,6 +284,31 @@ const SignupPage = () => {
               <p className="text-[10px] font-headline text-slate-500 uppercase tracking-widest">
                 Already have clearance? <Link to="/login" className="text-secondary-container hover:underline ml-1">Access Terminal</Link>
               </p>
+            </div>
+
+            {/* Social Login */}
+            <div className="pt-4 mt-2 border-t border-white/5 flex flex-col gap-4">
+              <p className="font-headline text-[10px] text-slate-500 uppercase tracking-widest text-center">
+                Or Initialize via Protocol
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <button 
+                  type="button"
+                  onClick={() => handleSocialLogin('google')}
+                  className="border border-white/10 text-white font-headline text-[10px] uppercase tracking-widest py-3 rounded-md hover:bg-white/5 transition-all flex items-center justify-center gap-2"
+                >
+                  <img src="https://www.google.com/favicon.ico" className="w-3.5 h-3.5 grayscale" alt="Google" />
+                  <span>Google</span>
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => handleSocialLogin('github')}
+                  className="border border-white/10 text-white font-headline text-[10px] uppercase tracking-widest py-3 rounded-md hover:bg-white/5 transition-all flex items-center justify-center gap-2"
+                >
+                  <img src="https://github.com/favicon.ico" className="w-3.5 h-3.5 invert" alt="GitHub" />
+                  <span>GitHub</span>
+                </button>
+              </div>
             </div>
           </form>
 

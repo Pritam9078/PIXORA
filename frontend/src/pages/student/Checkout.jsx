@@ -4,7 +4,7 @@ import {
   CreditCard, ShieldCheck, Cpu, Award, 
   TrendingUp, Printer, Loader2, Sparkles, 
   ChevronRight, ArrowLeft, Terminal, Lock, 
-  AlertCircle, Fingerprint, Check, Zap, HelpCircle
+  AlertCircle, Fingerprint, Check, Zap, HelpCircle, FileText
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useStudentTheme } from '../../context/StudentThemeContext';

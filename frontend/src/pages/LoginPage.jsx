@@ -166,6 +166,9 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showResend, setShowResend] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
   const navigate = useNavigate();
   const { user, profile } = useAuth();
 
@@ -202,6 +205,8 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setShowResend(false);
+    setResendSuccess(false);
 
     try {
       const { data, error: authError } = await supabase.auth.signInWithPassword({
@@ -209,7 +214,13 @@ export default function LoginPage() {
         password,
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        if (authError.message === 'Email not confirmed') {
+          setShowResend(true);
+          throw new Error('Neural identity not verified. Please check your email for the confirmation link.');
+        }
+        throw authError;
+      }
 
       // We rely on the useEffect above to handle the routing once AuthContext provides the profile.
       // But if we want an immediate fallback:
@@ -227,6 +238,34 @@ export default function LoginPage() {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendEmail = async () => {
+    if (!email) return;
+    setResendLoading(true);
+    setError(null);
+    setResendSuccess(false);
+    setShowResend(false); // Hide button while loading or after success
+
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/login`
+        }
+      });
+      
+      if (error) throw error;
+      
+      setResendSuccess(true);
+      setError('A new verification link has been dispatched to your neural identity.');
+    } catch (err) {
+      setError(err.message);
+      setShowResend(true); // Show it again if it failed
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -345,13 +384,30 @@ export default function LoginPage() {
               {error && (
                 <div style={{ 
                   marginBottom: "24px", padding: "12px", 
-                  backgroundColor: "rgba(239, 68, 68, 0.1)", 
-                  border: "1px solid rgba(239, 68, 68, 0.2)", 
-                  color: "#ef4444", fontSize: "12px", 
+                  backgroundColor: resendSuccess ? "rgba(195, 244, 0, 0.1)" : "rgba(239, 68, 68, 0.1)", 
+                  border: resendSuccess ? "1px solid rgba(195, 244, 0, 0.2)" : "1px solid rgba(239, 68, 68, 0.2)", 
+                  color: resendSuccess ? "#c3f400" : "#ef4444", fontSize: "12px", 
                   fontFamily: "'Space Grotesk', monospace",
-                  textAlign: "center"
+                  textAlign: "center",
+                  display: "flex", flexDirection: "column", gap: "12px", alignItems: "center"
                 }}>
-                  {error}
+                  <span>{error}</span>
+                  {showResend && !resendSuccess && (
+                    <button 
+                      onClick={handleResendEmail}
+                      disabled={resendLoading}
+                      type="button"
+                      style={{
+                        background: "rgba(239, 68, 68, 0.15)", border: "1px solid rgba(239, 68, 68, 0.3)",
+                        color: "#ef4444", padding: "8px 16px", cursor: "pointer",
+                        fontFamily: "'Space Grotesk', monospace", fontSize: "10px", textTransform: "uppercase",
+                        letterSpacing: "0.1em", display: "flex", alignItems: "center", gap: "8px"
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>send</span>
+                      {resendLoading ? "DISPATCHING..." : "RESEND LINK"}
+                    </button>
+                  )}
                 </div>
               )}
 

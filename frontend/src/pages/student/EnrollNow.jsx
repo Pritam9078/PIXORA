@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Gamepad2, Wallet, ArrowRight, ArrowLeft, 
   CheckCircle2, Cpu, Code, Sparkles, User,
-  Calendar, Award, Terminal
+  Calendar, Award, Terminal, Lock, Fingerprint
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useStudentTheme } from '../../context/StudentThemeContext';
 import { ProfileService } from '../../services/ProfileService';
 import { toast } from 'react-hot-toast';
+import { supabase } from '../../lib/supabase';
 
 const MENTORS = {
   blockchain: {
@@ -41,7 +42,8 @@ const EnrollNow = () => {
     cohort: 'June 1, 2026',
     bio: profile?.bio || '',
     github: '',
-    discord: ''
+    discord: '',
+    password: ''
   });
 
   const handleTrackSelect = (track) => {
@@ -71,6 +73,14 @@ const EnrollNow = () => {
     
     try {
       setLoading(true);
+
+      if (formData.password) {
+        const { error: passwordError } = await supabase.auth.updateUser({
+          password: formData.password
+        });
+        if (passwordError) throw passwordError;
+      }
+
       const updates = {
         learning_track: formData.learning_track,
         bio: formData.bio,
@@ -352,11 +362,35 @@ const EnrollNow = () => {
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
               <div className="text-center space-y-1">
                 <h2 className="text-xl font-headline font-bold text-white uppercase tracking-wider">Student Credentials</h2>
-                <p className="text-xs text-on-surface-variant/40 font-semibold uppercase tracking-wider">Secure handles and tell us about your background context.</p>
+                <p className="text-xs text-on-surface-variant/40 font-semibold uppercase tracking-wider">Secure handles and verify your identity details.</p>
               </div>
 
               <div className="space-y-6 pt-4">
                 
+                {/* Student Overview Card */}
+                <div className="glass-card border-white/5 rounded-3xl p-6 relative overflow-hidden flex flex-col md:flex-row gap-6 items-center md:items-start">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--st-color-primary)]/5 rounded-full blur-3xl"></div>
+                  <div className="w-16 h-16 rounded-2xl bg-[var(--st-color-primary)]/10 border border-[var(--st-color-primary)]/30 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(var(--st-color-primary-rgb),0.2)]">
+                    <Fingerprint className="text-[var(--st-color-primary)]" size={32} />
+                  </div>
+                  <div className="space-y-3 w-full text-center md:text-left z-10">
+                    <div>
+                      <h3 className="font-headline font-black text-lg text-white uppercase tracking-wider">{profile?.full_name || 'Cadet Protocol'}</h3>
+                      <p className="text-xs font-bold text-[var(--st-color-primary)] uppercase tracking-widest">{user?.email}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                      <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-white/5 border border-white/10 text-[9px] font-headline text-white/50 uppercase tracking-widest">
+                        <Terminal size={10} />
+                        Status: Cleared
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-white/5 border border-white/10 text-[9px] font-headline text-white/50 uppercase tracking-widest">
+                        <Cpu size={10} />
+                        Track: {formData.learning_track === 'game_dev' ? 'Engine Arch' : 'Web3 Core'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Handles Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   
@@ -398,13 +432,33 @@ const EnrollNow = () => {
                 <div className="space-y-3">
                   <label className="text-[10px] font-headline font-black text-on-surface-variant/30 uppercase tracking-[0.2em] ml-2">Student Identity Biography</label>
                   <textarea 
-                    rows="4"
+                    rows="3"
                     required
                     placeholder="Describe your coding experience and what you want to achieve with Pixora..."
                     value={formData.bio}
                     onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
                     className="w-full glass-card border-white/5 rounded-2xl p-4 text-sm font-medium text-white focus:outline-none focus:border-[var(--st-color-primary)]/40 transition-all resize-none"
                   ></textarea>
+                </div>
+
+                {/* Set Password */}
+                <div className="space-y-3 pt-2">
+                  <label className="text-[10px] font-headline font-black text-on-surface-variant/30 uppercase tracking-[0.2em] ml-2">Secure Protocol (Manual Login Password)</label>
+                  <div className="relative">
+                    <input 
+                      type="password" 
+                      placeholder="Set password for manual terminal access (required if using social login)"
+                      value={formData.password}
+                      onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                      className="w-full glass-card border-white/5 rounded-2xl p-4 pl-12 text-sm font-medium text-white focus:outline-none focus:border-[var(--st-color-primary)]/40 transition-all"
+                    />
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/40 font-bold">
+                      <Lock size={18} />
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-on-surface-variant/40 font-medium ml-2">
+                    Optional if you already set a password during initial clearance.
+                  </p>
                 </div>
 
               </div>

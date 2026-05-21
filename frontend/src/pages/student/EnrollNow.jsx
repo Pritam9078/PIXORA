@@ -82,10 +82,12 @@ const EnrollNow = () => {
       }
 
       const updates = {
-        learning_track: formData.learning_track,
         bio: formData.bio,
         wallet_address: formData.learning_track === 'blockchain' ? '0x' + Array(40).fill(0).map(() => Math.floor(Math.random()*16).toString(16)).join('') : null
       };
+
+      // Save the track locally so they remain 'agnostic' in the DB and are locked in onboarding
+      localStorage.setItem('pending_learning_track', formData.learning_track);
 
       await ProfileService.updateProfile(user.id, updates);
       await refreshProfile();

@@ -4,11 +4,13 @@ import {
   CreditCard, ShieldCheck, Cpu, Award, 
   TrendingUp, Printer, Loader2, Sparkles, 
   ChevronRight, ArrowLeft, Terminal, Lock, 
-  AlertCircle, Fingerprint, Check, Zap, HelpCircle, FileText
+  AlertCircle, Fingerprint, Check, Zap, HelpCircle, FileText, Clock
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useStudentTheme } from '../../context/StudentThemeContext';
 import { CourseService } from '../../services/CourseService';
+import { CouponService } from '../../services/CouponService';
+import { ProfileService } from '../../services/ProfileService';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 
@@ -106,13 +108,16 @@ const Checkout = () => {
   const { user, profile, refreshProfile } = useAuth();
   const { currentTheme } = useStudentTheme();
 
+  const pendingTrack = localStorage.getItem('pending_learning_track');
+  const activeTrack = (profile?.learning_track === 'agnostic' && pendingTrack) ? pendingTrack : profile?.learning_track;
+
   // Redirect security checks: If student hasn't selected track, push to enroll-now (bypass if purchasing a specific course)
   useEffect(() => {
-    if (!courseToPurchase && profile && profile.learning_track === 'agnostic') {
+    if (!courseToPurchase && profile && activeTrack === 'agnostic') {
       toast.error('Initialization required. Calibrate your specialized track first!');
       navigate('/student/enroll-now');
     }
-  }, [profile, navigate, courseToPurchase]);
+  }, [profile, activeTrack, navigate, courseToPurchase]);
 
   // Page States: 'form' | 'processing' | 'success'
   const [stage, setStage] = useState('form');
@@ -133,6 +138,43 @@ const Checkout = () => {
   // Success parameters
   const [clearanceId, setClearanceId] = useState('');
   const [cohortDate] = useState('June 1, 2026');
+
+  // Coupon States
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+
+  // Computed Pricing
+  const basePrice = courseToPurchase ? (courseToPurchase.price || 0) : (selectedPlan === 'pro' ? 30.00 : 16.00);
+  const baseINR = courseToPurchase ? (courseToPurchase.price * 83 || 0) : (selectedPlan === 'pro' ? 2799 : 1499);
+  
+  const discountMultiplier = appliedCoupon ? (1 - (appliedCoupon.discount_percentage / 100)) : 1;
+  const currentPrice = appliedCoupon?.is_gift_access ? 0 : basePrice * discountMultiplier;
+  const currentINR = appliedCoupon?.is_gift_access ? 0 : baseINR * discountMultiplier;
+  
+  const currentTitle = courseToPurchase ? courseToPurchase.title : (selectedPlan === 'pro' ? 'Pro STUDENT Access Plan' : 'Starter STUDENT Access Plan');
+
+  const handleApplyCoupon = async (e) => {
+    e.preventDefault();
+    if (!couponCode.trim()) return;
+    
+    setIsApplyingCoupon(true);
+    try {
+      const couponData = await CouponService.validateCoupon(couponCode);
+      setAppliedCoupon(couponData);
+      toast.success(couponData.is_gift_access ? 'Gift Access Unlocked!' : `Coupon applied! ${couponData.discount_percentage}% off`);
+    } catch (err) {
+      toast.error(err.message || 'Invalid coupon code');
+      setAppliedCoupon(null);
+    } finally {
+      setIsApplyingCoupon(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode('');
+  };
 
   // Detect card brand dynamically
   useEffect(() => {
@@ -175,22 +217,26 @@ const Checkout = () => {
   // Run payment validation and database synchronizations
   const handleCheckoutSubmit = async (e) => {
     e.preventDefault();
-    if (!cardholder.trim()) {
-      toast.error('Cardholder verification name is required.');
-      return;
-    }
-    if (cardNumber.replace(/\s/g, '').length < 15) {
-      toast.error('Enter a valid authorization card sequence.');
-      return;
-    }
-    if (expiry.length < 5) {
-      toast.error('Enter a valid expiration date MM/YY.');
-      return;
-    }
-    const requiredCvv = cardBrand === 'amex' ? 4 : 3;
-    if (cvv.length < requiredCvv) {
-      toast.error(`Enter a valid ${requiredCvv}-digit CVV code.`);
-      return;
+    
+    // Only validate card details if it's not a free gift access
+    if (currentPrice > 0) {
+      if (!cardholder.trim()) {
+        toast.error('Cardholder verification name is required.');
+        return;
+      }
+      if (cardNumber.replace(/\s/g, '').length < 15) {
+        toast.error('Enter a valid authorization card sequence.');
+        return;
+      }
+      if (expiry.length < 5) {
+        toast.error('Enter a valid expiration date MM/YY.');
+        return;
+      }
+      const requiredCvv = cardBrand === 'amex' ? 4 : 3;
+      if (cvv.length < requiredCvv) {
+        toast.error(`Enter a valid ${requiredCvv}-digit CVV code.`);
+        return;
+      }
     }
 
     // Set page to Processing terminal stage
@@ -198,26 +244,23 @@ const Checkout = () => {
     setLogs([]);
     setProgressCheck(0);
 
-    const price = courseToPurchase ? (courseToPurchase.price || 0) : (selectedPlan === 'pro' ? 399.00 : 199.00);
-    const purchaseTitle = courseToPurchase ? courseToPurchase.title : (selectedPlan === 'pro' ? 'Pro STUDENT Access Plan' : 'Starter STUDENT Access Plan');
-
     const terminalLogs = courseToPurchase ? [
-      { text: 'Establishing secure cryptographic pipeline with Stripe...', delay: 400 },
-      { text: `Preparing PaymentIntent: [${price}.00 USD] for Course: [${purchaseTitle}]...`, delay: 1000 },
+      { text: currentPrice > 0 ? 'Establishing secure cryptographic pipeline with Stripe...' : 'Initializing Gift Access Protocol...', delay: 400 },
+      { text: currentPrice > 0 ? `Preparing PaymentIntent: [${currentPrice}.00 USD] for Course: [${currentTitle}]...` : `Validating Gift Access for Course: [${currentTitle}]...`, delay: 1000 },
       { text: 'Validating zero-knowledge proof tokens...', delay: 1600 },
-      { text: 'Authorized successfully! Receipt token: ch_' + Math.random().toString(36).substring(2, 10).toUpperCase(), delay: 2200 },
+      { text: currentPrice > 0 ? 'Authorized successfully! Receipt token: ch_' + Math.random().toString(36).substring(2, 10).toUpperCase() : 'Gift Access Granted! Receipt token: gift_' + Math.random().toString(36).substring(2, 10).toUpperCase(), delay: 2200 },
       { text: 'Writing payment ledger transaction to public.payments...', delay: 2800, databaseSync: true },
       { text: `Calibrating course enrollment for Course: [${purchaseTitle}] in public.enrollments...`, delay: 4200, enrollmentSync: true },
       { text: 'Allocating course mentor and resources...', delay: 4900 },
       { text: 'Generating signed cryptographic Course Clearance Directive...', delay: 5500 },
       { text: 'CALIBRATION HANDSHAKE SECURED. REDIRECTING PORTAL...', delay: 6200 }
     ] : [
-      { text: 'Establishing secure cryptographic pipeline with Stripe...', delay: 400 },
-      { text: `Preparing PaymentIntent: [${price}.00 USD] with method card...`, delay: 1000 },
+      { text: currentPrice > 0 ? 'Establishing secure cryptographic pipeline with Stripe...' : 'Initializing Gift Access Protocol...', delay: 400 },
+      { text: currentPrice > 0 ? `Preparing PaymentIntent: [${currentPrice}.00 USD] with method card...` : `Validating Gift Access for Plan...`, delay: 1000 },
       { text: 'Validating zero-knowledge proof tokens...', delay: 1600 },
-      { text: 'Authorized successfully! Receipt token: ch_' + Math.random().toString(36).substring(2, 10).toUpperCase(), delay: 2200 },
+      { text: currentPrice > 0 ? 'Authorized successfully! Receipt token: ch_' + Math.random().toString(36).substring(2, 10).toUpperCase() : 'Gift Access Granted! Receipt token: gift_' + Math.random().toString(36).substring(2, 10).toUpperCase(), delay: 2200 },
       { text: 'Writing payment ledger transaction to public.payments...', delay: 2800, databaseSync: true },
-      { text: `Querying all published courses for Learning Track: [${profile?.learning_track || 'Specialized'}]...`, delay: 3500 },
+      { text: `Querying all published courses for Learning Track: [${activeTrack || 'Specialized'}]...`, delay: 3500 },
       { text: 'Calibrating batch student enrollment sequence in public.enrollments...', delay: 4200, enrollmentSync: true },
       { text: 'Allocating elite senior industry track mentor...', delay: 4900 },
       { text: 'Generating signed cryptographic Student Offer Letter directive...', delay: 5500 },
@@ -233,23 +276,36 @@ const Checkout = () => {
         // When DB synchronizations are scheduled in timeline
         if (item.databaseSync) {
           try {
-            const randomId = 'ch_' + Math.random().toString(36).substring(2, 12).toUpperCase();
-            await supabase.from('payments').insert({
+            const randomId = (currentPrice > 0 ? 'ch_' : 'gift_') + Math.random().toString(36).substring(2, 12).toUpperCase();
+            const { error: paymentError } = await supabase
+            .from('payments')
+            .insert({
               user_id: user.id,
-              amount: price,
-              currency: 'USD',
+              amount: currentPrice,
+              currency: 'usd',
               status: 'completed',
-              provider: 'stripe',
+              provider: currentPrice > 0 ? 'stripe' : 'gift',
               provider_id: randomId,
+              coupon_id: appliedCoupon ? appliedCoupon.id : null,
+              is_gift_access: appliedCoupon?.is_gift_access || false,
               metadata: {
                 purchase_type: courseToPurchase ? 'course' : 'plan',
                 course_id: courseToPurchase ? courseToPurchase.id : null,
                 course_title: courseToPurchase ? courseToPurchase.title : null,
                 plan: courseToPurchase ? null : selectedPlan,
-                track: profile?.learning_track,
-                cardholder: cardholder
+                track: activeTrack,
+                cardholder: currentPrice > 0 ? cardholder : 'GIFT_ACCESS'
               }
             });
+
+            if (paymentError) {
+              console.error('Ledger sync failed:', paymentError);
+              throw paymentError;
+            }
+
+            if (appliedCoupon) {
+              await CouponService.recordRedemption(appliedCoupon.id, user.id, basePrice, currentPrice);
+            }
             console.log('Payment synchronized successfully.');
           } catch (err) {
             console.warn('Payment RLS constraint / DB failure bypassed locally:', err.message);
@@ -263,7 +319,7 @@ const Checkout = () => {
               console.log('Course enrollment complete.');
             } else {
               // Retrieve available courses for track
-              const userTrack = profile?.track || (profile?.learning_track ? profile.learning_track.toUpperCase() : null);
+              const userTrack = profile?.track || (activeTrack ? activeTrack.toUpperCase() : null);
               const matchedCourses = await CourseService.getAvailableCourses(profile?.college_id, userTrack);
 
               if (matchedCourses && matchedCourses.length > 0) {
@@ -283,11 +339,21 @@ const Checkout = () => {
 
         // Final transition
         if (index === terminalLogs.length - 1) {
-          setTimeout(() => {
+          setTimeout(async () => {
             const randomHex = Math.random().toString(16).substring(2, 6).toUpperCase();
-            const trackCode = courseToPurchase ? 'CRSE' : (profile?.learning_track === 'blockchain' ? 'BCHN' : 'GDEV');
+            const trackCode = courseToPurchase ? 'CRSE' : (activeTrack === 'blockchain' ? 'BCHN' : 'GDEV');
             setClearanceId(`PX-${trackCode}-${randomHex}`);
             
+            // If they were onboarding, finalize their track now
+            if (profile?.learning_track === 'agnostic' && pendingTrack) {
+              try {
+                await ProfileService.updateProfile(user.id, { learning_track: pendingTrack });
+                localStorage.removeItem('pending_learning_track');
+              } catch (err) {
+                console.error(err);
+              }
+            }
+
             // Refresh profile state globally
             refreshProfile().catch(err => console.error(err));
             
@@ -306,7 +372,7 @@ const Checkout = () => {
         avatar: courseToPurchase.instructor?.avatar_url || "https://api.dicebear.com/7.x/pixel-art/svg?seed=instructor",
         signature: 'Pixora Education'
       }
-    : (MENTORS[profile?.learning_track] || MENTORS.game_dev);
+    : (MENTORS[activeTrack] || MENTORS.game_dev);
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -391,6 +457,41 @@ const Checkout = () => {
             
             {/* Left: Plan Tier Selection Grid or Course Details */}
             <div className="lg:col-span-5 space-y-6">
+              
+              {/* Coupon Code Section */}
+              <div className="glass-panel p-6 rounded-[32px] border-white/5 space-y-4">
+                <span className="text-[10px] font-headline font-black text-on-surface-variant/40 uppercase tracking-[0.15em] ml-1 flex justify-between items-center">
+                  <span>Discount / Gift Access Code</span>
+                  {appliedCoupon && (
+                    <button type="button" onClick={removeCoupon} className="text-[var(--st-color-error)] hover:text-red-400">Remove</button>
+                  )}
+                </span>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    placeholder="Enter PIXORA05 or PIXORA001..."
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                    disabled={!!appliedCoupon || isApplyingCoupon}
+                    className="flex-1 bg-white/[0.02] border border-white/5 focus:border-[var(--st-color-primary)] rounded-2xl px-4 py-3 text-sm font-mono tracking-wider text-white placeholder-on-surface-variant/30 focus:outline-none transition-all disabled:opacity-50"
+                  />
+                  <button 
+                    type="button" 
+                    onClick={handleApplyCoupon}
+                    disabled={!!appliedCoupon || isApplyingCoupon || !couponCode.trim()}
+                    className="btn-secondary px-6 rounded-2xl text-xs tracking-wider disabled:opacity-50"
+                  >
+                    {isApplyingCoupon ? <Loader2 size={16} className="animate-spin" /> : 'Apply'}
+                  </button>
+                </div>
+                {appliedCoupon && (
+                  <div className="text-xs font-mono px-3 py-2 rounded-lg bg-[var(--st-color-primary)]/10 text-[var(--st-color-primary)] inline-flex items-center gap-1.5 border border-[var(--st-color-primary)]/20 shadow-[0_0_10px_rgba(var(--st-color-primary-rgb),0.1)]">
+                    <Check size={12} />
+                    {appliedCoupon.is_gift_access ? 'Gift Access Code Validated' : `${appliedCoupon.discount_percentage}% Discount Applied`}
+                  </div>
+                )}
+              </div>
+
               {courseToPurchase ? (
                 <div className="glass-panel p-6 rounded-[32px] border-white/5 space-y-4">
                   <span className="text-[10px] font-headline font-black text-on-surface-variant/40 uppercase tracking-[0.15em] ml-1 block">Course Selection</span>
@@ -445,8 +546,9 @@ const Checkout = () => {
                           <p className="text-[10px] text-on-surface-variant/60 font-medium mt-1">Full access to fundamental track modules</p>
                         </div>
                         <div className="text-right">
-                          <span className="text-xl font-headline font-black text-white">$199</span>
-                          <span className="text-[9px] text-on-surface-variant/40 block">One-time billing</span>
+                          <span className="text-xl font-headline font-black text-white">$16</span>
+                          <span className="text-[10px] font-mono text-white/50 block">₹1499</span>
+                          <span className="text-[9px] text-on-surface-variant/40 block mt-1">One-time billing</span>
                         </div>
                       </div>
                       
@@ -481,8 +583,9 @@ const Checkout = () => {
                           <p className="text-[10px] text-on-surface-variant/60 font-medium mt-1">Direct mentor pipeline + verified certification</p>
                         </div>
                         <div className="text-right">
-                          <span className="text-xl font-headline font-black text-[var(--st-color-primary)]">$399</span>
-                          <span className="text-[9px] text-on-surface-variant/40 block">One-time billing</span>
+                          <span className="text-xl font-headline font-black text-[var(--st-color-primary)]">$30</span>
+                          <span className="text-[10px] font-mono text-white/50 block">₹2799</span>
+                          <span className="text-[9px] text-[var(--st-color-primary)]/50 block mt-1">One-time billing</span>
                         </div>
                       </div>
 
@@ -576,9 +679,11 @@ const Checkout = () => {
 
               {/* Secure Input Form Panel */}
               <form onSubmit={handleCheckoutSubmit} className="glass-panel p-6 rounded-[32px] border-white/5 space-y-6">
+                
                 <span className="text-[10px] font-headline font-black text-on-surface-variant/40 uppercase tracking-[0.15em] ml-1 block">2. Input Payment Credentials</span>
                 
-                <div className="space-y-4">
+                {currentPrice > 0 ? (
+                  <div className="space-y-4">
                   {/* Cardholder Name */}
                   <div className="space-y-2">
                     <label className="text-[10px] font-headline font-black text-on-surface-variant/60 uppercase tracking-wider block ml-1">Cardholder Verification Name</label>
@@ -656,13 +761,28 @@ const Checkout = () => {
                       </div>
                     </div>
                   </div>
-                </div>
+                  </div>
+                ) : (
+                  <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-6 text-center space-y-3 mt-4">
+                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[var(--st-color-primary)]/10 text-[var(--st-color-primary)] mb-2">
+                      <Sparkles size={24} />
+                    </div>
+                    <h3 className="font-headline font-bold text-white text-lg tracking-wide">Gift Access Activated</h3>
+                    <p className="text-on-surface-variant/60 text-xs max-w-sm mx-auto">Your access code bypasses the billing requirement. You may proceed directly to the onboarding sequence.</p>
+                  </div>
+                )}
 
                 {/* Price telemetry and checkout submit button */}
                 <div className="pt-4 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
                   <div className="text-center md:text-left">
                     <span className="text-[9px] text-on-surface-variant/40 block font-headline font-bold tracking-widest uppercase">STATION CHARGE VALUE</span>
-                    <span className="text-2xl font-headline font-black text-white">${price}.00 USD</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl font-headline font-black text-white">${currentPrice}.00 USD</span>
+                      <span className="text-sm font-mono text-white/40">₹{currentINR}</span>
+                      {appliedCoupon && !appliedCoupon.is_gift_access && (
+                        <span className="text-xs font-mono text-on-surface-variant/40 line-through ml-2">${basePrice}.00</span>
+                      )}
+                    </div>
                   </div>
 
                   <button 
@@ -670,7 +790,7 @@ const Checkout = () => {
                     className="w-full md:w-auto btn-primary flex items-center justify-center gap-2 px-8 py-3.5 !rounded-2xl shadow-[0_0_20px_var(--st-color-glow)] text-xs font-headline font-bold uppercase tracking-widest cursor-pointer"
                   >
                     <Zap size={16} />
-                    <span>Authorize Cryptographic Node</span>
+                    <span>{currentPrice === 0 ? 'Activate Gift Access' : 'Authorize Cryptographic Node'}</span>
                   </button>
                 </div>
               </form>
@@ -799,7 +919,7 @@ const Checkout = () => {
                   </>
                 ) : (
                   <>
-                    We are pleased to inform you that your holographic credentials and biometric telemetry have cleared Pixora Academy’s validation sequence. Upon verification of billing payload pipelines, your clearance has been elevated to <strong className="text-white">Active Grade 1 Academy Student</strong> specializing in the <strong className="text-white">{profile?.learning_track === 'blockchain' ? 'Blockchain & Web3 Protocol' : 'Game Development Engine'} Specialization Track</strong>.
+                    We are pleased to inform you that your holographic credentials and biometric telemetry have cleared Pixora Academy’s validation sequence. Upon verification of billing payload pipelines, your clearance has been elevated to <strong className="text-white">Active Grade 1 Academy Student</strong> specializing in the <strong className="text-white">{activeTrack === 'blockchain' ? 'Blockchain & Web3 Protocol' : 'Game Development Engine'} Specialization Track</strong>.
                   </>
                 )}
               </p>

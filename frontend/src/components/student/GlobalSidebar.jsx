@@ -98,7 +98,7 @@ const GlobalSidebar = ({ isOpen, setIsOpen }) => {
 
         <nav className="space-y-1">
           {navItems.map((item) => {
-            const isLocked = isAgnostic && item.path !== '/student/dashboard' && item.path !== '/student/courses';
+            const isLocked = isAgnostic;
             return isLocked ? (
               <div
                 key={item.name}

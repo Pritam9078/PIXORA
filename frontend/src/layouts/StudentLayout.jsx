@@ -13,16 +13,15 @@ const StudentLayout = () => {
 
   const isAgnostic = profile && profile.learning_track === 'agnostic';
   const allowedAgnosticPaths = [
-    '/student/dashboard',
     '/student/enroll-now',
     '/student/document-verification',
     '/student/checkout',
     '/student/settings'
   ];
 
-  // Gatekeeper: if agnostic student tries to access locked tabs, redirect to dashboard
+  // Gatekeeper: if agnostic student tries to access locked tabs, redirect to onboarding
   if (isAgnostic && !allowedAgnosticPaths.some(path => location.pathname === path || location.pathname.startsWith(path))) {
-    return <Navigate to="/student/dashboard" replace />;
+    return <Navigate to="/student/enroll-now" replace />;
   }
 
   // Check if we are in the course player (which needs a specialized layout)
